@@ -101,11 +101,13 @@ class Room00(Stage):
                 base.bgm.playSfx('start-dialog')
                 self.force = Vec3(0,0,0)
                 self.torque = Vec3(0,0,0)
+                self.ballNP.node().setLinearDamping(1)
                 
                 
 
     def actionAUp(self):
-        pass
+        if(self.ballNP.node().getLinearDamping() == 1):
+            self.ballNP.node().setLinearDamping(0)
         
     def actionB(self):
         self.ballNP.node().setAngularDamping(0.82)
