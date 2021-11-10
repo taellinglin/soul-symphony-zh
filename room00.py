@@ -1,3 +1,6 @@
+from math import pi
+from math import sin
+from math import cos
 import sys
 from stageflow.core import Stage
 from random import  choice
@@ -25,6 +28,15 @@ class Room00(Stage):
     def __init__(self, exit_stage = "main_menu"):
         self.exit_stage = exit_stage
         self.colors = [(1,0,0,1), (0,1,0,1), (0,0,1,1), (1,1,0,1), (1,0,1,1)]
+        self.colors = []
+        phase_frags = 6
+        for phase in [0.5 * pi * (i / float(phase_frags)) for i in range(phase_frags)]:
+            self.colors.append((cos(phase), sin(phase), 0, 1))
+        for phase in [0.5 * pi * (i / float(phase_frags)) for i in range(phase_frags)]:
+            self.colors.append((0, cos(phase), sin(phase), 1))
+        for phase in [0.5 * pi * (i / float(phase_frags)) for i in range(phase_frags)]:
+            self.colors.append((sin(phase), 0, cos(phase), 1))
+        self.color_idx = -1
         self.clock = 0
         self.npcs =[]
         self.gamepad = None
@@ -206,8 +218,9 @@ class Room00(Stage):
             else:
                 nametag.hide()
         self.ballNP.set_color(choice(self.colors))
+        self.color_idx = (self.color_idx + 1) % len(self.colors)
         for o, obj in enumerate(self.level.ground.get_children()):
-            obj.set_color(choice(self.colors))
+            obj.set_color(self.colors[self.color_idx])
         self.clock += 0.001
         dt = globalClock.getDt()
         self.processInput(dt)
