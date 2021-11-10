@@ -1,0 +1,4 @@
+--asset_dir= "text_chapters/*"
+--export_dir= "text_chapters/*"
+--converters= "blend2bam"
+physics-engine "bullet"
