@@ -3,6 +3,7 @@ from stageflow.core import Stage
 from random import  choice
 from stageflow import Stage
 from level import level
+from npc import npc
 
 from panda3d.core import BitMask32
 from panda3d.core import NodePath
@@ -20,7 +21,6 @@ MAX_SPEED = 6      # Max speed in ft/sec
 MAX_SPEED_SQ = MAX_SPEED ** 2  # Squared to make it easier to use lengthSquared
 # Instead of length
 BALL_SPEED = 10
-
 class Room00(Stage):
     def __init__(self, exit_stage = "main_menu"):
         self.exit_stage = exit_stage
@@ -73,34 +73,47 @@ class Room00(Stage):
         
         print(self.gamepad)
         self.level = level()
+        self.level.get_npcs(21)
+        self.level.place_npcs()
         self.load_ball()
         self.setup_ball_forces()
-        
+
         base.accept("gamepad-face_a", self.actionA)
+        base.accept("space", self.actionA)
         base.accept("gamepad-face_a-up", self.actionAUp)
+        base.accept("space-up", self.actionAUp)
         base.accept("gamepad-face_b", self.actionB)
+        base.accept("shift", self.actionB)
         base.accept("gamepad-face_b-up", self.actionBUp)
+        base.accept("shift-up", self.actionBUp)
+        
         
     def setup_ball_forces(self):
         self.force = Vec3(0,0,0)
         self.torque = Vec3(0,0,0)
         
     def actionA(self):
-        self.ballNP.node().applyCentralImpulse(Vec3(0,0,128))
-        print("[A] pressed")
-         
+        self.ballNP.node().applyCentralImpulse(Vec3(0,0,128+32))
+        for n, npc_mount in enumerate(self.level.npc_mounts):
+            if((npc_mount.getPos().getXy() - self.ballNP.getPos().getXy()).length() < 5):
+                print("trigger-dialog")
+                print("from npc: "+str(n))
+                base.bgm.playSfx('start-dialog')
+                self.force = Vec3(0,0,0)
+                self.torque = Vec3(0,0,0)
+                
+                
+
     def actionAUp(self):
-        print("[A] released")
+        pass
         
     def actionB(self):
         self.ballNP.node().setAngularDamping(0.82)
         self.ballNP.node().setLinearDamping(0.82)
-        print("[B]Brake pressed")
          
     def actionBUp(self):
         self.ballNP.node().setAngularDamping(0)
         self.ballNP.node().setLinearDamping(0)
-        print("[B]Brake released")
         
     def connect(self, device):
         """Event handler that is called when a device is discovered."""
@@ -113,7 +126,8 @@ class Room00(Stage):
 
             # Enable this device to ShowBase so that we can receive events.
             # We set up the events with a prefix of "gamepad-".
-            base.attachInputDevice(device, prefix="gamepad")
+            if(not (self.gamepad == None)):
+                base.attachInputDevice(device, prefix="gamepad")
 
 
     def disconnect(self, device):
@@ -134,13 +148,16 @@ class Room00(Stage):
             self.connect(devices[0])
             
     def processInput(self, dt):
-        self.left_x = self.gamepad.findAxis(InputDevice.Axis.left_x)
-        self.left_y = self.gamepad.findAxis(InputDevice.Axis.left_y)
-        self.right_x = self.gamepad.findAxis(InputDevice.Axis.right_x)
-        self.right_y = self.gamepad.findAxis(InputDevice.Axis.right_y)
-        self.leftAnalog = Vec3(self.left_x.value, self.left_y.value, 0)
-        force = self.leftAnalog
-        torque = Vec3(0,0,self.right_x.value)
+        force = Vec3(0,0,0)
+        torque = Vec3(0,0,0)
+        if(not self.gamepad == None):
+            self.left_x = self.gamepad.findAxis(InputDevice.Axis.left_x)
+            self.left_y = self.gamepad.findAxis(InputDevice.Axis.left_y)
+            self.right_x = self.gamepad.findAxis(InputDevice.Axis.right_x)
+            self.right_y = self.gamepad.findAxis(InputDevice.Axis.right_y)
+            self.leftAnalog = Vec3(self.left_x.value, self.left_y.value, 0)
+            force = self.leftAnalog
+            torque = Vec3(0,0,self.right_x.value)
         if inputState.isSet('cam-right'): base.cam.set_r(self.ballNP, 0.5)
         if inputState.isSet('cam-left'): base.cam.set_r(self.ballNP, -0.5)        
         if inputState.isSet('forward'): force.setY( 1.0)
@@ -176,28 +193,16 @@ class Room00(Stage):
         visualNP.reparentTo(self.ballNP)
         
     def update(self, task):
-        for n, npc in enumerate(self.npcs):
-            face = render.find("**/npcFace")
-            emblem = render.find("**/npcEmblem")
-            name = npc.find("**/npcName")
-            face.set_h(face, 0.5)
-            emblem.set_h(emblem, -0.5)
-            name.lookAt(base.cam)
-            name.set_p(name, 90)
-            name.set_r(name, 180)
-            face.set_color(choice(self.colors))
-            emblem.set_color(choice(self.colors))
-            name.set_color(choice(self.colors))
-            print(str(n)+": "+str(name.isHidden()))
-            if((npc.getPos().getXy() - self.ballNP.getPos().getXy()).length() < 5):
-                if name.isHidden():
-                    print(str(n)+": "+str(name.isHidden()))
+        for n, npc_mount in enumerate(self.level.npc_mounts):
+            nametag = npc_mount.find('**/npcNametag')
+            if((npc_mount.getPos().getXy() - self.ballNP.getPos().getXy()).length() < 5):
+                if nametag.isHidden():
+                    nametag.show()
                     base.bgm.playSfx('hover')
-                    print("playing sfx")
-                    
+                pass
+                #PLAY THE SFX ONCE...
             else:
-                name.hide()
-            
+                nametag.hide()
         self.ballNP.set_color(choice(self.colors))
         for o, obj in enumerate(self.level.ground.get_children()):
             obj.set_color(choice(self.colors))

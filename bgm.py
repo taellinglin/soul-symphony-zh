@@ -37,7 +37,8 @@ class BGM():
             'soul-symphony',
             'correct_guess',
             'incorrect_guess',
-            'hover'
+            'hover',
+            'start-dialog'
         ]
         self.sfx = {}
         for s in sfx_names:

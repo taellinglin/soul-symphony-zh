@@ -26,10 +26,9 @@ class level():
             base.loader.load_font('fonts/text/Storybook.otf'),
             base.loader.load_font('fonts/text/Xenon.otf'),  
         ]
-        self.get_npcs(21)
+
         self.load_world()
         self.load_ground()
-        self.place_npcs()
         base.task_mgr.add(self.update, 'level_update')
          
     def get_npcs(self, num_npcs):
@@ -96,4 +95,6 @@ class level():
         self.ground.reparentTo(render)
         
     def update(self, task):
+        
+        
         return task.cont

@@ -3,6 +3,7 @@ from panda3d.core import NodePath
 from panda3d.core import TextFont
 from panda3d.core import Texture
 from panda3d.core import TextureStage
+from bgm import BGM
 from random import  choice
 from random import shuffle
 names = ["Dimitri", 
@@ -32,6 +33,7 @@ names = ["Dimitri",
          "Neptune"]
 used_names = []
 class npc():
+    
     def __init__(self):
         self.names = names
         self.faces = [
@@ -60,7 +62,7 @@ class npc():
         self.nametag = npcModel.find("**/npcNametag")
         self.face = npcModel.find("**/npcFace")
         self.face.set_two_sided(True)
-        
+        self.nametag.hide()
         
         self.emblem = npcModel.find("**/npcEmblem")
         self.emblem.set_two_sided(True)
@@ -82,5 +84,6 @@ class npc():
     def update(self, task):
         self.face.set_h(self.face, 1)
         self.emblem.set_h(self.emblem, -1)
+            
         return task.cont
     
