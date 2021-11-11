@@ -7,13 +7,15 @@ from random import  choice
 from stageflow import Stage
 from level import level
 from npc import npc
-
+from dialog import dialog
 from panda3d.core import BitMask32
 from panda3d.core import NodePath
 from panda3d.core import InputDevice
 from panda3d.core import TextureStage
 from panda3d.core import Vec3
 from panda3d.core import BitMask32
+from panda3d.core import TextNode
+
 from direct.showbase.InputStateGlobal import inputState
 from panda3d.bullet import BulletSphereShape
 from panda3d.bullet import BulletRigidBodyNode
@@ -99,6 +101,9 @@ class Room00(Stage):
         self.ball_roll = base.loader.load_sfx('audio/ball_roll.wav')
         self.ball_roll.setLoop(True)
         self.ball_roll.play()
+        self.dialog = dialog()
+        self.dialog_card = TextNode('dialog_card')
+        self.dialog_card_node = render.attach_new_node(self.dialog_card)
         base.accept("gamepad-face_a", self.actionA)
         base.accept("space", self.actionA)
         base.accept("gamepad-face_a-up", self.actionAUp)
@@ -118,7 +123,11 @@ class Room00(Stage):
         base.bgm.playSfx('ball-jump')
         for n, npc_mount in enumerate(self.level.npc_mounts):
             if((npc_mount.getPos().getXy() - self.ballNP.getPos().getXy()).length() < 5):
-                print("trigger-dialog")
+                print(str(npc_mount.find("**/npcNametag").get_children()))
+                print(str(self.dialog.get_dialog(n)))
+                
+                self.dialog_card.text = self.dialog.get_dialog(n)
+                self.dialog_card_node.show()
                 print("from npc: "+str(n))
                 base.bgm.playSfx('start-dialog')
                 self.force = Vec3(0,0,0)
@@ -130,6 +139,7 @@ class Room00(Stage):
     def actionAUp(self):
         if(self.ballNP.node().getLinearDamping() == 1):
             self.ballNP.node().setLinearDamping(0)
+        self.dialog_card_node.hide()
         
     def actionB(self):
         self.ballNP.node().setAngularDamping(0.82)

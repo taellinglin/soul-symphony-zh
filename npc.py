@@ -3,6 +3,8 @@ from panda3d.core import NodePath
 from panda3d.core import TextFont
 from panda3d.core import Texture
 from panda3d.core import TextureStage
+from panda3d.core import CardMaker
+
 from bgm import BGM
 from random import  choice
 from random import shuffle
@@ -72,7 +74,8 @@ class npc():
             self.face.set_texture(stage, npc.get("face"), 1)
         for stage in self.emblem.find_all_texture_stages():
             self.emblem.set_texture(stage, npc.get("emblem"), 1)
-        
+        self.cm = CardMaker('card')
+        self.card = render.attachNewNode(self.cm.generate())
         new_npc = {"name" : npc.get("name"),
                    "nametag" : self.nametag,
                    "face": self.face,
