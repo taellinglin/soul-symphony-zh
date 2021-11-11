@@ -1,5 +1,6 @@
 from npc import npc
 from math import sin
+from math import cosh
 from random import  choice
 from panda3d.bullet import BulletWorld
 from panda3d.bullet import BulletRigidBodyNode
@@ -102,11 +103,7 @@ class level():
     def update(self, task):
         self.clock += 0.001
         self.clock2 += 0.1
-        ts = TextureStage('tex_stage')
         for stage in self.maze02.find_all_texture_stages():
-            self.maze02.setTexOffset(stage, 5*sin(self.clock)+1, 5*sin(self.clock)+1)
-            #self.maze02.set_tex_rotate(stage, self.clock2)
-            
-            #self.maze02.setTexScale(stage, 5*sin(self.clock)+1, 5*sin(self.clock)+1)
+            self.maze02.setTexOffset(stage, .5*sin(self.clock/6), .5*sin(self.clock/6))
         
         return task.cont

@@ -30,13 +30,19 @@ class Room00(Stage):
         self.exit_stage = exit_stage
         self.colors = [(1,0,0,1), (0,0,1,1), (1,1,0,1), (1,0,1,1)]
         self.colors = []
-        phase_frags = 5
+        phase_frags = 6
         for phase in [0.5 * pi * (i / float(phase_frags)) for i in range(phase_frags)]:
-            self.colors.append((cos(phase), sin(phase), 0, 1))
+                self.colors.append((cos(phase), 1, 0, 1))
         for phase in [0.5 * pi * (i / float(phase_frags)) for i in range(phase_frags)]:
-            self.colors.append((0, cos(phase), sin(phase), 1))
+            self.colors.append((0, 1, sin(phase), 1))
         for phase in [0.5 * pi * (i / float(phase_frags)) for i in range(phase_frags)]:
-            self.colors.append((sin(phase), 0, cos(phase), 1))
+            self.colors.append((0, cos(phase), 1, 1))
+        for phase in [0.5 * pi * (i / float(phase_frags)) for i in range(phase_frags)]:
+            self.colors.append((sin(phase), 0, 1, 1))
+        for phase in [0.5 * pi * (i / float(phase_frags)) for i in range(phase_frags)]:
+            self.colors.append((1, 0, cos(phase), 1))
+        for phase in [0.5 * pi * (i / float(phase_frags)) for i in range(phase_frags)]:
+            self.colors.append((1, sin(phase), 0, 1))
         self.color_idx = -1
         self.clock = 0
         self.npcs =[]
