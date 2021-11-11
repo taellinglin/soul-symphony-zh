@@ -103,7 +103,11 @@ class Room00(Stage):
         self.ball_roll.play()
         self.dialog = dialog()
         self.dialog_card = TextNode('dialog_card')
-        self.dialog_card_node = render.attach_new_node(self.dialog_card)
+        self.dialog_card.align = 2
+        self.dialog_card.setWordwrap(40)
+        self.dialog_card_node = aspect2d.attach_new_node(self.dialog_card)
+        self.dialog_card_node.setScale(0.08)
+        
         base.accept("gamepad-face_a", self.actionA)
         base.accept("space", self.actionA)
         base.accept("gamepad-face_a-up", self.actionAUp)
