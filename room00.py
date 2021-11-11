@@ -115,6 +115,7 @@ class Room00(Stage):
         
     def actionA(self):
         self.ballNP.node().applyCentralImpulse(Vec3(0,0,128+32))
+        base.bgm.playSfx('ball-jump')
         for n, npc_mount in enumerate(self.level.npc_mounts):
             if((npc_mount.getPos().getXy() - self.ballNP.getPos().getXy()).length() < 5):
                 print("trigger-dialog")
@@ -216,7 +217,7 @@ class Room00(Stage):
         visualNP.reparentTo(self.ballNP)
         
     def update(self, task):
-        self.ball_roll.setPlayRate(0.1*(abs(self.ballNP.get_node(0).getLinearVelocity().getX())+abs(self.ballNP.get_node(0).getLinearVelocity().getY())+abs(self.ballNP.get_node(0).getLinearVelocity().getZ())))
+        self.ball_roll.setPlayRate(0.05*(abs(self.ballNP.get_node(0).getLinearVelocity().getX())+abs(self.ballNP.get_node(0).getLinearVelocity().getY())+abs(self.ballNP.get_node(0).getLinearVelocity().getZ())))
         for n, npc_mount in enumerate(self.level.npc_mounts):
             nametag = npc_mount.find('**/npcNametag')
             if((npc_mount.getPos().getXy() - self.ballNP.getPos().getXy()).length() < 5):

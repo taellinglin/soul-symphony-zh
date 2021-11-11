@@ -38,7 +38,8 @@ class BGM():
             'correct_guess',
             'incorrect_guess',
             'hover',
-            'start-dialog'
+            'start-dialog',
+            'ball-jump'
         ]
         self.sfx = {}
         for s in sfx_names:
