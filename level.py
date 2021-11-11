@@ -1,4 +1,5 @@
 from npc import npc
+from math import sin
 from random import  choice
 from panda3d.bullet import BulletWorld
 from panda3d.bullet import BulletRigidBodyNode
@@ -8,6 +9,8 @@ from panda3d.bullet import BulletTriangleMeshShape
 from panda3d.core import Vec3
 from panda3d.core import BitMask32
 from panda3d.core import TextNode
+from panda3d.core import TextureStage
+from panda3d.core import Texture
 from panda3d.core import TextFont
 from panda3d.core import NodePath
 DEBUG = False
@@ -29,6 +32,8 @@ class level():
 
         self.load_world()
         self.load_ground()
+        self.clock = 0
+        self.clock2 = 0
         base.task_mgr.add(self.update, 'level_update')
          
     def get_npcs(self, num_npcs):
@@ -95,6 +100,13 @@ class level():
         self.ground.reparentTo(render)
         
     def update(self, task):
-        
+        self.clock += 0.001
+        self.clock2 += 0.1
+        ts = TextureStage('tex_stage')
+        for stage in self.maze02.find_all_texture_stages():
+            self.maze02.setTexOffset(stage, 5*sin(self.clock)+1, 5*sin(self.clock)+1)
+            #self.maze02.set_tex_rotate(stage, self.clock2)
+            
+            #self.maze02.setTexScale(stage, 5*sin(self.clock)+1, 5*sin(self.clock)+1)
         
         return task.cont

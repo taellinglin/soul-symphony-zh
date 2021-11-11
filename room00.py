@@ -11,6 +11,7 @@ from npc import npc
 from panda3d.core import BitMask32
 from panda3d.core import NodePath
 from panda3d.core import InputDevice
+from panda3d.core import TextureStage
 from panda3d.core import Vec3
 from panda3d.core import BitMask32
 from direct.showbase.InputStateGlobal import inputState
@@ -27,9 +28,9 @@ BALL_SPEED = 10
 class Room00(Stage):
     def __init__(self, exit_stage = "main_menu"):
         self.exit_stage = exit_stage
-        self.colors = [(1,0,0,1), (0,1,0,1), (0,0,1,1), (1,1,0,1), (1,0,1,1)]
+        self.colors = [(1,0,0,1), (0,0,1,1), (1,1,0,1), (1,0,1,1)]
         self.colors = []
-        phase_frags = 6
+        phase_frags = 5
         for phase in [0.5 * pi * (i / float(phase_frags)) for i in range(phase_frags)]:
             self.colors.append((cos(phase), sin(phase), 0, 1))
         for phase in [0.5 * pi * (i / float(phase_frags)) for i in range(phase_frags)]:
@@ -221,7 +222,7 @@ class Room00(Stage):
         self.color_idx = (self.color_idx + 1) % len(self.colors)
         for o, obj in enumerate(self.level.ground.get_children()):
             obj.set_color(self.colors[self.color_idx])
-        self.clock += 0.001
+        self.clock += 1
         dt = globalClock.getDt()
         self.processInput(dt)
         
