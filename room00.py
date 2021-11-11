@@ -96,7 +96,9 @@ class Room00(Stage):
         self.level.place_npcs()
         self.load_ball()
         self.setup_ball_forces()
-
+        self.ball_roll = base.loader.load_sfx('audio/ball_roll.wav')
+        self.ball_roll.setLoop(True)
+        self.ball_roll.play()
         base.accept("gamepad-face_a", self.actionA)
         base.accept("space", self.actionA)
         base.accept("gamepad-face_a-up", self.actionAUp)
@@ -214,6 +216,7 @@ class Room00(Stage):
         visualNP.reparentTo(self.ballNP)
         
     def update(self, task):
+        self.ball_roll.setPlayRate(0.1*(abs(self.ballNP.get_node(0).getLinearVelocity().getX())+abs(self.ballNP.get_node(0).getLinearVelocity().getY())+abs(self.ballNP.get_node(0).getLinearVelocity().getZ())))
         for n, npc_mount in enumerate(self.level.npc_mounts):
             nametag = npc_mount.find('**/npcNametag')
             if((npc_mount.getPos().getXy() - self.ballNP.getPos().getXy()).length() < 5):
