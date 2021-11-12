@@ -76,7 +76,8 @@ class level():
     def load_ground(self):
         self.ground = base.loader.loadModel("levels/maze02.bam")
         self.npc_mounts = self.ground.findAllMatches("**/npc**")  
-        self.maze02 = self.ground.findAllMatches("**/levelCol").getPath(0)
+        self.floor = self.ground.findAllMatches("**/levelFloor").getPath(0)
+        self.walls = self.ground.findAllMatches("**/levelWall").getPath(0)
         #self.wallshader = Shader.load(Shader.SL_GLSL, vertex="shaders/daemon.vert", fragment="shaders/daemon.frag")
         #self.maze02.setShaderInput("iTime", self.clock)
         #self.maze02.setShaderInput("iResolution", (1,1))        
@@ -85,25 +86,43 @@ class level():
         #self.npc00marker = self.ground.findAllMatches("**/p1").getPath(0)
         #self.npc00name = self.ground.findAllMatches("**/pName").getPath(0)
         #self.maze02.set_two_sided(True)
-        groundCol = self.ground.findAllMatches("**/+GeomNode").getPath(0).node().getGeom(0)
+        floorCol = self.ground.findAllMatches("**/floorCol").getPath(0).node().getGeom(0)
+        wallCol = self.ground.findAllMatches("**/wallCol").getPath(0).node().getGeom(0)
+        print(str(floorCol))
+        print(str(wallCol))
+        
         mesh = BulletTriangleMesh()
-        mesh.addGeom(groundCol)
+        mesh2 = BulletTriangleMesh()
+        mesh.addGeom(floorCol)
+        mesh2.addGeom(wallCol)
         shape = BulletTriangleMeshShape(mesh, dynamic=True)
-        body = BulletRigidBodyNode('Level')
+        shape2 = BulletTriangleMeshShape(mesh2, dynamic=True) 
+        body = BulletRigidBodyNode('Floor')
+        body2 = BulletRigidBodyNode('Walls')
         bodyNP = self.worldNP.attachNewNode(body)
+        bodyNP2 = self.worldNP.attachNewNode(body2)
         bodyNP.node().addShape(shape)
+        bodyNP2.node().addShape(shape2)
+        
         bodyNP.setPos(0, 0, 0)
+        bodyNP2.setPos(0, 0, 0)
         bodyNP.setCollideMask(BitMask32.allOn())
+        bodyNP2.setCollideMask(BitMask32.allOn())
         self.world.attachRigidBody(bodyNP.node())
+        self.world.attachRigidBody(bodyNP2.node())
         bodyNP.show()
-        self.ground.reparentTo(bodyNP)
-        self.groundNP = bodyNP
+        #bodyNP2.show()
+        self.floor.reparentTo(bodyNP)
+        self.walls.reparentTo(bodyNP2)
+        self.floorNP = bodyNP
+        self.wallsNP = bodyNP2
         self.ground.reparentTo(render)
         
     def update(self, task):
         self.clock += 0.001
         self.clock2 += 0.1
-        for stage in self.maze02.find_all_texture_stages():
-            self.maze02.setTexOffset(stage, .5*sin(self.clock/6), .5*sin(self.clock/6))
-        
+        for stage in self.floor.find_all_texture_stages():
+            self.floor.setTexOffset(stage, .5*sin(self.clock/6), .5*sin(self.clock/6))
+        for stage in self.walls.find_all_texture_stages():
+            self.walls.setTexOffset(stage, .5*sin(self.clock/6), .5*sin(self.clock/6))
         return task.cont

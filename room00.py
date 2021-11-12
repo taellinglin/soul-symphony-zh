@@ -124,22 +124,27 @@ class Room00(Stage):
         self.torque = Vec3(0,0,0)
         
     def actionA(self):
-        result = self.level.world.contactTestPair(self.ballNP.node(), self.level.groundNP.node())
+        result = self.level.world.contactTestPair(self.ballNP.node(), self.level.floorNP.node())
         print(result.getNumContacts())
+        
         if result.getNumContacts() > 0:
-            self.ballNP.node().applyCentralImpulse(Vec3(0,0,128+32))
-            base.bgm.playSfx('ball-jump')
-            for n, npc_mount in enumerate(self.level.npc_mounts):
-                if((npc_mount.getPos().getXy() - self.ballNP.getPos().getXy()).length() < 5):
-                    print(str(npc_mount.find("**/npcNametag").get_children()))
-                    print(str(self.level.npcs[n]))
-                    self.dialog_card.text = self.level.npcs[n].get('dialog')
-                    self.dialog_card_node.show()
-                    print("from npc: "+str(n))
-                    base.bgm.playSfx('start-dialog')
-                    self.force = Vec3(0,0,0)
-                    self.torque = Vec3(0,0,0)
-                    self.ballNP.node().setLinearDamping(1)
+            for contact in result.getContacts():
+                print(contact.getNode0())
+                print(contact.getNode1())
+                if contact.getNode1() == self.level.floorNP.node():
+                    self.ballNP.node().applyCentralImpulse(Vec3(0,0,128+32))
+                    base.bgm.playSfx('ball-jump')
+                    for n, npc_mount in enumerate(self.level.npc_mounts):
+                        if((npc_mount.getPos().getXy() - self.ballNP.getPos().getXy()).length() < 5):
+                            print(str(npc_mount.find("**/npcNametag").get_children()))
+                            print(str(self.level.npcs[n]))
+                            self.dialog_card.text = self.level.npcs[n].get('dialog')
+                            self.dialog_card_node.show()
+                            print("from npc: "+str(n))
+                            base.bgm.playSfx('start-dialog')
+                            self.force = Vec3(0,0,0)
+                            self.torque = Vec3(0,0,0)
+                            self.ballNP.node().setLinearDamping(1)
                     
                     
 
@@ -247,7 +252,9 @@ class Room00(Stage):
                 nametag.hide()
         self.ballNP.set_color(choice(self.colors))
         self.color_idx = (self.color_idx + 1) % len(self.colors)
-        for o, obj in enumerate(self.level.ground.get_children()):
+        for o, obj in enumerate(self.level.floor.get_children()):
+            obj.set_color(self.colors[self.color_idx])
+        for o, obj in enumerate(self.level.walls.get_children()):
             obj.set_color(self.colors[self.color_idx])
         self.clock += 1
         dt = globalClock.getDt()
@@ -269,7 +276,9 @@ class Room00(Stage):
         base.flow.transition(self.exit_stage)
         
     def exit(self, data):
-        self.level.world.removeRigidBody(self.level.groundNP.node())
+        self.level.world.removeRigidBody(self.level.floorNP.node())
+        self.level.world.removeRigidBody(self.level.wallsNP.node())
+        
         self.level.world.removeRigidBody(self.ballNP.node())
         self.level.world = None
 
