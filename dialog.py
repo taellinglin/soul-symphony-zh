@@ -1,4 +1,5 @@
 from random import randrange
+from random import shuffle
 class dialog():
     def __init__(self):
         self.dialogs = ["Hey there! I'm here to teach you about the sacred realm. Here we can see everything going on in the world at all times. Understanding is everywhere.",
@@ -68,13 +69,22 @@ class dialog():
                         "They are kind off...dismissive...yeah...dismissive.",
         ]
         self.dialogs.sort()
+        shuffle(self.dialogs)
         self.dialog_pointer = 0
     def get_dialog(self, dialog):
         #get_dialog() is random or get_dialog(n) is direct.
+        list_copy = self.dialogs
         if dialog == None:
-            return self.dialogs[randrange(0, len(self.dialogs))]
+            print(str(len(self.dialogs)))
+            shuffle(list_copy)
+            next_random = list_copy.pop()
+            return next_random
+        
         elif dialog >= 0 and dialog <= len(self.dialogs):
-            return self.dialogs[dialog]
+            return list_copy.pop(dialog)
+        
+    def get_dialogs(self):
+        return self.dialogs
     
     def set_dialog(self, dialog):
         if dialog == None:

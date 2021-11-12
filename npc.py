@@ -8,6 +8,7 @@ from panda3d.core import CardMaker
 from bgm import BGM
 from random import  choice
 from random import shuffle
+from dialog import dialog
 names = ["Dimitri", 
          "Mon-Du", 
          "Loki", 
@@ -34,6 +35,7 @@ names = ["Dimitri",
          "Soldier", 
          "Neptune"]
 used_names = []
+
 class npc():
     
     def __init__(self):
@@ -51,8 +53,12 @@ class npc():
                         base.loader.loadTexture("NPCs/emblems/emblem02.png"),
         ]
         base.task_mgr.add(self.update, "npc_update")
+        self.npc_dialog = dialog()
+        self.dialogs = self.npc_dialog.get_dialogs()
+        self.id = 0
         
     def load_npc(self):
+        
         npcModel = base.loader.loadModel("NPCs/npc01.bam")
         list_copy = self.names
         shuffle(list_copy)
@@ -76,12 +82,16 @@ class npc():
             self.emblem.set_texture(stage, npc.get("emblem"), 1)
         self.cm = CardMaker('card')
         self.card = render.attachNewNode(self.cm.generate())
-        new_npc = {"name" : npc.get("name"),
+        npc_dialog_text = self.dialogs[self.id]
+        new_npc = { "id" : self.id,
+                    "name" : npc.get("name"),
                    "nametag" : self.nametag,
                    "face": self.face,
                    "emblem": self.emblem,
-                   "model": npcModel
+                   "model": npcModel,
+                   "dialog": npc_dialog_text
         }
+        self.id += 1
         return new_npc
     
     def update(self, task):

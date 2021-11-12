@@ -128,9 +128,9 @@ class Room00(Stage):
         for n, npc_mount in enumerate(self.level.npc_mounts):
             if((npc_mount.getPos().getXy() - self.ballNP.getPos().getXy()).length() < 5):
                 print(str(npc_mount.find("**/npcNametag").get_children()))
-                print(str(self.dialog.get_dialog(n)))
-                
-                self.dialog_card.text = self.dialog.get_dialog(n)
+                print(str(choice(self.dialog.get_dialog(n))))
+                print(str(self.level.npcs[n]))
+                self.dialog_card.text = self.level.npcs[n].get('dialog')
                 self.dialog_card_node.show()
                 print("from npc: "+str(n))
                 base.bgm.playSfx('start-dialog')
