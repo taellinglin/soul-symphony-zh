@@ -19,6 +19,10 @@ from panda3d.core import TextNode
 from direct.showbase.InputStateGlobal import inputState
 from panda3d.bullet import BulletSphereShape
 from panda3d.bullet import BulletRigidBodyNode
+from panda3d.bullet import BulletBodyNode
+
+
+
 
 
 
@@ -73,7 +77,7 @@ class Room00(Stage):
     def enter(self,data):
         print("Roll Test Area Entered...")
         base.cam.set_z(24)
-        base.bgm.playMusic('Ambience00', True)
+        #base.bgm.playMusic('Ambience00', True)
         base.task_mgr.add(self.update, 'update')
         base.accept('escape', sys.exit)
         inputState.watchWithModifiers('forward', 'w')
@@ -88,9 +92,6 @@ class Room00(Stage):
         inputState.watchWithModifiers('cam-left', '[')
         inputState.watchWithModifiers('cam-right', 'gamepad-trigger_right')
         inputState.watchWithModifiers('cam-left', 'gamepad-trigger_left')
-        
-        
-        
         
         print(self.gamepad)
         self.level = level()
@@ -123,21 +124,24 @@ class Room00(Stage):
         self.torque = Vec3(0,0,0)
         
     def actionA(self):
-        self.ballNP.node().applyCentralImpulse(Vec3(0,0,128+32))
-        base.bgm.playSfx('ball-jump')
-        for n, npc_mount in enumerate(self.level.npc_mounts):
-            if((npc_mount.getPos().getXy() - self.ballNP.getPos().getXy()).length() < 5):
-                print(str(npc_mount.find("**/npcNametag").get_children()))
-                print(str(self.level.npcs[n]))
-                self.dialog_card.text = self.level.npcs[n].get('dialog')
-                self.dialog_card_node.show()
-                print("from npc: "+str(n))
-                base.bgm.playSfx('start-dialog')
-                self.force = Vec3(0,0,0)
-                self.torque = Vec3(0,0,0)
-                self.ballNP.node().setLinearDamping(1)
-                
-                
+        result = self.level.world.contactTestPair(self.ballNP.node(), self.level.groundNP.node())
+        print(result.getNumContacts())
+        if result.getNumContacts() > 0:
+            self.ballNP.node().applyCentralImpulse(Vec3(0,0,128+32))
+            base.bgm.playSfx('ball-jump')
+            for n, npc_mount in enumerate(self.level.npc_mounts):
+                if((npc_mount.getPos().getXy() - self.ballNP.getPos().getXy()).length() < 5):
+                    print(str(npc_mount.find("**/npcNametag").get_children()))
+                    print(str(self.level.npcs[n]))
+                    self.dialog_card.text = self.level.npcs[n].get('dialog')
+                    self.dialog_card_node.show()
+                    print("from npc: "+str(n))
+                    base.bgm.playSfx('start-dialog')
+                    self.force = Vec3(0,0,0)
+                    self.torque = Vec3(0,0,0)
+                    self.ballNP.node().setLinearDamping(1)
+                    
+                    
 
     def actionAUp(self):
         if(self.ballNP.node().getLinearDamping() == 1):
@@ -248,7 +252,7 @@ class Room00(Stage):
         self.clock += 1
         dt = globalClock.getDt()
         self.processInput(dt)
-        
+        #print(self.level.groundNP.node().checkCollisionWith(self.level.ballNP.node()))
         base.cam.set_x(self.ballNP.get_x())
         base.cam.set_y(self.ballNP.get_y() - 32)
         base.cam.set_z(self.ballNP.get_z() + 16)
@@ -265,7 +269,7 @@ class Room00(Stage):
         base.flow.transition(self.exit_stage)
         
     def exit(self, data):
-        self.level.world.removeRigidBody(self.groundNP.node())
+        self.level.world.removeRigidBody(self.level.groundNP.node())
         self.level.world.removeRigidBody(self.ballNP.node())
         self.level.world = None
 
@@ -274,6 +278,7 @@ class Room00(Stage):
         self.ballNP = None
 
         self.level.worldNP.removeNode()
+        base.ignore('enter')
         #self.ball.detachNode()
         base.bgm.stopMusic()
         base.taskMgr.remove('update')

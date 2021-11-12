@@ -69,5 +69,6 @@ class TitleScreen(Stage):
         base.camera.detachNode()
         base.bgm.stopMusic()
         base.ignore('enter')
+        base.ignore('gamepad-start')
         base.taskMgr.remove('update')
         return data
