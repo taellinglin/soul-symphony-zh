@@ -66,7 +66,7 @@ class dialog():
                         "Gold isn't exactly like....a physical thing...right?",
                         "We took things away from them, like love, harmony, and unity...they turned into demons and refused to take them back...so we gave them chaos, pain, and dysphoria....it's slowly letting them accept the original parts back without rejection. It's all just a very secret recipe...you have to find the right amounts of each thing or it falls apart. They are converting the second round of parts into reward, overcoming, strengthened bonds...a lot of rare parts...",
                         "Mhmm...whatever...",
-                        "They are kind off...dismissive...yeah...dismissive.",
+                        "They are kind of...dismissive...yeah...dismissive.",
         ]
         self.dialogs.sort()
         shuffle(self.dialogs)
