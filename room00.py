@@ -77,7 +77,7 @@ class Room00(Stage):
     def enter(self,data):
         print("Roll Test Area Entered...")
         base.cam.set_z(24)
-        base.bgm.playMusic('Ambience00', True)
+        base.bgm.playMusic(None, True)
         base.task_mgr.add(self.update, 'update')
         base.accept('escape', sys.exit)
         inputState.watchWithModifiers('forward', 'w')
@@ -125,8 +125,6 @@ class Room00(Stage):
         
     def actionA(self):
         result = self.level.world.contactTestPair(self.ballNP.node(), self.level.floorNP.node())
-        print(result.getNumContacts())
-        
         if result.getNumContacts() > 0:
                 contact = result.getContacts()[0]
                 if contact.getNode1() == self.level.floorNP.node():
@@ -223,7 +221,7 @@ class Room00(Stage):
         self.ballNP = self.level.worldNP.attachNewNode(BulletRigidBodyNode('Sphere'))
         self.ballNP.node().setMass(4)
         self.ballNP.node().addShape(shape)
-        self.ballNP.setPos(0, -10, 0)
+        self.ballNP.setPos(self.level.player_start.getPos())
         #self.ballNP.setScale(2, 1, 0.5)
         self.ballNP.setCollideMask(BitMask32.allOn())
         self.ballNP.node().setDeactivationEnabled(False)

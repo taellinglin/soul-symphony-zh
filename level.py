@@ -74,10 +74,11 @@ class level():
         self.world.setDebugNode(self.debugNP.node())
         
     def load_ground(self):
-        self.ground = base.loader.loadModel("levels/maze02.bam")
+        self.ground = base.loader.loadModel("levels/level00.bam")
         self.npc_mounts = self.ground.findAllMatches("**/npc**")  
         self.floor = self.ground.findAllMatches("**/levelFloor").getPath(0)
         self.walls = self.ground.findAllMatches("**/levelWall").getPath(0)
+        self.player_start = self.ground.findAllMatches("**/playerStart").getPath(0)
         #self.wallshader = Shader.load(Shader.SL_GLSL, vertex="shaders/daemon.vert", fragment="shaders/daemon.frag")
         #self.maze02.setShaderInput("iTime", self.clock)
         #self.maze02.setShaderInput("iResolution", (1,1))        
@@ -88,8 +89,6 @@ class level():
         #self.maze02.set_two_sided(True)
         floorCol = self.ground.findAllMatches("**/floorCol").getPath(0).node().getGeom(0)
         wallCol = self.ground.findAllMatches("**/wallCol").getPath(0).node().getGeom(0)
-        print(str(floorCol))
-        print(str(wallCol))
         
         mesh = BulletTriangleMesh()
         mesh2 = BulletTriangleMesh()
