@@ -74,7 +74,7 @@ class level():
         self.world.setDebugNode(self.debugNP.node())
         
     def load_ground(self):
-        self.ground = base.loader.loadModel("levels/level00.bam")
+        self.ground = base.loader.loadModel("levels/level02.bam")
         self.npc_mounts = self.ground.findAllMatches("**/npc**")  
         self.floor = self.ground.findAllMatches("**/levelFloor").getPath(0)
         self.walls = self.ground.findAllMatches("**/levelWall").getPath(0)
@@ -110,7 +110,7 @@ class level():
         self.world.attachRigidBody(bodyNP.node())
         self.world.attachRigidBody(bodyNP2.node())
         bodyNP.show()
-        #bodyNP2.show()
+        bodyNP2.show()
         self.floor.reparentTo(bodyNP)
         self.walls.reparentTo(bodyNP2)
         self.floorNP = bodyNP
