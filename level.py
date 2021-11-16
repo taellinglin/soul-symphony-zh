@@ -30,7 +30,12 @@ class level():
             base.loader.load_font('fonts/text/Storybook.otf'),
             base.loader.load_font('fonts/text/Xenon.otf'),  
         ]
-
+        self.levels = [
+            base.loader.loadModel("levels/level00.bam"),
+            base.loader.loadModel("levels/level01.bam"),
+            base.loader.loadModel("levels/level02.bam"),
+            base.loader.loadModel("levels/level03.bam")
+        ]
         self.load_world()
         self.load_ground()
         self.clock = 0
@@ -74,7 +79,7 @@ class level():
         self.world.setDebugNode(self.debugNP.node())
         
     def load_ground(self):
-        self.ground = base.loader.loadModel("levels/level02.bam")
+        self.ground = choice(self.levels)
         self.npc_mounts = self.ground.findAllMatches("**/npc**")  
         self.floor = self.ground.findAllMatches("**/levelFloor").getPath(0)
         self.walls = self.ground.findAllMatches("**/levelWall").getPath(0)
