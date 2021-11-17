@@ -57,7 +57,7 @@ class BGM():
         #base.playMusic(self.current_music, 1, 1, None, 0)
             
         
-    def playMusic(self, track = None, loop = True):
+    def playMusic(self, track = None, loop = True, volume = 1):
         print("Starting Music...")
         if(self.current_music.status == 2):
             self.current_music.stop()
@@ -68,6 +68,7 @@ class BGM():
             print(self.songs.index(track))
             self.current_music = self.music[track]
         self.current_music.setLoop(loop)
+        self.current_music.setVolume(volume)
         self.current_music.play()
         
         

@@ -107,7 +107,10 @@ class level():
         bodyNP2 = self.worldNP.attachNewNode(body2)
         bodyNP.node().addShape(shape)
         bodyNP2.node().addShape(shape2)
-        
+        bodyNP.node().setRestitution(0.75)
+        bodyNP2.node().setRestitution(0.75)
+        bodyNP.node().setCollisionResponse(True)
+        bodyNP2.node().setCollisionResponse(True)
         bodyNP.setPos(0, 0, 0)
         bodyNP2.setPos(0, 0, 0)
         bodyNP.setCollideMask(BitMask32.allOn())
