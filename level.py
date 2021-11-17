@@ -79,7 +79,7 @@ class level():
         self.world.setDebugNode(self.debugNP.node())
         
     def load_ground(self):
-        self.ground = choice(self.levels)
+        self.ground = self.levels[2]
         self.npc_mounts = self.ground.findAllMatches("**/npc**")  
         self.floor = self.ground.findAllMatches("**/levelFloor").getPath(0)
         self.walls = self.ground.findAllMatches("**/levelWall").getPath(0)
@@ -127,6 +127,10 @@ class level():
         self.clock2 += 0.1
         for stage in self.floor.find_all_texture_stages():
             self.floor.setTexOffset(stage, .5*sin(self.clock/6), .5*sin(self.clock/6))
+            self.floor.setTexScale(stage, .05*sin(self.clock)+2.5, .05*sin(self.clock)+2.5, 1)
+            
         for stage in self.walls.find_all_texture_stages():
             self.walls.setTexOffset(stage, .5*sin(self.clock/6), .5*sin(self.clock/6))
+            self.walls.setTexScale(stage, .5*sin(self.clock)+2.5, .5*sin(self.clock)+2.5,1)
+            
         return task.cont

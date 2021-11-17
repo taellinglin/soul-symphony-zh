@@ -77,7 +77,7 @@ class Room00(Stage):
     def enter(self,data):
         print("Roll Test Area Entered...")
         base.cam.set_z(24)
-        base.bgm.playMusic(None, True)
+        #base.bgm.playMusic('The_Spirits', True)
         base.task_mgr.add(self.update, 'update')
         base.accept('escape', sys.exit)
         inputState.watchWithModifiers('forward', 'w')
@@ -108,7 +108,15 @@ class Room00(Stage):
         self.dialog_card.setWordwrap(40)
         self.dialog_card_node = aspect2d.attach_new_node(self.dialog_card)
         self.dialog_card_node.setScale(0.08)
-        
+        self.boing = False
+        self.boings = [
+            'boing00',
+            'boing01',
+            'boing02',
+            'boing03',
+            'boing04',
+            
+        ]
         base.accept("gamepad-face_a", self.actionA)
         base.accept("space", self.actionA)
         base.accept("gamepad-face_a-up", self.actionAUp)
@@ -243,6 +251,34 @@ class Room00(Stage):
                 #PLAY THE SFX ONCE...
             else:
                 nametag.hide()
+                
+        result = self.level.world.contactTestPair(self.ballNP.node(), self.level.floorNP.node())
+        result2 = self.level.world.contactTestPair(self.ballNP.node(), self.level.wallsNP.node())
+        if result.getNumContacts() > 0:
+            contact = result.getContacts()[0]
+            if contact.getNode1() == self.level.floorNP.node():
+                if not self.boing:
+                    self.boing = True
+                    mpoint = contact.getManifoldPoint()
+                    volume =  abs(mpoint.getDistance())
+                    pitch = volume
+                    base.bgm.playSfx(choice(self.boings), volume, 1)
+        else:
+            self.boing = False
+        
+        if result2.getNumContacts() > 0:
+            contact2 = result2.getContacts()[0]
+            if contact2.getNode1() == self.level.wallsNP.node():
+                if not self.boing:
+                    self.boing = True
+                    mpoint = contact2.getManifoldPoint()
+                    volume =  abs(mpoint.getDistance())
+                    print(volume)
+                    pitch = volume
+                    base.bgm.playSfx(choice(self.boings), volume, 1)
+        else:
+            self.boing = False
+                        
         self.ballNP.set_color(choice(self.colors))
         self.color_idx = (self.color_idx + 1) % len(self.colors)
         for o, obj in enumerate(self.level.ground.get_children()):
@@ -256,7 +292,7 @@ class Room00(Stage):
         self.processInput(dt)
         #print(self.level.groundNP.node().checkCollisionWith(self.level.ballNP.node()))
         base.cam.set_x(self.ballNP.get_x())
-        base.cam.set_y(self.ballNP.get_y() - 32)
+        base.cam.set_y(self.ballNP.get_y() - 48)
         base.cam.set_z(self.ballNP.get_z() + 16)
         base.cam.look_at(self.ballNP)
         

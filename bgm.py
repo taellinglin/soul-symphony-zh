@@ -26,7 +26,8 @@ class BGM():
             'TheSpiritsTwo',
             'SpiritsMarch',
             'SuperSignal',
-            'Ambience00'
+            'Ambience00',
+            'The_Spirits'
         ]
 
         self.music = {}
@@ -39,7 +40,12 @@ class BGM():
             'incorrect_guess',
             'hover',
             'start-dialog',
-            'ball-jump'
+            'ball-jump',
+            'boing00',
+            'boing01',
+            'boing02',
+            'boing03',
+            'boing04',
         ]
         self.sfx = {}
         for s in sfx_names:
@@ -69,12 +75,14 @@ class BGM():
         #if (self.current_music.status()== 2):
         self.current_music.stop()
             
-    def playSfx(self, sfx = None):
+    def playSfx(self, sfx = None, volume = 1, pitch = 1):
         if sfx == None:
             print("No sfx provided.")
             return
         if self.current_sfx.status != self.current_sfx.PLAYING:
             self.current_sfx = self.sfx[sfx]
+            self.current_sfx.setPlayRate(pitch)
+            self.current_sfx.setVolume(volume)
             self.current_sfx.play()
     
     def is_playing_sfx(self):

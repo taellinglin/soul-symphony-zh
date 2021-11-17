@@ -1,3 +1,5 @@
+build
+.eggs
 .pyc
 __pycache__
 .avi

@@ -1,4 +1,16 @@
---asset_dir= "text_chapters/*"
---export_dir= "text_chapters/*"
---converters= "blend2bam"
-physics-engine "bullet"
+[build]
+asset_dir = "build/assets/"
+export_dir = "build/"
+converters = [ "blend2bam", "native2bam",]
+
+[general]
+name = "Soul Symphony"
+
+[run]
+main_file = "main.py"
+
+[blend2bam]
+physics_engine = "bullet"
+
+[python]
+path = "C:\\Panda3D-1.10.10-x64\\python\\ppython.EXE"
