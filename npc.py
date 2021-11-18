@@ -45,6 +45,10 @@ class npc():
                         base.loader.loadTexture("NPCs/faces/face01.png"),
                         base.loader.loadTexture("NPCs/faces/face02.png"),
                         base.loader.loadTexture("NPCs/faces/face03.png"),
+                        base.loader.loadTexture("NPCs/faces/face04.png"),
+                        base.loader.loadTexture("NPCs/faces/face05.png"),
+                        base.loader.loadTexture("NPCs/faces/face06.png"),
+                        
                         
         ]
         self.emblems = [

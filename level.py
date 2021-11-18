@@ -79,7 +79,7 @@ class level():
         self.world.setDebugNode(self.debugNP.node())
         
     def load_ground(self):
-        self.ground = self.levels[2]
+        self.ground = choice(self.levels)
         self.npc_mounts = self.ground.findAllMatches("**/npc**")  
         self.floor = self.ground.findAllMatches("**/levelFloor").getPath(0)
         self.walls = self.ground.findAllMatches("**/levelWall").getPath(0)

@@ -12,7 +12,7 @@ from direct.showbase.ShowBase import ShowBase
 from stageflow import Flow
 from stageflow.panda3d import Panda3DSplash
 from panda3d.core import WindowProperties
-
+from direct.particles import Particles
 from stageflow.prefab import Quit
 
 class Base(ShowBase):
@@ -35,7 +35,7 @@ base.win.requestProperties(wp)
 base.bgm = BGM()
 base.motion_blur = MotionBlur()
 base.disable_mouse()
-base.enableParticles()
+#base.enableParticles()
 base.flow = Flow(
     stages=dict(
         splash=Panda3DSplash(exit_stage='title_screen'),

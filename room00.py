@@ -77,7 +77,7 @@ class Room00(Stage):
     def enter(self,data):
         print("Roll Test Area Entered...")
         base.cam.set_z(24)
-        base.bgm.playMusic('The_Spirits', True, 0.5)
+        base.bgm.playMusic(None, True, 0.5)
         base.task_mgr.add(self.update, 'update')
         base.accept('escape', sys.exit)
         inputState.watchWithModifiers('forward', 'w')

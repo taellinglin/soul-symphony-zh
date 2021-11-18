@@ -18,6 +18,8 @@ setup(
         'panda3d-keybindings',
         'panda3d-stageflow',
         'panda3d-pman',
+        'direct',
+        
     ],
     tests_require=[
         'pytest',
@@ -36,19 +38,21 @@ setup(
                 "**/*.wav",
                 "**/*.egg",
                 "**/*.bam",
-                "/*"
+                "/*",
+                "**/*.otf",
             ],
             'rename_paths': {
                 CONFIG['build']['export_dir']+ 'assets/',
             },
-            'gui_apps': {
+            'console_apps': {
                 APP_NAME: CONFIG['run']['main_file'],
             },
             'plugins': [
                 'pandagl',
                 'p3openal_audio',
             ],
-            'use_optimized_wheels': True
+            'use_optimized_wheels': True,
+            'log_filename': CONFIG['build']['export_dir']+'/output.log',
             
         },
     }
