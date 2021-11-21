@@ -33,7 +33,12 @@ names = ["Dimitri",
          "Brook", 
          "Fargo", 
          "Soldier", 
-         "Neptune"]
+         "Neptune",
+         "Aelita",
+         "Tae Lee",
+         "Honda",
+         "Saturn",
+         "Tortuga"]
 used_names = []
 
 class npc():

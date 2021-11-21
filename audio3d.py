@@ -12,10 +12,11 @@ class audio3d():
                 self.audio3d.loadSfx('audio/portal_loop03.wav'),
                 self.audio3d.loadSfx('audio/portal_loop04.wav'),
                 self.audio3d.loadSfx('audio/portal_loop05.wav'),
-                self.audio3d.loadSfx('audio/portal_loop.06wav'),
+                self.audio3d.loadSfx('audio/portal_loop06.wav'),
             ]
         }
-        self.audio3d.setDistanceFactor(1)
+        self.audio3d.setDistanceFactor(10)
+        #self.audio3d.setDopplerFactor(1)
         
     def enter(self):
         base.task_mgr.add(self.update, 'update')
@@ -32,12 +33,14 @@ class audio3d():
                     sfx3d = list_copy.pop()
                     print(loop)
                     sfx3d.setLoop(loop)
-                    sfx3d.setVolume(5)
-                    sfx3d.play()
+                    #sfx3d.setVolume(0.5)
+                    
                     print(str(sfx3d))
                     self.audio3d.attachSoundToObject(sfx3d, obj)
-                    self.audio3d.setSoundMinDistance(sfx3d, 1)
-                    self.audio3d.setSoundMaxDistance(sfx3d, 50)
+                    self.audio3d.setSoundMinDistance(sfx3d, 100)
+                    self.audio3d.setSoundMaxDistance(sfx3d, 200)
+                    self.audio3d.setDropOffFactor(15)
+                    sfx3d.play()
                     
                     print("Attached sound to object.")
                     print(str(obj))

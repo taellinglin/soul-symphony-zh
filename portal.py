@@ -1,9 +1,17 @@
+from direct.showbase.Loader import Loader
+
+
+from audio3d import audio3d
+
 class Portal():
     
     def __init__(self):
-        pass
-    
-    def warp(self):
-        #goto some level or cutscene...
+        self.model = base.loader.loadModel('components/portal.bam')
+        self.audio3d = audio3d()
+        self.portal_loops = self.audio3d.sfx3d.get('portal_loop')
         
-    def update(self):
+    def warp(self):
+        
+        
+    def update(self, task):
+        
