@@ -31,7 +31,7 @@ setup(
     },
     options={
         'build_apps': {
-            'platforms':['win_amd64'],
+            'platforms':['win_amd64','manylinux1_x86_64', 'macosx_10_6_x86_64'],
             'include_patterns' : [
                 "**/*.png",
                 "**/*.ogg",

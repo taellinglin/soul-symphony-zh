@@ -34,13 +34,15 @@ class BGM():
         for song in self.songs:
             self.music[song] = base.loader.load_sfx("music/{}.ogg".format(song))
 
-        sfx_names = [
+        self.sfx_names = [
             'soul-symphony',
             'correct_guess',
             'incorrect_guess',
             'hover',
             'start-dialog',
             'ball-jump',
+            'portal_loop',
+            'warp',
             'boing00',
             'boing01',
             'boing02',
@@ -48,7 +50,7 @@ class BGM():
             'boing04',
         ]
         self.sfx = {}
-        for s in sfx_names:
+        for s in self.sfx_names:
             self.sfx[s] = base.loader.load_sfx("audio/{}.wav".format(s))
 
         self.current_sfx = self.sfx['soul-symphony']
@@ -76,7 +78,7 @@ class BGM():
         #if (self.current_music.status()== 2):
         self.current_music.stop()
             
-    def playSfx(self, sfx = None, volume = 1, pitch = 1):
+    def playSfx(self, sfx = None, volume = 1, pitch = 1, loop = False):
         if sfx == None:
             print("No sfx provided.")
             return
@@ -84,8 +86,15 @@ class BGM():
             self.current_sfx = self.sfx[sfx]
             self.current_sfx.setPlayRate(pitch)
             self.current_sfx.setVolume(volume)
+            self.current_sfx.setLoop(loop)
             self.current_sfx.play()
-    
+            
+    def stopSfx(self, sfx = None):
+        if sfx == None:
+            sfx = self.current_sfx
+        if self.current_sfx.status == self.current_sfx.PLAYING:
+            sfx.stop()
+        
     def is_playing_sfx(self):
         if self.current_sfx.status == self.current_sfx.PLAYING:
             return True

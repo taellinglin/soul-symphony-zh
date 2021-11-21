@@ -48,6 +48,10 @@ class npc():
                         base.loader.loadTexture("NPCs/faces/face04.png"),
                         base.loader.loadTexture("NPCs/faces/face05.png"),
                         base.loader.loadTexture("NPCs/faces/face06.png"),
+                        base.loader.loadTexture("NPCs/faces/face07.png"),
+                        base.loader.loadTexture("NPCs/faces/face08.png"),
+                        base.loader.loadTexture("NPCs/faces/face09.png"),
+                        
                         
                         
         ]

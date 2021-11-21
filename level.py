@@ -1,3 +1,4 @@
+from audio3d import audio3d
 from npc import npc
 from math import sin
 from math import cosh
@@ -14,10 +15,12 @@ from panda3d.core import TextureStage
 from panda3d.core import Texture
 from panda3d.core import TextFont
 from panda3d.core import NodePath
+
 DEBUG = False
 class level():
 
     def __init__(self):
+        self.audio = audio3d()
         self.npcs = []
         self.fonts = [
             base.loader.load_font('fonts/text/Alstoria.otf'),
@@ -36,10 +39,13 @@ class level():
             base.loader.loadModel("levels/level02.bam"),
             base.loader.loadModel("levels/level03.bam")
         ]
+        self.portals = []
+        self.portal_template = base.loader.loadModel("components/portal00.bam")
         self.load_world()
         self.load_ground()
         self.clock = 0
         self.clock2 = 0
+        
         base.task_mgr.add(self.update, 'level_update')
          
     def get_npcs(self, num_npcs):
@@ -48,19 +54,20 @@ class level():
             self.npcs.append(new_npc.load_npc())
         
     def place_npcs(self):
-        for n, npc in enumerate(self.npc_mounts):
-            npcObject = self.npcs[n]
-            name = self.npcs[n].get('name')
-            face = self.npcs[n].get('face')
-            emblem = self.npcs[n].get('emblem')
-            name_node = TextNode("npcName_"+str(name))
-            name_node.text = str(name)
-            name_node.align = 2
-            name_node.font = choice(self.fonts)
-            npcObject.get('nametag').attach_new_node(name_node)
-            #frame.set_pos(npc,(0,0,5))
-            npcObject.get('model').attach_new_node(face.get_node(0))
-            npcObject.get('model').instance_to(self.npc_mounts[n])
+        if len(self.npc_mounts):
+            for n, npc in enumerate(self.npc_mounts):
+                npcObject = self.npcs[n]
+                name = self.npcs[n].get('name')
+                face = self.npcs[n].get('face')
+                emblem = self.npcs[n].get('emblem')
+                name_node = TextNode("npcName_"+str(name))
+                name_node.text = str(name)
+                name_node.align = 2
+                name_node.font = choice(self.fonts)
+                npcObject.get('nametag').attach_new_node(name_node)
+                #frame.set_pos(npc,(0,0,5))
+                npcObject.get('model').attach_new_node(face.get_node(0))
+                npcObject.get('model').instance_to(self.npc_mounts[n])
     def load_world(self):
         # World
         self.worldNP = render.attachNewNode('World')
@@ -79,11 +86,18 @@ class level():
         self.world.setDebugNode(self.debugNP.node())
         
     def load_ground(self):
-        self.ground = choice(self.levels)
+        self.ground = self.levels[3]
         self.npc_mounts = self.ground.findAllMatches("**/npc**")  
         self.floor = self.ground.findAllMatches("**/levelFloor").getPath(0)
         self.walls = self.ground.findAllMatches("**/levelWall").getPath(0)
         self.player_start = self.ground.findAllMatches("**/playerStart").getPath(0)
+        self.portals = self.ground.findAllMatches("**/portal**")
+        if len(self.portals):
+            for p, portal in enumerate(self.portals):
+                self.audio.playSfx('portal_loop', portal, True)
+                self.portal_template.instanceTo(portal)
+                
+                
         #self.wallshader = Shader.load(Shader.SL_GLSL, vertex="shaders/daemon.vert", fragment="shaders/daemon.frag")
         #self.maze02.setShaderInput("iTime", self.clock)
         #self.maze02.setShaderInput("iResolution", (1,1))        
@@ -126,6 +140,7 @@ class level():
         self.ground.reparentTo(render)
         
     def update(self, task):
+        self.audio.update(task)
         self.clock += 0.001
         self.clock2 += 0.1
         for stage in self.floor.find_all_texture_stages():

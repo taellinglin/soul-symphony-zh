@@ -61,12 +61,24 @@ class dialog():
                         "War...loss...tragedy...what garbage I see...more to burn as fuel for higher intentions...",
                         "Math, Physics? Yeah...there's a guy here who does that...it's kind of annoying really...keeps on saying stuff about bringing back the dead...it's not really the best idea to do that...",
                         "Death isn't scary to me...it's actually a soul here who tends to act very jubilant. Works well with that one soul....that one you call \"Life\". ",
-                        "Crisis Averted...Turmoild Accounted for...Trauma Quantified, Processing reflection vector in nuetral paralell space...Realigning entangled Tronicas. (What does this soul do...sounds pretty intense...I better leave it alone).",
+                        "Crisis Averted...Turmoil Accounted for...Trauma Quantified, Processing reflection vector in nuetral paralell space...Realigning entangled Tronicas. (What does this soul do...sounds pretty intense...I better leave it alone).",
                         "Saving lives? Mortals are funny! We are lives that are saved already! We work with death, not against it. Death is a great thing to have around when unstable realities and consciousness is a thing...",
                         "Gold isn't exactly like....a physical thing...right?",
                         "We took things away from them, like love, harmony, and unity...they turned into demons and refused to take them back...so we gave them chaos, pain, and dysphoria....it's slowly letting them accept the original parts back without rejection. It's all just a very secret recipe...you have to find the right amounts of each thing or it falls apart. They are converting the second round of parts into reward, overcoming, strengthened bonds...a lot of rare parts...",
                         "Mhmm...whatever...",
                         "They are kind of...dismissive...yeah...dismissive.",
+                        "Oh man look at that guy! I think he just robbed a bank or something! Wow",
+                        "Yoyoyo, I'm a rapper soul, drink from the bowl, the shadowy hull, push and don't pull!~"
+                        "Oh I teach baby instincts...trying to figure out why sometimes they get an instinct to eat this stuff called glue...yuck!",
+                        "Have you ever had glue, it tastes amazing!(Wait what? You eat glue???)",
+                        "Found the culprit, haha! Oh wait no...I must be mistaken again...",
+                        "Did you know all dogs reincarnate from the same soul? It's the most loyal spirit we know!",
+                        "Quack! I'm a duck!",
+                        "You're not a duck...haha",
+                        "Whoa, don't go on the internet!",
+                        "I hear time...it's very bustling and constant."
+                        "Why look forward to it when you can look forward, back, right, there, here, around, and uhhhh....well you can look more than just one direction, right? Oh...I see...",
+                        "Spin, spin, spin!!!"      
         ]
         self.dialogs.sort()
         shuffle(self.dialogs)

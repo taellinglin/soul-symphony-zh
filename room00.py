@@ -77,7 +77,7 @@ class Room00(Stage):
     def enter(self,data):
         print("Roll Test Area Entered...")
         base.cam.set_z(24)
-        base.bgm.playMusic(None, True, 0.5)
+        base.bgm.playMusic(None, True, 0.25)
         base.task_mgr.add(self.update, 'update')
         base.accept('escape', sys.exit)
         inputState.watchWithModifiers('forward', 'w')
@@ -109,6 +109,8 @@ class Room00(Stage):
         self.dialog_card_node = aspect2d.attach_new_node(self.dialog_card)
         self.dialog_card_node.setScale(0.08)
         self.boing = False
+        self.portal_loop = False
+        self.level.audio.audio3d.attachListener(base.cam)
         self.boings = [
             'boing00',
             'boing01',
@@ -138,14 +140,23 @@ class Room00(Stage):
                 if contact.getNode1() == self.level.floorNP.node():
                     self.ballNP.node().applyCentralImpulse(Vec3(0,0,128+32))
                     base.bgm.playSfx('ball-jump')
-                    for n, npc_mount in enumerate(self.level.npc_mounts):
-                        if((npc_mount.getPos().getXy() - self.ballNP.getPos().getXy()).length() < 5):
-                            self.dialog_card.text = self.level.npcs[n].get('dialog')
-                            self.dialog_card_node.show()
-                            base.bgm.playSfx('start-dialog')
-                            self.force = Vec3(0,0,0)
-                            self.torque = Vec3(0,0,0)
-                            self.ballNP.node().setLinearDamping(1)
+                    if len(self.level.npc_mounts):
+                        for n, npc_mount in enumerate(self.level.npc_mounts):
+                            if((npc_mount.getPos().getXy() - self.ballNP.getPos().getXy()).length() < 5):
+                                self.dialog_card.text = self.level.npcs[n].get('dialog')
+                                self.dialog_card_node.show()
+                                base.bgm.playSfx('start-dialog')
+                                self.force = Vec3(0,0,0)
+                                self.torque = Vec3(0,0,0)
+                                self.ballNP.node().setLinearDamping(1)
+                    if len(self.level.portals):
+                        for p, portal in enumerate(self.level.portals):
+                            if((portal.getPos().getXy() - self.ballNP.getPos().getXy()).length() < 5):
+                                self.dialog_card.text = choice(["Let's Trip!", "C'mon now!", "Yeah! Onward!", "We're out!", "Abscond!", "Let's get Lost!", "Sayonara!", "Nigeru!", "Outta here!"])
+                                self.dialog_card_node.show()
+                                self.force = Vec3(0,0,0)
+                                self.torque = Vec3(0,0,0)
+                                self.ballNP.node().setLinearDamping(1)
                     
                     
 
@@ -153,6 +164,13 @@ class Room00(Stage):
         if(self.ballNP.node().getLinearDamping() == 1):
             self.ballNP.node().setLinearDamping(0)
         self.dialog_card_node.hide()
+        for p, portal in enumerate(self.level.portals):
+            if((portal.getPos().getXy() - self.ballNP.getPos().getXy()).length() < 5):
+                self.dialog_card.text = choice(["Ok!", "Alright!", "Affirmative!", "Totally!"])
+                self.dialog_card_node.hide()
+                base.bgm.stopSfx()
+                base.bgm.playSfx('warp')
+                self.transition('room00')
         
     def actionB(self):
         self.ballNP.node().setAngularDamping(0.82)
@@ -274,12 +292,14 @@ class Room00(Stage):
                     self.boing = True
                     mpoint = contact2.getManifoldPoint()
                     volume =  abs(mpoint.getDistance())
-                    print(volume)
                     pitch = volume
                     base.bgm.playSfx(choice(self.boings), volume, 1)
         else:
             self.boing = False
-                        
+        for p, portal in enumerate(self.level.portals):
+            portal.set_h(portal, 0.5)
+            portal.set_color(self.colors[self.color_idx])
+        
         self.ballNP.set_color(choice(self.colors))
         self.color_idx = (self.color_idx + 1) % len(self.colors)
         for o, obj in enumerate(self.level.ground.get_children()):
@@ -317,10 +337,24 @@ class Room00(Stage):
         self.debugNP = None
         self.level.groundNP = None
         self.ballNP = None
-
+        for n, npc in enumerate(self.level.npc_mounts):
+            npc.removeNode()
         self.level.worldNP.removeNode()
         base.ignore('enter')
+        base.ignore("gamepad-face_a")
+        base.ignore("space")
+        base.ignore("gamepad-face_a-up")
+        base.ignore("space-up")
+        base.ignore("gamepad-face_b")
+        base.ignore("shift")
+        base.ignore("gamepad-face_b-up")
+        base.ignore("shift-up")
+        
         #self.ball.detachNode()
         base.bgm.stopMusic()
+        base.cam.set_z(1)
+        base.cam.set_x(0)
+        base.cam.set_y(0)
+        base.cam.set_hpr(0,0,0)
         base.taskMgr.remove('update')
         return data
