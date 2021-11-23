@@ -270,7 +270,7 @@ class room00(Stage):
         self.level.world.removeRigidBody(self.level.wallsNP.node())
         
         self.level.world.removeRigidBody(self.player.ballNP.node())
-        self.level.world = None
+        #self.level.world = None
         self.level.audio.stopLoopingAudio()
         self.debugNP = None
         self.level.groundNP = None
@@ -301,4 +301,8 @@ class room00(Stage):
         base.cam.set_y(0)
         base.cam.set_hpr(0,0,0)
         base.taskMgr.remove('update')
+        for n, node in enumerate(aspect2d.get_children()):
+            node.detachNode()
+            node.removeNode()
+        print(base.render.ls())
         return data

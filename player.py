@@ -44,3 +44,6 @@ class player():
     def setup_ball_forces(self):
         self.force = Vec3(0,0,0)
         self.torque = Vec3(0,0,0)
+    
+    def __destroy__(self):
+        self.ball_roll.stop()
