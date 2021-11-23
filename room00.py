@@ -4,6 +4,7 @@ from math import cos
 import sys
 from stageflow.core import Stage
 from random import  choice
+from random import  randint
 from stageflow import Stage
 from level import level
 from player import player
@@ -45,20 +46,6 @@ class room00(Stage):
         self.color_idx = -1
         self.clock = 0
         self.npcs =[]
-        
-                # Accept device dis-/connection events
-
-
-        # Accept button events of the first connected gamepad
-        #self.accept("gamepad-back", exit)
-        #s#elf.accept("gamepad-start", exit)
-        #se#lf.accept("gamepad-face_x", self.reset)
-
-        
-        #self.accept("gamepad-face_b", self.action, extraArgs=["face_b"])
-        #self.accept("gamepad-face_b-up", self.actionUp)
-        #self.accept("gamepad-face_y", self.action, extraArgs=["face_y"])
-        #self.accept("gamepad-face_y-up", self.actionUp)
         base.disableMouse()
 
         
@@ -234,9 +221,9 @@ class room00(Stage):
         else:
             self.player.boing = False
         for p, portal in enumerate(self.level.portals):
-            portal.set_h(portal, 0.5)
+            portal.set_h(portal, 3)
+            portal.set_scale(0.8,0.8,abs(2*sin(self.clock*60)))
             portal.set_color(self.colors[self.color_idx])
-        
         self.player.ballNP.set_color(choice(self.colors))
         self.color_idx = (self.color_idx + 1) % len(self.colors)
         for o, obj in enumerate(self.level.ground.get_children()):
@@ -272,7 +259,9 @@ class room00(Stage):
         self.level.world.removeRigidBody(self.player.ballNP.node())
         #self.level.world = None
         self.level.audio.stopLoopingAudio()
-        self.debugNP = None
+        #self.debugNP = None
+        self.level.debugNP.detachNode()
+        self.level.debugNP.removeNode()
         self.level.groundNP = None
         #self.player.ballNP = None
         self.player.ballNP.detachNode()
@@ -304,5 +293,4 @@ class room00(Stage):
         for n, node in enumerate(aspect2d.get_children()):
             node.detachNode()
             node.removeNode()
-        print(base.render.ls())
         return data
