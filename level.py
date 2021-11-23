@@ -2,7 +2,7 @@ from audio3d import audio3d
 from npc import npc
 from math import sin
 from math import cosh
-from random import  choice
+from random import  choice, randint
 from panda3d.bullet import BulletWorld
 from panda3d.bullet import BulletRigidBodyNode
 from panda3d.bullet import BulletDebugNode
@@ -19,7 +19,7 @@ from panda3d.core import NodePath
 DEBUG = False
 class level():
 
-    def __init__(self):
+    def __init__(self, lvl):
         self.audio = audio3d()
         self.npcs = []
         self.fonts = [
@@ -39,6 +39,10 @@ class level():
             base.loader.loadModel("levels/level02.bam"),
             base.loader.loadModel("levels/level03.bam")
         ]
+        if lvl == None:
+            lvl = randint(0,len(self.levels))
+        else:
+            self.lvl = lvl
         self.portals = []
         self.portal_template = base.loader.loadModel("components/portal00.bam")
         self.load_world()
@@ -86,7 +90,7 @@ class level():
         self.world.setDebugNode(self.debugNP.node())
         
     def load_ground(self):
-        self.ground = self.levels[3]
+        self.ground = self.levels[self.lvl]
         self.npc_mounts = self.ground.findAllMatches("**/npc**")  
         self.floor = self.ground.findAllMatches("**/levelFloor").getPath(0)
         self.walls = self.ground.findAllMatches("**/levelWall").getPath(0)

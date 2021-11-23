@@ -73,12 +73,12 @@ class npc():
     def load_npc(self):
         
         npcModel = base.loader.loadModel("NPCs/npc01.bam")
-        list_copy = self.names
+        list_copy = self.names.copy()
         shuffle(list_copy)
-        if len(list_copy) > 0:
+        if len(list_copy):
             next_random = list_copy.pop()
         else:
-            self.dialogs = self.npc_dialog.__init__()
+            self.dialogs = self.npc_dialog.get_dialogs()
             list_copy = self.dialogs
             next_random = list_copy.pop()
             

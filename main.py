@@ -2,9 +2,9 @@
 from letterMatching import LetterMatching
 from titleScreen import TitleScreen
 from motionBlur import MotionBlur
+from gamepadInput import GamepadInput
 from bgm import BGM
-from room00 import Room00
-from room01 import Room01
+from room00 import room00
 from intro import Intro
 from intro2 import Intro2
 from intro3 import Intro3
@@ -36,6 +36,8 @@ base.bgm = BGM()
 base.motion_blur = MotionBlur()
 base.disable_mouse()
 #base.enableParticles()
+base.levels =['room00', 'room01', 'room02','room03']
+base.gamepad_input = GamepadInput()
 base.flow = Flow(
     stages=dict(
         splash=Panda3DSplash(exit_stage='title_screen'),
@@ -44,7 +46,10 @@ base.flow = Flow(
         intro2=Intro2(exit_stage='intro3'),
         intro3=Intro3(exit_stage='lettermatching'),
         letter_matching=LetterMatching(exit_stage='room00'),
-        room00=Room00(exit_stage='quit'),
+        room00=room00(exit_stage='quit', lvl = 0),
+        room01=room00(exit_stage='quit', lvl = 1),
+        room02=room00(exit_stage='quit', lvl = 2),
+        room03=room00(exit_stage='quit', lvl = 3),
         quit=Quit()
     ),
     initial_stage = 'title_screen',

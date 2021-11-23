@@ -16,8 +16,9 @@ class audio3d():
             ]
         }
         self.audio3d.setDistanceFactor(10)
-        #self.audio3d.setDopplerFactor(1)
-        
+        self.audio3d.setDopplerFactor(3)
+        self.playing_loops = []
+                
     def enter(self):
         base.task_mgr.add(self.update, 'update')
     def playSfx(self, sfx = None, obj = None, loop = False):
@@ -33,7 +34,7 @@ class audio3d():
                     sfx3d = list_copy.pop()
                     print(loop)
                     sfx3d.setLoop(loop)
-                    #sfx3d.setVolume(0.5)
+                    sfx3d.setVolume(0.25)
                     
                     print(str(sfx3d))
                     self.audio3d.attachSoundToObject(sfx3d, obj)
@@ -41,6 +42,8 @@ class audio3d():
                     self.audio3d.setSoundMaxDistance(sfx3d, 200)
                     self.audio3d.setDropOffFactor(15)
                     sfx3d.play()
+                    if loop:
+                        self.playing_loops.append(sfx3d)
                     
                     print("Attached sound to object.")
                     print(str(obj))
@@ -50,3 +53,7 @@ class audio3d():
         self.audio3d.update()
         #print(str(self.audio3d.getListenerVelocity()))
         return task.cont
+    
+    def stopLoopingAudio(self):
+        for s, sound in enumerate(self.playing_loops):
+            sound.stop()

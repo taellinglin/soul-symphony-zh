@@ -80,6 +80,7 @@ class dialog():
                         "Why look forward to it when you can look forward, back, right, there, here, around, and uhhhh....well you can look more than just one direction, right? Oh...I see...",
                         "Spin, spin, spin!!!"      
         ]
+        self.used_dialogs = []
         self.dialogs.sort()
         shuffle(self.dialogs)
         self.dialog_pointer = 0
@@ -87,11 +88,15 @@ class dialog():
         #get_dialog() is random or get_dialog(n) is direct.
         list_copy = self.dialogs
         if dialog == None:
-            print(str(len(self.dialogs)))
-            shuffle(list_copy)
-            next_random = list_copy.pop()
-            return next_random
-        
+            if len(list_copy):
+                shuffle(list_copy)
+                next_random = list_copy.pop()
+                self.used_dialogs.append(next_random)
+                return next_random
+            else:
+                self.dialogs = self.used_dialogs
+                print("Resetting Dialogs...now you might see repeats!")
+                self.get_dialog()
         elif dialog >= 0 and dialog <= len(self.dialogs):
             return list_copy.pop(dialog)
         

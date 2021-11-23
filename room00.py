@@ -20,8 +20,12 @@ from panda3d.bullet import BulletRigidBodyNode
 from panda3d.bullet import BulletBodyNode
 
 from direct.showbase.InputStateGlobal import inputState
-class Room00(Stage):
-    def __init__(self, exit_stage = "main_menu"):
+class room00(Stage):
+    def __init__(self, exit_stage = "main_menu", lvl = None):
+        if lvl == None:
+            self.lvl = 0
+        else:
+            self.lvl = lvl
         self.exit_stage = exit_stage
         self.colors = [(1,0,0,1), (0,0,1,1), (1,1,0,1), (1,0,1,1)]
         self.colors = []
@@ -41,14 +45,9 @@ class Room00(Stage):
         self.color_idx = -1
         self.clock = 0
         self.npcs =[]
-        self.gamepad = None
-        devices = base.devices.getDevices(InputDevice.DeviceClass.gamepad)
-        if devices:
-            self.connect(devices[0])
-            
+        
                 # Accept device dis-/connection events
-        base.accept("connect-device", self.connect)
-        base.accept("disconnect-device", self.disconnect)
+
 
         # Accept button events of the first connected gamepad
         #self.accept("gamepad-back", exit)
@@ -63,7 +62,10 @@ class Room00(Stage):
         base.disableMouse()
 
         
-    def enter(self,data):
+    def enter(self, lvl = None):
+        if lvl == None:
+            lvl = self.lvl
+        self.lvl = lvl
         print("Roll Test Area Entered...")
         base.cam.set_z(24)
         base.bgm.playMusic(None, True, 0.25)
@@ -82,14 +84,14 @@ class Room00(Stage):
         inputState.watchWithModifiers('cam-right', 'gamepad-trigger_right')
         inputState.watchWithModifiers('cam-left', 'gamepad-trigger_left')
         
-        print(self.gamepad)
-        self.level = level()
+        print("level: "+str(self.lvl))
+        self.level = level(self.lvl)
         self.level.get_npcs(21)
         self.level.place_npcs()
         self.player = player()
         self.player.ballNP.reparentTo(self.level.worldNP)
         self.level.world.attachRigidBody(self.player.ballNP.node())
-        self.player.ballNP.setPos(self.level.player_start.getPos())
+        self.player.ballNP.setPos(choice(self.level.portals).getPos()+(0,0,3))
         self.dialog = dialog()
         self.dialog_card = TextNode('dialog_card')
         self.dialog_card.align = 2
@@ -148,7 +150,8 @@ class Room00(Stage):
                 self.dialog_card_node.hide()
                 base.bgm.stopSfx()
                 base.bgm.playSfx('warp')
-                self.transition('intro3')
+                self.transition(choice(base.levels))
+                return
         
     def actionB(self):
         self.player.ballNP.node().setAngularDamping(0.82)
@@ -158,46 +161,15 @@ class Room00(Stage):
         self.player.ballNP.node().setAngularDamping(0)
         self.player.ballNP.node().setLinearDamping(0)
         
-    def connect(self, device):
-        """Event handler that is called when a device is discovered."""
 
-        # We're only interested if this is a gamepad and we don't have a
-        # gamepad yet.
-        if device.device_class == InputDevice.DeviceClass.gamepad and not self.gamepad:
-            print("Found %s" % (device))
-            self.gamepad = device
-
-            # Enable this device to ShowBase so that we can receive events.
-            # We set up the events with a prefix of "gamepad-".
-            if(not (self.gamepad == None)):
-                base.attachInputDevice(device, prefix="gamepad")
-
-
-    def disconnect(self, device):
-        """Event handler that is called when a device is removed."""
-
-        if self.gamepad != device:
-            # We don't care since it's not our gamepad.
-            return
-
-        # Tell ShowBase that the device is no longer needed.
-        print("Disconnected %s" % (device))
-        base.detachInputDevice(device)
-        self.gamepad = None
-
-        # Do we have any other gamepads?  Attach the first other gamepad.
-        devices = base.devices.getDevices(InputDevice.DeviceClass.gamepad)
-        if devices:
-            self.connect(devices[0])
-            
     def processInput(self, dt):
         force = Vec3(0,0,0)
         torque = Vec3(0,0,0)
-        if(not self.gamepad == None):
-            self.left_x = self.gamepad.findAxis(InputDevice.Axis.left_x)
-            self.left_y = self.gamepad.findAxis(InputDevice.Axis.left_y)
-            self.right_x = self.gamepad.findAxis(InputDevice.Axis.right_x)
-            self.right_y = self.gamepad.findAxis(InputDevice.Axis.right_y)
+        if(not base.gamepad_input.gamepad == None):
+            self.left_x = base.gamepad_input.gamepad.findAxis(InputDevice.Axis.left_x)
+            self.left_y = base.gamepad_input.gamepad.findAxis(InputDevice.Axis.left_y)
+            self.right_x = base.gamepad_input.gamepad.findAxis(InputDevice.Axis.right_x)
+            self.right_y = base.gamepad_input.gamepad.findAxis(InputDevice.Axis.right_y)
             self.leftAnalog = Vec3(self.left_x.value, self.left_y.value, 0)
             force = self.leftAnalog
             torque = Vec3(0,0,self.right_x.value)
@@ -223,6 +195,7 @@ class Room00(Stage):
 
         
     def update(self, task):
+        self.level.audio.audio3d.setListenerVelocity(self.player.ballNP.get_node(0).getLinearVelocity())
         self.player.ball_roll.setPlayRate(0.05*(abs(self.player.ballNP.get_node(0).getLinearVelocity().getX())+abs(self.player.ballNP.get_node(0).getLinearVelocity().getY())+abs(self.player.ballNP.get_node(0).getLinearVelocity().getZ())))
         for n, npc_mount in enumerate(self.level.npc_mounts):
             nametag = npc_mount.find('**/npcNametag')
@@ -284,7 +257,7 @@ class Room00(Stage):
         self.level.world.doPhysics(dt, 25, 2.0/360.0)
         return task.cont
     
-    def transition(self, exit_stage):
+    def transition(self, exit_stage, lvl = None):
         if exit_stage == None:
             self.exit_stage = 'main_menu'
         else:
@@ -292,17 +265,24 @@ class Room00(Stage):
         base.flow.transition(self.exit_stage)
         
     def exit(self, data):
+        self.player.ball_roll.stop()
         self.level.world.removeRigidBody(self.level.floorNP.node())
         self.level.world.removeRigidBody(self.level.wallsNP.node())
         
         self.level.world.removeRigidBody(self.player.ballNP.node())
         self.level.world = None
-
+        self.level.audio.stopLoopingAudio()
         self.debugNP = None
         self.level.groundNP = None
-        self.player.ballNP = None
+        #self.player.ballNP = None
+        self.player.ballNP.detachNode()
+        self.player.ballNP.removeNode()
         for n, npc in enumerate(self.level.npc_mounts):
+            npc.detachNode()
             npc.removeNode()
+        for p, portal in enumerate(self.level.portals):
+            portal.detachNode()
+            portal.removeNode()
         self.level.worldNP.removeNode()
         base.ignore('enter')
         base.ignore("gamepad-face_a")
