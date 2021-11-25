@@ -49,6 +49,7 @@ class letters():
     def make_letter(self, font = None, letter = None):
         textnode = TextNode('letter'+str(letter))
         textnode.text = letter
+        textnode.setTextScale(4)
         textnode.setAlign(2)
         if font == None:
             textnode.font = choice(self.fonts)

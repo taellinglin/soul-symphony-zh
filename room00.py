@@ -235,7 +235,7 @@ class room00(Stage):
             letter.set_h(letter, 1)
             letter.set_color(choice(self.colors))
             if((letter.getPos().getXy() - self.player.ballNP.getPos().getXy()).length() < 3):
-                base.bgm.playSfx('pickup', 1, randFloat(0.25, 8), False)
+                base.bgm.playSfx('pickup', 1, randFloat(0.1, 2), False)
                 letter.detachNode()
                 letter.removeNode()
                 print("Score + 1!")
@@ -288,6 +288,9 @@ class room00(Stage):
         for p, portal in enumerate(self.level.portals):
             portal.detachNode()
             portal.removeNode()
+        for l, letter in enumerate(render.findAllMatches('**/level**')):
+            letter.detachNode()
+            letter.removeNode()
         self.level.worldNP.removeNode()
         base.ignore('enter')
         base.ignore("gamepad-face_a")
