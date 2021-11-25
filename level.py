@@ -194,8 +194,9 @@ class level():
             letter_node = NodePath('letter_'+letter.text)
             letter_node.attachNewNode(letter)
             letter_node.setPos(self.letter_mounts.pop())
-            letter_node.setScale(4)
-            letter_node.set_sy(0.5)
+            letter_node.setScale(10)
+            letter_node.set_sy(0.25)
+            letter_node.set_two_sided(True)
             letter_node.flatten_strong()
             letter_node.reparentTo(render)
             

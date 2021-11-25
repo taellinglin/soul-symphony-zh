@@ -234,7 +234,6 @@ class room00(Stage):
         for l, letter in enumerate(render.findAllMatches('**/letter**')):
             letter.set_h(letter, 1)
             letter.set_color(choice(self.colors))
-            print(letter.getPos().getXy())
             if((letter.getPos().getXy() - self.player.ballNP.getPos().getXy()).length() < 3):
                 base.bgm.playSfx('pickup', 1, randFloat(0.25, 8), False)
                 letter.detachNode()
