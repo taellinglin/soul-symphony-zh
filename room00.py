@@ -2,6 +2,8 @@ from math import pi
 from math import sin
 from math import cos
 import sys
+
+from direct.showbase.PythonUtil import randFloat
 from stageflow.core import Stage
 from random import  choice
 from random import  randint
@@ -10,6 +12,8 @@ from level import level
 from player import player
 from npc import npc
 from dialog import dialog
+
+
 from panda3d.core import BitMask32
 from panda3d.core import NodePath
 from panda3d.core import InputDevice
@@ -183,6 +187,7 @@ class room00(Stage):
         
     def update(self, task):
         self.level.audio.audio3d.setListenerVelocity(self.player.ballNP.get_node(0).getLinearVelocity())
+        self.color_idx = (self.color_idx + 1) % len(self.colors)
         self.player.ball_roll.setPlayRate(0.05*(abs(self.player.ballNP.get_node(0).getLinearVelocity().getX())+abs(self.player.ballNP.get_node(0).getLinearVelocity().getY())+abs(self.player.ballNP.get_node(0).getLinearVelocity().getZ())))
         for n, npc_mount in enumerate(self.level.npc_mounts):
             nametag = npc_mount.find('**/npcNametag')
@@ -224,14 +229,26 @@ class room00(Stage):
             portal.set_h(portal, 3)
             portal.set_scale(0.8,0.8,abs(2*sin(self.clock*60)))
             portal.set_color(self.colors[self.color_idx])
+            
         self.player.ballNP.set_color(choice(self.colors))
-        self.color_idx = (self.color_idx + 1) % len(self.colors)
+        for l, letter in enumerate(render.findAllMatches('**/letter**')):
+            letter.set_h(letter, 1)
+            letter.set_color(choice(self.colors))
+            print(letter.getPos().getXy())
+            if((letter.getPos().getXy() - self.player.ballNP.getPos().getXy()).length() < 3):
+                base.bgm.playSfx('pickup', 1, randFloat(0.25, 8), False)
+                letter.detachNode()
+                letter.removeNode()
+                print("Score + 1!")
+        
         for o, obj in enumerate(self.level.ground.get_children()):
                 obj.set_color(self.colors[self.color_idx])
         for o, obj in enumerate(self.level.floor.get_children()):
                 obj.set_color(self.colors[self.color_idx])
         for o, obj in enumerate(self.level.walls.get_children()):
-                obj.set_color(self.colors[self.color_idx])      
+                obj.set_color(self.colors[self.color_idx])
+        for o, obj in enumerate(self.level.ceil.get_children()):
+            obj.set_color(self.colors[self.color_idx])      
         self.clock += 1
         dt = globalClock.getDt()
         self.processInput(dt)
