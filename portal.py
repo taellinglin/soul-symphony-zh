@@ -11,7 +11,7 @@ class Portal():
         self.portal_loops = self.audio3d.sfx3d.get('portal_loop')
         
     def warp(self):
-        
+        pass
         
     def update(self, task):
-        
+        pass

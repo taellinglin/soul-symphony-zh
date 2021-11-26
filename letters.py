@@ -34,7 +34,6 @@ class letters():
         self.fonts = {
             'daemon': base.loader.load_font('fonts/konnarian/Daemon.otf'),
             'chesilin': base.loader.load_font('fonts/konnarian/Chesilin.otf'),
-            'sama': base.loader.load_font('fonts/terrestrial/Sama.otf'),
             'crossbats': base.loader.load_font('fonts/symbols/crossbats.otf')    
         }
         self.letter_nodes = []

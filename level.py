@@ -44,6 +44,17 @@ class level():
             base.loader.loadModel("levels/level02.bam"),
             base.loader.loadModel("levels/level03.bam")
         ]
+        self.floortextures = [
+            base.loader.loadTexture('graphics/pattern00.png'),
+            base.loader.loadTexture('graphics/pattern01.png'),
+            base.loader.loadTexture('graphics/pattern02.png'),
+        ]
+        self.walltextures = [
+            base.loader.loadTexture('graphics/pattern03.png'),
+            base.loader.loadTexture('graphics/pattern04.png'),
+            base.loader.loadTexture('graphics/pattern05.png'),
+            base.loader.loadTexture('graphics/pattern06.png'), 
+        ]
         if lvl == None:
             lvl = randint(0,len(self.levels))
         else:
@@ -105,7 +116,12 @@ class level():
         self.floor = self.ground.findAllMatches("**/levelFloor").getPath(0)
         self.walls = self.ground.findAllMatches("**/levelWall").getPath(0)
         self.ceil = self.ground.findAllMatches("**/levelCeil").getPath(0)
-        
+        for stage in self.floor.find_all_texture_stages():
+            self.floor.set_texture(stage, choice(self.floortextures), 1)
+        for stage in self.walls.find_all_texture_stages():
+            self.walls.set_texture(stage, choice(self.walltextures), 1)
+        for stage in self.ceil.find_all_texture_stages():
+            self.ceil.set_texture(stage, choice(self.floortextures), 1)
         self.player_start = self.ground.findAllMatches("**/playerStart").getPath(0)
         self.portals = self.ground.findAllMatches("**/portal**")
         if len(self.portals):
@@ -210,5 +226,9 @@ class level():
         for stage in self.walls.find_all_texture_stages():
             self.walls.setTexOffset(stage, .5*sin(self.clock/6), .5*sin(self.clock/6))
             self.walls.setTexScale(stage, .5*sin(self.clock)+2.5, .5*sin(self.clock)+2.5,1)
+        
+        for stage in self.ceil.find_all_texture_stages():
+            self.ceil.setTexOffset(stage, .5*sin(self.clock/6), .5*sin(self.clock/6))
+            self.ceil.setTexScale(stage, .05*sin(self.clock)+2.5, .05*sin(self.clock)+2.5,1)
             
         return task.cont

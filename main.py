@@ -1,5 +1,6 @@
 
 from letterMatching import LetterMatching
+from scoreboard import scoreboard
 from titleScreen import TitleScreen
 from motionBlur import MotionBlur
 from gamepadInput import GamepadInput
@@ -12,6 +13,7 @@ from direct.showbase.ShowBase import ShowBase
 from stageflow import Flow
 from stageflow.panda3d import Panda3DSplash
 from panda3d.core import WindowProperties
+from panda3d.core import AntialiasAttrib
 from direct.particles import Particles
 from stageflow.prefab import Quit
 
@@ -38,6 +40,9 @@ base.disable_mouse()
 #base.enableParticles()
 base.levels =['room00', 'room01', 'room02','room03']
 base.gamepad_input = GamepadInput()
+base.scoreboard = scoreboard()
+base.scoreboard.hide()
+base.render.setAntialias(AntialiasAttrib.MNone)
 base.flow = Flow(
     stages=dict(
         splash=Panda3DSplash(exit_stage='title_screen'),

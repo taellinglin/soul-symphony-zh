@@ -59,7 +59,7 @@ class room00(Stage):
         self.lvl = lvl
         print("Roll Test Area Entered...")
         base.cam.set_z(24)
-        base.bgm.playMusic(None, True, 0.25)
+        base.bgm.playMusic(None, True, 0.4)
         base.task_mgr.add(self.update, 'update')
         base.accept('escape', sys.exit)
         inputState.watchWithModifiers('forward', 'w')
@@ -89,6 +89,7 @@ class room00(Stage):
         self.dialog_card.setWordwrap(40)
         self.dialog_card_node = aspect2d.attach_new_node(self.dialog_card)
         self.dialog_card_node.setScale(0.08)
+        base.scoreboard.show()
 
         self.level.audio.audio3d.attachListener(base.cam)
 
@@ -229,7 +230,7 @@ class room00(Stage):
             portal.set_h(portal, 3)
             portal.set_scale(0.8,0.8,abs(2*sin(self.clock*60)))
             portal.set_color(self.colors[self.color_idx])
-            
+        base.scoreboard.score_node.setColor(choice(self.colors))
         self.player.ballNP.set_color(choice(self.colors))
         for l, letter in enumerate(render.findAllMatches('**/letter**')):
             letter.set_h(letter, 1)
@@ -238,6 +239,7 @@ class room00(Stage):
                 base.bgm.playSfx('pickup', 1, randFloat(0.1, 2), False)
                 letter.detachNode()
                 letter.removeNode()
+                base.scoreboard.addPoints(1)
                 print("Score + 1!")
         
         for o, obj in enumerate(self.level.ground.get_children()):
@@ -288,7 +290,7 @@ class room00(Stage):
         for p, portal in enumerate(self.level.portals):
             portal.detachNode()
             portal.removeNode()
-        for l, letter in enumerate(render.findAllMatches('**/level**')):
+        for l, letter in enumerate(render.findAllMatches('**/letter**')):
             letter.detachNode()
             letter.removeNode()
         self.level.worldNP.removeNode()
@@ -309,7 +311,7 @@ class room00(Stage):
         base.cam.set_y(0)
         base.cam.set_hpr(0,0,0)
         base.taskMgr.remove('update')
-        for n, node in enumerate(aspect2d.get_children()):
+        for n, node in enumerate(aspect2d.findAllMatches('**/dialog_card')):
             node.detachNode()
             node.removeNode()
         return data
