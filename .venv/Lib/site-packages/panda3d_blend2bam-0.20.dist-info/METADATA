@@ -1,0 +1,25 @@
+Metadata-Version: 2.1
+Name: panda3d-blend2bam
+Version: 0.20
+Summary: A tool to convert Blender blend files to Panda3D BAM files
+Home-page: https://github.com/Moguri/panda3d-blend2bam
+Author: Mitchell Stokes
+License: MIT
+Project-URL: Bug Tracker, https://github.com/Moguri/panda3d-blend2bam/issues
+Keywords: panda3d,gamedev
+Platform: UNKNOWN
+Classifier: Development Status :: 4 - Beta
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Programming Language :: Python :: 3
+Requires-Python: >=3.6
+Description-Content-Type: text/markdown
+License-File: LICENSE.txt
+Requires-Dist: panda3d
+Requires-Dist: panda3d-gltf (>=0.6)
+Provides-Extra: test
+Requires-Dist: pytest ; extra == 'test'
+Requires-Dist: pylint (==2.4.*) ; extra == 'test'
+Requires-Dist: pytest-pylint ; extra == 'test'
+
+README.md
+

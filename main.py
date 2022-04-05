@@ -38,7 +38,7 @@ base.bgm = BGM()
 base.motion_blur = MotionBlur()
 base.disable_mouse()
 #base.enableParticles()
-base.levels =['room00', 'room01', 'room02','room03']
+base.levels =['room00', 'room01', 'room02','room03', 'arcade00']
 base.gamepad_input = GamepadInput()
 base.scoreboard = scoreboard()
 base.scoreboard.hide()
@@ -46,7 +46,7 @@ base.render.setAntialias(AntialiasAttrib.MNone)
 base.flow = Flow(
     stages=dict(
         splash=Panda3DSplash(exit_stage='title_screen'),
-        title_screen=TitleScreen(exit_stage='room00'),
+        title_screen=TitleScreen(exit_stage='arcade00'),
         intro=Intro(exit_stage='intro2'),
         intro2=Intro2(exit_stage='intro3'),
         intro3=Intro3(exit_stage='lettermatching'),
@@ -55,6 +55,7 @@ base.flow = Flow(
         room01=room00(exit_stage='quit', lvl = 1),
         room02=room00(exit_stage='quit', lvl = 2),
         room03=room00(exit_stage='quit', lvl = 3),
+        arcade00 = room00(exit_stage='quit', lvl = 4),
         quit=Quit()
     ),
     initial_stage = 'title_screen',

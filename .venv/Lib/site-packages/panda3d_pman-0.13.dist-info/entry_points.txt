@@ -1,0 +1,11 @@
+[console_scripts]
+native2bam = pman.native2bam:main
+pman = pman.cli:main
+
+[pman.converters]
+blend2bam = pman.hooks:converter_blend_bam
+native2bam = pman.hooks:converter_native_bam
+
+[pman.creation_extras]
+git = pman.hooks:create_git
+
