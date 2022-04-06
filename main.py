@@ -51,12 +51,12 @@ base.flow = Flow(
         intro2=Intro2(exit_stage='intro3'),
         intro3=Intro3(exit_stage='lettermatching'),
         letter_matching=LetterMatching(exit_stage='room00'),
-        room00=room00(exit_stage='quit', lvl = 0),
-        room01=room00(exit_stage='quit', lvl = 1),
-        room02=room00(exit_stage='quit', lvl = 2),
-        room03=room00(exit_stage='quit', lvl = 3),
-        arcade00 = room00(exit_stage='quit', lvl = 4),
-        arcade01 = room00(exit_stage='quit', lvl = 5),
+        room00=room00(exit_stage='quit', lvl = 2),
+        room01=room00(exit_stage='quit', lvl = 3),
+        room02=room00(exit_stage='quit', lvl = 4),
+        room03=room00(exit_stage='quit', lvl = 5),
+        arcade00 = room00(exit_stage='quit', lvl = 1),
+        arcade01 = room00(exit_stage='quit', lvl = 0),
         
         quit=Quit()
     ),

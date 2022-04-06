@@ -159,8 +159,15 @@ class room00(Stage):
                 base.bgm.stopSfx()
                 base.bgm.playSfx('warp')
                 if self.lvl < len(base.levels):
-                    self.transition(base.levels[self.lvl+1])
-                    return
+                    
+                    self.lvl += 1
+                    print("Next Level! Level: "+ str(self.lvl))
+                    self.transition(base.levels[self.lvl])
+                elif self.lvl >= len(base.levels):
+                    print("Starting from first level...")
+                    self.lvl = 0
+                    self.transition(base.levels[self.lvl])
+                return
         
     def actionB(self):
         self.player.ballNP.node().setAngularDamping(0.82)
