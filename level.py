@@ -43,7 +43,9 @@ class level():
             base.loader.loadModel("levels/level01.bam"),
             base.loader.loadModel("levels/level02.bam"),
             base.loader.loadModel("levels/level03.bam"),
-            base.loader.loadModel("levels/arcade00.bam")
+            base.loader.loadModel("levels/arcade00.bam"),
+            base.loader.loadModel("levels/arcade01.bam")
+            
         ]
         self.floortextures = [
             base.loader.loadTexture('graphics/pattern00.png'),
@@ -97,7 +99,7 @@ class level():
         # World
         self.worldNP = render.attachNewNode('World')
         self.debugNP = self.worldNP.attachNewNode(BulletDebugNode('Debug'))
-        self.debugNP.show()
+        #self.debugNP.show()
         self.debugNP.node().showWireframe(DEBUG)
         self.debugNP.node().showConstraints(DEBUG)
         self.debugNP.node().showBoundingBoxes(DEBUG)
@@ -134,6 +136,8 @@ class level():
         if len(self.letter_nodes):
             for l, letter in enumerate(self.letter_nodes):
                 letter_node = letter.attachNewNode('letter_node')
+                letter_node.setScale(1)
+                letter_node.set_two_sided(1)
                 letter_node.attachNewNode(choice(self.letters.letter_nodes))
                 
         #self.wallshader = Shader.load(Shader.SL_GLSL, vertex="shaders/daemon.vert", fragment="shaders/daemon.frag")
@@ -211,10 +215,12 @@ class level():
             letter_node = NodePath('letter_'+letter.text)
             letter_node.attachNewNode(letter)
             letter_node.setPos(self.letter_mounts.pop())
-            letter_node.set_sy(1)
-            letter_node.flatten_strong()
-            letter_node.set_two_sided(True)
+            letter_node.set_sy(0.05)
+            letter_node.set_p(90)
+            
+            #letter_node.flatten_strong()
             letter_node.reparentTo(render)
+            letter_node.set_two_sided(1)
             
     def update(self, task):
         self.audio.update(task)

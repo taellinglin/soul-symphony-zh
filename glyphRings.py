@@ -5,12 +5,18 @@ from panda3d.core import TextNode
 from panda3d.core import DirectionalLight
 from panda3d.core import AmbientLight
 from random import randint, choice
-
+from math import pi
+from math import sin
+from math import cos
+from panda3d.core import AntialiasAttrib
+from panda3d.core import TextProperties
 
 class GlyphRings():
     def __init__(self, font, number_of_rings=16, characters_in_ring=16):
         self.font = font
-        self.font.set_render_mode(TextFont.RMSolid)
+        self.font.set_render_mode(TextFont.RMTexture)
+        self.font.setPageSize(1024, 1024)
+        self.font.setPixelsPerUnit(1024)
 
         self.rings = []
         self.center = NodePath('center')
@@ -20,20 +26,24 @@ class GlyphRings():
                 ring.set_h(ring, 360/characters_in_ring)
                 glyph_text = TextNode('glyph_'+str(c))
                 glyph_text.font = self.font
+                glyph_text.setTextScale(1)
                 glyph_text.text = choice('abcdefghijklmnopqrstuvwxyz')
                 glyph_node = render.attach_new_node(glyph_text)
                 glyph_node.set_y(math.pi)
+                glyph_node.set_scale(1)
                 glyph_node.set_sy(0.05)
                 glyph_node.set_p(90) # Flip up
                 glyph_node.set_two_sided(1)
-                glyph_node.set_r(90*randint(0,4))
+                #glyph_node.set_r(90*randint(0,4))
                 glyph_node.wrt_reparent_to(ring)
-                glyph_node.flatten_strong()
+                #glyph_node.flatten_light()
+                glyph_node.setAntialias(AntialiasAttrib.MNone)
             ring.set_scale(16-r)
             self.rings.append(ring)
         self.center.reparent_to(render)
 
         self.colors = [(1,0,0,1), (0,1,1,1), (1,1,0,1), (1,0,1,1)]
+      
         self.clock = 0
         self.ring_speed = 1
         self.char_speed = 0.01

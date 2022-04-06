@@ -99,8 +99,8 @@ class npc():
             self.face.set_texture(stage, npc.get("face"), 1)
         for stage in self.emblem.find_all_texture_stages():
             self.emblem.set_texture(stage, npc.get("emblem"), 1)
-        self.cm = CardMaker('card')
-        self.card = render.attachNewNode(self.cm.generate())
+        #self.cm = CardMaker('card')
+        #self.card = render.attachNewNode(self.cm.generate())
         npc_dialog_text = self.dialogs[self.id]
         new_npc = { "id" : self.id,
                     "name" : npc.get("name"),

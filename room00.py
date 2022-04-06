@@ -82,9 +82,9 @@ class room00(Stage):
         self.level.place_npcs()
         self.player = player()
         self.player.ballNP.reparentTo(self.level.worldNP)
-        self.double_jump =  False
+        self.double_jump =  0
         self.level.world.attachRigidBody(self.player.ballNP.node())
-        self.player.ballNP.setPos(self.level.player_start.getPos()+(0,0,3))
+        self.player.ballNP.setPos(self.level.player_start.getPos()+(0,0,1))
         self.dialog = dialog()
         self.dialog_card = TextNode('dialog_card')
         self.dialog_card.align = 2
@@ -108,13 +108,13 @@ class room00(Stage):
 
         
     def actionA(self):
-        print(self.double_jump)
         result = self.level.world.contactTestPair(self.player.ballNP.node(), self.level.floorNP.node())
         if result.getNumContacts() > 0:
                 contact = result.getContacts()[0]
                 if contact.getNode1() == self.level.floorNP.node():
                     self.player.ballNP.node().applyCentralImpulse(Vec3(0,0,128+32))
-                    self.double_jump = True
+                    self.double_jump = 1
+                    print("Single Jump!")
                     base.bgm.playSfx('ball-jump')
                     if len(self.level.npc_mounts):
                         for n, npc_mount in enumerate(self.level.npc_mounts):
@@ -135,11 +135,16 @@ class room00(Stage):
                                 self.player.ballNP.node().setLinearDamping(1)
                 else:
                     self.double_jump = False
-                    print(self.double_jump)
         else:
-            if self.double_jump:
+            if self.double_jump == 0:
+                self.double_jump = 1
+                print("Off ground, can Double Jump!")
+            if self.double_jump == 1:
                 self.player.ballNP.node().applyCentralImpulse(Vec3(0,0,128+32))
-                self.double_jump = False
+                print("Double Jump!")
+                self.double_jump = 2
+            elif self.double_jump == 2:
+                print("Can only double jump!")
                     
                     
 
@@ -153,8 +158,9 @@ class room00(Stage):
                 self.dialog_card_node.hide()
                 base.bgm.stopSfx()
                 base.bgm.playSfx('warp')
-                self.transition(choice(base.levels))
-                return
+                if self.lvl < len(base.levels):
+                    self.transition(base.levels[self.lvl+1])
+                    return
         
     def actionB(self):
         self.player.ballNP.node().setAngularDamping(0.82)
@@ -198,7 +204,15 @@ class room00(Stage):
 
         
     def update(self, task):
-        if(self.player.ballNP.getPos().z <= -100):
+        result = self.level.world.contactTestPair(self.player.ballNP.node(), self.level.floorNP.node())
+        if result.getNumContacts() > 0:
+                contact = result.getContacts()[0]
+                if contact.getNode1() == self.level.floorNP.node():
+                    if self.double_jump != 0:
+                        print("Landed on ground, can now jump and double jump!")
+                    self.double_jump = 0
+                    
+        if(self.player.ballNP.getPos().z <= self.level.floor.getPos()-300):
             self.player.ballNP.setPos(self.level.player_start.getPos()+(0,0,3))
             self.player.ballNP.get_node(0).setLinearVelocity(0)
             self.player.ballNP.get_node(0).setAngularVelocity(0)
