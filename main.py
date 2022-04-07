@@ -38,7 +38,7 @@ base.bgm = BGM()
 base.motion_blur = MotionBlur()
 base.disable_mouse()
 #base.enableParticles()
-base.levels =['arcade01', 'arcade00', 'room00', 'room01', 'room02','room03']
+base.levels =['arcade01', 'arcade00', 'room00', 'room01', 'room02','room03', 'room04']
 base.gamepad_input = GamepadInput()
 base.scoreboard = scoreboard()
 base.scoreboard.hide()
@@ -51,12 +51,14 @@ base.flow = Flow(
         intro2=Intro2(exit_stage='intro3'),
         intro3=Intro3(exit_stage='lettermatching'),
         letter_matching=LetterMatching(exit_stage='room00'),
+        arcade00 = room00(exit_stage='quit', lvl = 1),
+        arcade01 = room00(exit_stage='quit', lvl = 0),
         room00=room00(exit_stage='quit', lvl = 2),
         room01=room00(exit_stage='quit', lvl = 3),
         room02=room00(exit_stage='quit', lvl = 4),
         room03=room00(exit_stage='quit', lvl = 5),
-        arcade00 = room00(exit_stage='quit', lvl = 1),
-        arcade01 = room00(exit_stage='quit', lvl = 0),
+        room04=room00(exit_stage='quit', lvl = 6),
+        
         
         quit=Quit()
     ),

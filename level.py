@@ -45,9 +45,7 @@ class level():
             base.loader.loadModel("levels/level01.bam"),
             base.loader.loadModel("levels/level02.bam"),
             base.loader.loadModel("levels/level03.bam"),
-            
-            
-            
+            base.loader.loadModel("levels/level04.bam")
         ]
         self.floortextures = [
             base.loader.loadTexture('graphics/pattern00.png'),
