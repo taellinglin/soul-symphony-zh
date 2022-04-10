@@ -298,7 +298,7 @@ class room00(Stage):
                 self.propSfx = 0
         for p, prop in enumerate(render.findAllMatches('**/prop**')):
             prop.set_color(choice(self.colors))
-        for o, obj in enumerate(self.level.ground.get_children()):
+        for o, obj in enumerate(self.level.ground.findAllMatches('**/npcNametag')):
                 obj.set_color(self.colors[self.color_idx])
         for o, obj in enumerate(self.level.floor.get_children()):
                 obj.set_color(self.colors[self.color_idx])
@@ -349,6 +349,12 @@ class room00(Stage):
         for l, letter in enumerate(render.findAllMatches('**/letter**')):
             letter.detachNode()
             letter.removeNode()
+        for p, prop in enumerate(render.findAllMatches('**/prop**')):
+            prop.detachNode()
+            prop.removeNode()
+        for a, propArea in enumerate(render.findAllMatches('**/propArea**')):
+            propArea.detachNode()
+            propArea.removeNode()
         self.level.worldNP.removeNode()
         base.ignore('enter')
         base.ignore("gamepad-face_a")
