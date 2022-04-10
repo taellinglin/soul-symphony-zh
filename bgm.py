@@ -29,11 +29,11 @@ class BGM():
             'Ambience00',
             'The_Spirits'
         ]
-
         self.music = {}
         for song in self.songs:
             self.music[song] = base.loader.load_sfx("music/{}.ogg".format(song))
-
+        self.propSfxList = {}
+        self.fallSfxList = {}
         self.sfx_names = [
             'soul-symphony',
             'correct_guess',
@@ -50,6 +50,24 @@ class BGM():
             'boing04',
             'pickup',
         ]
+        self.propSfx = [
+            'prop00',
+            'prop01',
+            'prop02',
+            'prop03',
+        ]
+        self.fallSfx = [
+            'fallout00',
+            'fallout01',
+            'fallout02',
+            'fallout03',
+            'fallout04'
+        ]
+        for propsfx in self.propSfx:
+            self.propSfxList[propsfx] = base.loader.load_sfx("audio/{}.wav".format(propsfx))
+        for fallsfx in self.fallSfx:
+            self.fallSfxList[fallsfx] = base.loader.load_sfx("audio/{}.wav".format(fallsfx))
+        self.endsong = base.loader.load_sfx("music/{}.ogg".format('EndRoom'))
         self.sfx = {}
         for s in self.sfx_names:
             self.sfx[s] = base.loader.load_sfx("audio/{}.wav".format(s))
@@ -89,7 +107,25 @@ class BGM():
             self.current_sfx.setVolume(volume)
             self.current_sfx.setLoop(loop)
             self.current_sfx.play()
-            
+    def playPropSfx(self, volume = 1, pitch = 1, loop = False):
+        self.current_sfx = self.propSfxList[choice(self.propSfx)]
+        print("Playing: " + str(self.current_sfx))
+        self.current_sfx.setPlayRate(pitch)
+        self.current_sfx.setVolume(volume)
+        self.current_sfx.setLoop(loop)
+        self.current_sfx.play()
+        
+    def playFallSfx(self, volume = 1, pitch = 1, loop = False):
+        self.current_sfx = self.fallSfxList[choice(self.fallSfx)]
+        print("Playing: " + str(self.current_sfx))
+        self.current_sfx.setPlayRate(pitch)
+        self.current_sfx.setVolume(volume)
+        self.current_sfx.setLoop(loop)
+        self.current_sfx.play()
+    def playEndSong(self):
+        self.stopMusic()
+        self.endsong.setLoop(True)
+        self.endsong.play()
     def stopSfx(self, sfx = None):
         if sfx == None:
             sfx = self.current_sfx

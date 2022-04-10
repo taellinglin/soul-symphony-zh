@@ -25,7 +25,7 @@ class TitleScreen(Stage):
         self.logo()
         self.press_start()
         self.glyph_rings = GlyphRings(font=base.loader.load_font('fonts/konnarian/Daemon.otf'))
-        base.bgm.playMusic('TitleScreen', True)
+        base.bgm.playMusic('TitleScreen', 0.5, True)
         base.bgm.playSfx('soul-symphony')
         base.task_mgr.add(self.update, 'update')
         base.accept('escape', sys.exit)

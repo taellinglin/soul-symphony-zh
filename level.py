@@ -39,8 +39,8 @@ class level():
             base.loader.load_font('fonts/text/Xenon.otf'),  
         ]
         self.levels = [
-            base.loader.loadModel("levels/arcade01.bam"),
             base.loader.loadModel("levels/arcade00.bam"),
+            base.loader.loadModel("levels/arcade01.bam"),
             base.loader.loadModel("levels/level00.bam"),
             base.loader.loadModel("levels/level01.bam"),
             base.loader.loadModel("levels/level02.bam"),

@@ -46,13 +46,13 @@ base.render.setAntialias(AntialiasAttrib.MNone)
 base.flow = Flow(
     stages=dict(
         splash=Panda3DSplash(exit_stage='title_screen'),
-        title_screen=TitleScreen(exit_stage='arcade01'),
+        title_screen=TitleScreen(exit_stage='arcade00'),
         intro=Intro(exit_stage='intro2'),
         intro2=Intro2(exit_stage='intro3'),
         intro3=Intro3(exit_stage='lettermatching'),
         letter_matching=LetterMatching(exit_stage='room00'),
-        arcade00 = room00(exit_stage='quit', lvl = 1),
-        arcade01 = room00(exit_stage='quit', lvl = 0),
+        arcade00 = room00(exit_stage='quit', lvl = 0),
+        arcade01 = room00(exit_stage='quit', lvl = 1),
         room00=room00(exit_stage='quit', lvl = 2),
         room01=room00(exit_stage='quit', lvl = 3),
         room02=room00(exit_stage='quit', lvl = 4),

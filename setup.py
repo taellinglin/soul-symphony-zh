@@ -1,37 +1,22 @@
-from os import path
-import builtins
-from setuptools import setup, find_packages 
-
-import pman.build_apps
-
-CONFIG = pman.get_config()
-
-APP_NAME = CONFIG['general']['name']
+from setuptools import setup, find_packages
 
 setup(
-    name=APP_NAME,
+    name="soulsymphony",
     packages=find_packages(),
     build_base = "build/",
     setup_requires=[
+        'pyinstaller',
         'pytest-runner',
         'panda3d',
         'panda3d-keybindings',
         'panda3d-stageflow',
         'panda3d-pman',
-        'direct',
+        'panda3d-logos'
         
     ],
-    tests_require=[
-        'pytest',
-        'pylint~=2.6.0',
-        'pytest-pylint',
-    ],
-    cmdclass={
-        'build_apps': pman.build_apps.BuildApps,
-    },
-    options={
+    options = {
         'build_apps': {
-            'platforms':['win_amd64','manylinux1_x86_64', 'macosx_10_6_x86_64'],
+            'platforms':['manylinux2010_x86_64', 'macosx_10_9_x86_64', 'win_amd64'],
             'include_patterns' : [
                 "**/*.png",
                 "**/*.ogg",
@@ -41,19 +26,15 @@ setup(
                 "/*",
                 "**/*.otf",
             ],
-            'rename_paths': {
-                CONFIG['build']['export_dir']+ 'assets/',
+            'gui_apps': {
+                'soulsymphony': 'main.py',
             },
-            'console_apps': {
-                APP_NAME: CONFIG['run']['main_file'],
-            },
+            'log_filename': '$USER_APPDATA/SoulSymphony/output.log',
+            'log_append': True,
             'plugins': [
                 'pandagl',
                 'p3openal_audio',
             ],
-            'use_optimized_wheels': True,
-            'log_filename': CONFIG['build']['export_dir']+'/output.log',
-            
-        },
+        }
     }
 )

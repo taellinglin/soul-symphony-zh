@@ -60,7 +60,7 @@ class room00(Stage):
         self.lvl = lvl
         print("Roll Test Area Entered...")
         base.cam.set_z(24)
-        base.bgm.playMusic(None, True, 0.4)
+        base.bgm.playMusic(None, True, 0.25)
         base.task_mgr.add(self.update, 'update')
         base.accept('escape', sys.exit)
         inputState.watchWithModifiers('forward', 'w')
@@ -83,6 +83,7 @@ class room00(Stage):
         self.player = player()
         self.player.ballNP.reparentTo(self.level.worldNP)
         self.double_jump =  0
+        self.propSfx = 0
         self.level.world.attachRigidBody(self.player.ballNP.node())
         self.player.ballNP.setPos(self.level.player_start.getPos()+(0,0,1))
         self.dialog = dialog()
@@ -158,15 +159,16 @@ class room00(Stage):
                 self.dialog_card_node.hide()
                 base.bgm.stopSfx()
                 base.bgm.playSfx('warp')
-                if self.lvl < len(base.levels):
+                if self.lvl < (len(base.levels)-1):
                     
                     self.lvl += 1
                     print("Next Level! Level: "+ str(self.lvl))
-                    self.transition(base.levels[self.lvl])
-                elif self.lvl >= len(base.levels):
+                    print("Level Name: "+ str(base.levels[self.lvl]))
+                    self.transition(base.levels[self.lvl], self.lvl)
+                elif self.lvl >= (len(base.levels)-1):
                     print("Starting from first level...")
                     self.lvl = 0
-                    self.transition(base.levels[self.lvl])
+                    self.transition(base.levels[self.lvl], self.lvl)
                 return
         
     def actionB(self):
@@ -211,6 +213,7 @@ class room00(Stage):
 
         
     def update(self, task):
+        
         result = self.level.world.contactTestPair(self.player.ballNP.node(), self.level.floorNP.node())
         if result.getNumContacts() > 0:
                 contact = result.getContacts()[0]
@@ -223,6 +226,7 @@ class room00(Stage):
             self.player.ballNP.setPos(self.level.player_start.getPos()+(0,0,3))
             self.player.ballNP.get_node(0).setLinearVelocity(0)
             self.player.ballNP.get_node(0).setAngularVelocity(0)
+            base.bgm.playFallSfx(1,1,False)
             
             
         self.level.audio.audio3d.setListenerVelocity(self.player.ballNP.get_node(0).getLinearVelocity())
@@ -278,8 +282,22 @@ class room00(Stage):
                 letter.detachNode()
                 letter.removeNode()
                 base.scoreboard.addPoints(1)
+                if base.scoreboard.getPoints() > 1000:
+                    base.bgm.playEndSong()
+                    print("You got 1,000 letters! Start the Music!")
                 print("Score + 1!")
-        
+        for a, propArea in enumerate(render.findAllMatches('**/propArea**')):
+            if((propArea.getPos().getXy() - self.player.ballNP.getPos().getXy()).length() < 8):
+                if self.propSfx == 0:
+                    self.propSfx = 1
+                if self.propSfx == 1:    
+                    print("You found a Prop!")
+                    base.bgm.playPropSfx(1, randFloat(0.5, 2), False)
+                    self.propSfx = 2
+            else:
+                self.propSfx = 0
+        for p, prop in enumerate(render.findAllMatches('**/prop**')):
+            prop.set_color(choice(self.colors))
         for o, obj in enumerate(self.level.ground.get_children()):
                 obj.set_color(self.colors[self.color_idx])
         for o, obj in enumerate(self.level.floor.get_children()):
@@ -300,12 +318,12 @@ class room00(Stage):
         self.level.world.doPhysics(dt, 25, 2.0/360.0)
         return task.cont
     
-    def transition(self, exit_stage, lvl = None):
+    def transition(self, exit_stage = None, lvl = None):
         if exit_stage == None:
             self.exit_stage = 'main_menu'
         else:
             self.exit_stage = exit_stage    
-        base.flow.transition(self.exit_stage)
+        base.flow.transition(self.exit_stage, data=lvl)
         
     def exit(self, data):
         self.player.ball_roll.stop()
