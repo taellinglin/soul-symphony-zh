@@ -5,18 +5,16 @@ setup(
     packages=find_packages(),
     build_base = "build/",
     setup_requires=[
-        'pyinstaller',
-        'pytest-runner',
         'panda3d',
         'panda3d-keybindings',
         'panda3d-stageflow',
         'panda3d-pman',
         'panda3d-logos'
-        
+
     ],
     options = {
         'build_apps': {
-            'platforms':['manylinux2010_x86_64', 'macosx_10_9_x86_64', 'win_amd64'],
+            'platforms':['manylinux2010_x86_64', 'macosx_10_9_x86_64', 'win_amd64', 'win32'],
             'include_patterns' : [
                 "**/*.png",
                 "**/*.ogg",
@@ -26,7 +24,7 @@ setup(
                 "/*",
                 "**/*.otf",
             ],
-            'gui_apps': {
+            'console_apps': {
                 'soulsymphony': 'main.py',
             },
             'log_filename': '$USER_APPDATA/SoulSymphony/output.log',

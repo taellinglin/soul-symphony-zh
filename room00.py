@@ -3,6 +3,7 @@ from math import pi
 from math import sin
 from math import cos
 import sys
+from typing import Any
 
 from direct.showbase.PythonUtil import randFloat
 from stageflow.core import Stage
@@ -13,7 +14,7 @@ from level import level
 from player import player
 from npc import npc
 from dialog import dialog
-
+from direct.interval.LerpInterval import LerpPosInterval
 
 from panda3d.core import BitMask32
 from panda3d.core import NodePath
@@ -52,6 +53,7 @@ class room00(Stage):
         self.clock = 0
         self.npcs =[]
         base.disableMouse()
+        
 
         
     def enter(self, lvl = None):
@@ -93,8 +95,9 @@ class room00(Stage):
         self.dialog_card_node = aspect2d.attach_new_node(self.dialog_card)
         self.dialog_card_node.setScale(0.08)
         base.scoreboard.show()
-
+        self.gamepad = base.devices.getDevices(InputDevice.DeviceClass.gamepad)[0]
         self.level.audio.audio3d.attachListener(base.cam)
+        self.clock00 = 1
 
         base.accept("gamepad-face_a", self.actionA)
         base.accept("space", self.actionA)
@@ -117,6 +120,7 @@ class room00(Stage):
                     self.double_jump = 1
                     print("Single Jump!")
                     base.bgm.playSfx('ball-jump')
+                    
                     if len(self.level.npc_mounts):
                         for n, npc_mount in enumerate(self.level.npc_mounts):
                             if((npc_mount.getPos().getXy() - self.player.ballNP.getPos().getXy()).length() < 5):
@@ -211,9 +215,17 @@ class room00(Stage):
         self.player.ballNP.node().applyTorque(torque)
 
 
-        
+    def rumble(self, task, strong, weak):
+        self.gamepad.setVibration(strong, weak)
+
     def update(self, task):
         
+        if (self.clock00 > 0):
+            self.clock00 = self.clock00 - 0.01
+        else:
+            self.clock00 = 1
+
+        #self.rumble(task,sin(self.clock00), sin(self.clock00))
         result = self.level.world.contactTestPair(self.player.ballNP.node(), self.level.floorNP.node())
         if result.getNumContacts() > 0:
                 contact = result.getContacts()[0]
@@ -246,26 +258,32 @@ class room00(Stage):
         result = self.level.world.contactTestPair(self.player.ballNP.node(), self.level.floorNP.node())
         result2 = self.level.world.contactTestPair(self.player.ballNP.node(), self.level.wallsNP.node())
         if result.getNumContacts() > 0:
-            contact = result.getContacts()[0]
-            if contact.getNode1() == self.level.floorNP.node():
-                if not self.player.boing:
-                    self.player.boing = True
-                    mpoint = contact.getManifoldPoint()
-                    volume =  abs(mpoint.getDistance())
-                    pitch = volume
-                    base.bgm.playSfx(choice(self.player.boings), volume, 1)
+            contacts = result.getContacts()
+            for c, contact in enumerate(contacts):
+                if contact.getNode1() == self.level.floorNP.node():
+                    if not self.player.boing:
+                        self.player.boing = True
+                        mpoint = contact.getManifoldPoint()
+                        normal = mpoint.getDistance()
+                        volume = abs(normal)
+                        pitch = volume
+                        self.rumble(task, volume, volume)
+                        base.bgm.playSfx(choice(self.player.boings), volume, 1)
         else:
             self.player.boing = False
         
         if result2.getNumContacts() > 0:
-            contact2 = result2.getContacts()[0]
-            if contact2.getNode1() == self.level.wallsNP.node():
-                if not self.player.boing:
-                    self.player.boing = True
-                    mpoint = contact2.getManifoldPoint()
-                    volume =  abs(mpoint.getDistance())
-                    pitch = volume
-                    base.bgm.playSfx(choice(self.player.boings), volume, 1)
+            contacts = result2.getContacts()
+            for c, contact in enumerate(contacts):
+                if contact.getNode1() == self.level.wallsNP.node():
+                    if not self.player.boing:
+                        self.player.boing = True
+                        mpoint = contact.getManifoldPoint()
+                        normal = mpoint.getDistance()
+                        volume =  abs(normal)
+                        self.rumble(task, volume, volume)
+                        print("Wall Impact: " + str(volume))
+                        base.bgm.playSfx(choice(self.player.boings), volume, 1)
         else:
             self.player.boing = False
         for p, portal in enumerate(self.level.portals):
