@@ -29,6 +29,7 @@ class Base(ShowBase):
 
 base = Base()
 wp = WindowProperties()
+wp.setCursorHidden(True)
 wp.setFullscreen(1)
 #wp.setSize(640, 480)
 wp.setSize(1920, 1080)
