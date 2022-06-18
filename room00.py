@@ -62,6 +62,7 @@ class room00(Stage):
         self.lvl = lvl
         print("Roll Test Area Entered...")
         base.cam.set_z(24)
+        base.vr.tracking_space.setZ(24)
         base.bgm.playMusic(None, True, 0.25)
         base.task_mgr.add(self.update, 'update')
         base.accept('escape', sys.exit)
@@ -95,7 +96,11 @@ class room00(Stage):
         self.dialog_card_node = aspect2d.attach_new_node(self.dialog_card)
         self.dialog_card_node.setScale(0.08)
         base.scoreboard.show()
-        self.gamepad = base.devices.getDevices(InputDevice.DeviceClass.gamepad)[0]
+        if len(base.devices.getDevices(InputDevice.DeviceClass.gamepad)):
+            self.gamepad = base.devices.getDevices(InputDevice.DeviceClass.gamepad)[0]
+        else:
+            self.gamepad = None
+      
         self.level.audio.audio3d.attachListener(base.cam)
         self.clock00 = 1
 
@@ -216,6 +221,7 @@ class room00(Stage):
 
 
     def rumble(self, task, strong, weak):
+        duration = strong + weak
         self.gamepad.setVibration(strong, weak)
 
     def update(self, task):
@@ -267,7 +273,8 @@ class room00(Stage):
                         normal = mpoint.getDistance()
                         volume = abs(normal)
                         pitch = volume
-                        self.rumble(task, volume, volume)
+                        if (self.gamepad != None):
+                            self.rumble(task, volume, volume)
                         base.bgm.playSfx(choice(self.player.boings), volume, 1)
         else:
             self.player.boing = False
@@ -281,7 +288,8 @@ class room00(Stage):
                         mpoint = contact.getManifoldPoint()
                         normal = mpoint.getDistance()
                         volume =  abs(normal)
-                        self.rumble(task, volume, volume)
+                        if (self.gamepad != None):
+                            self.rumble(task, volume, volume)
                         print("Wall Impact: " + str(volume))
                         base.bgm.playSfx(choice(self.player.boings), volume, 1)
         else:
@@ -331,6 +339,7 @@ class room00(Stage):
         base.cam.set_x(self.player.ballNP.get_x())
         base.cam.set_y(self.player.ballNP.get_y() - 48)
         base.cam.set_z(self.player.ballNP.get_z() + 16)
+        base.vr.tracking_space.setPos(self.player.ballNP.get_x(), self.player.ballNP.get_y() - 48, self.player.ballNP.get_z() + 16)
         base.cam.look_at(self.player.ballNP)
         
         self.level.world.doPhysics(dt, 25, 2.0/360.0)

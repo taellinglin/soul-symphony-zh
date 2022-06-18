@@ -9,7 +9,9 @@ setup(
         'panda3d-keybindings',
         'panda3d-stageflow',
         'panda3d-pman',
-        'panda3d-logos'
+        'panda3d-logos',
+        'packaging',
+        'panda3d-openvr'
 
     ],
     options = {
@@ -23,6 +25,8 @@ setup(
                 "**/*.bam",
                 "/*",
                 "**/*.otf",
+                "**/*.vrmanifest",
+                "**/*.json"
             ],
             'console_apps': {
                 'soulsymphony': 'main.py',

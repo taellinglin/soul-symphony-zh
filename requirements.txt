@@ -1,1 +1,7 @@
 panda3d
+panda3d-keybindings
+panda3d-stageflow
+panda3d-pman
+panda3d-logos
+packaging
+panda3d-openvr

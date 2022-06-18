@@ -21,6 +21,8 @@ class TitleScreen(Stage):
         base.accept("gamepad-start", self.transition, [self.exit_stage])
         
         base.cam.set_z(256)
+        base.vr.tracking_space.setZ(256)
+        base.vr.tracking_space.setPos(0,0,0)
         base.cam.look_at(render)
         self.logo()
         self.press_start()
@@ -29,7 +31,7 @@ class TitleScreen(Stage):
         base.bgm.playSfx('soul-symphony')
         base.task_mgr.add(self.update, 'update')
         base.accept('escape', sys.exit)
-    
+
     def transition(self, exit_stage):
         base.flow.transition(self.exit_stage)
         

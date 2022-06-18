@@ -16,11 +16,14 @@ from panda3d.core import WindowProperties
 from panda3d.core import AntialiasAttrib
 from direct.particles import Particles
 from stageflow.prefab import Quit
+from p3dopenvr.p3dopenvr import *
+from panda3d.core import ExecutionEnvironment
 
 class Base(ShowBase):
     def __init__(self):
         ShowBase.__init__(self)
-        
+        self.vr = P3DOpenVR()
+        self.vr.init()
         base.accept('f11', self.drop_to_pdb)
 
     def drop_to_pdb(self):
@@ -28,6 +31,8 @@ class Base(ShowBase):
 
 
 base = Base()
+
+
 wp = WindowProperties()
 wp.setCursorHidden(True)
 wp.setFullscreen(1)
