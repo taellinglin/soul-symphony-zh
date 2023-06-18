@@ -1,0 +1,13 @@
+LICENSE.txt
+README.md
+setup.cfg
+setup.py
+soulsymphony.egg-info/PKG-INFO
+soulsymphony.egg-info/SOURCES.txt
+soulsymphony.egg-info/dependency_links.txt
+soulsymphony.egg-info/top_level.txt
+stageflow/__init__.py
+stageflow/core.py
+stageflow/panda3d.py
+stageflow/prefab.py
+stageflow/wecs.py

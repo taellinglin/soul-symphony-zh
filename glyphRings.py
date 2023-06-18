@@ -20,6 +20,7 @@ class GlyphRings():
                 ring.set_h(ring, 360/characters_in_ring)
                 glyph_text = TextNode('glyph_'+str(c))
                 glyph_text.font = self.font
+                glyph_text.setFlattenFlags(1)
                 glyph_text.text = choice('abcdefghijklmnopqrstuvwxyz')
                 glyph_node = render.attach_new_node(glyph_text)
                 glyph_node.set_y(math.pi)
@@ -28,7 +29,7 @@ class GlyphRings():
                 glyph_node.set_two_sided(1)
                 glyph_node.set_r(90*randint(0,4))
                 glyph_node.wrt_reparent_to(ring)
-                glyph_node.flatten_strong()
+                glyph_node.setRenderMode(TextFont.RMSolid, 2.0)
             ring.set_scale(16-r)
             self.rings.append(ring)
         self.center.reparent_to(render)

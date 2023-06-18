@@ -16,6 +16,7 @@ from panda3d.core import WindowProperties
 from panda3d.core import AntialiasAttrib
 from direct.particles import Particles
 from stageflow.prefab import Quit
+import os
 
 class Base(ShowBase):
     def __init__(self):
@@ -26,6 +27,15 @@ class Base(ShowBase):
     def drop_to_pdb(self):
         import pdb; pdb.set_trace()
 
+    def get_fonts(self, folder_path):
+        font_files = []
+        for root, dirs, files in os.walk(folder_path):
+            for file in files:
+                if file.lower().endswith('.ttf'):
+                    relative_path = os.path.join(root, file)
+                    font_files.append(loader.load_font(relative_path))
+                    print("Loaded:"+ relative_path)
+        return font_files
 
 base = Base()
 wp = WindowProperties()
@@ -37,6 +47,7 @@ base.win.requestProperties(wp)
 base.bgm = BGM()
 base.motion_blur = MotionBlur()
 base.disable_mouse()
+base.fonts = base.get_fonts("fonts/text/")
 #base.enableParticles()
 base.levels =['room00', 'room01', 'room02','room03']
 base.gamepad_input = GamepadInput()

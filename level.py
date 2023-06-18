@@ -18,6 +18,7 @@ from panda3d.core import TextFont
 from panda3d.core import NodePath
 from panda3d.core import GeomVertexReader
 from panda3d.core import GeomVertexData
+import os
 
 
 
@@ -27,17 +28,6 @@ class level():
     def __init__(self, lvl):
         self.audio = audio3d()
         self.npcs = []
-        self.fonts = [
-            base.loader.load_font('fonts/text/Alstoria.otf'),
-            base.loader.load_font('fonts/text/Circus.otf'),
-            base.loader.load_font('fonts/text/Copic.otf'),
-            base.loader.load_font('fonts/text/Dayton.otf'),
-            base.loader.load_font('fonts/text/Empire.otf'),
-            base.loader.load_font('fonts/text/Festival.otf'),
-            base.loader.load_font('fonts/text/Mallika.otf'),
-            base.loader.load_font('fonts/text/Storybook.otf'),
-            base.loader.load_font('fonts/text/Xenon.otf'),  
-        ]
         self.levels = [
             base.loader.loadModel("levels/level00.bam"),
             base.loader.loadModel("levels/level01.bam"),
@@ -71,7 +61,7 @@ class level():
         
         #self.place_letters()
         base.task_mgr.add(self.update, 'level_update')
-         
+        
     def get_npcs(self, num_npcs):
         for n in range(num_npcs):
             new_npc = npc()
@@ -87,7 +77,7 @@ class level():
                 name_node = TextNode("npcName_"+str(name))
                 name_node.text = str(name)
                 name_node.align = 2
-                name_node.font = choice(self.fonts)
+                name_node.font = choice(base.fonts)
                 npcObject.get('nametag').attach_new_node(name_node)
                 #frame.set_pos(npc,(0,0,5))
                 npcObject.get('model').attach_new_node(face.get_node(0))

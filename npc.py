@@ -6,39 +6,40 @@ from panda3d.core import TextureStage
 from panda3d.core import CardMaker
 
 from bgm import BGM
-from random import  choice
-from random import shuffle
+from random import choice, shuffle
 from dialog import dialog
-names = ["Dimitri", 
-         "Mon-Du", 
-         "Loki", 
-         "Zodiac", 
-         "Prime", 
-         "Xing", 
-         "Walker", 
-         "Toma", 
-         "Barako", 
-         "Mortalia", 
-         "Ho-Shin", 
-         "Piko-Su", 
-         "Thai", 
-         "Ocean", 
-         "Vivian", 
-         "Scholar", 
-         "Tempest", 
-         "Dreamer", 
-         "Sky", 
-         "Lithium", 
-         "Boxer", 
-         "Brook", 
-         "Fargo", 
-         "Soldier", 
-         "Neptune",
-         "Aelita",
-         "Tae Lee",
-         "Honda",
-         "Saturn",
-         "Tortuga"]
+import glob
+
+names = ["迪米特里",
+         "蒙杜",
+         "洛基",
+         "黄道",
+         "普瑞姆",
+         "星",
+         "沃克",
+         "托玛",
+         "巴拉科",
+         "莫塔利亚",
+         "何新",
+         "皮克苏",
+         "泰",
+         "海洋",
+         "薇薇安",
+         "学者",
+         "暴风雨",
+         "梦想家",
+         "天空",
+         "锂",
+         "拳击手",
+         "布鲁克",
+         "法尔戈",
+         "士兵",
+         "海王星",
+         "艾丽塔",
+         "泰利",
+         "本田",
+         "土星",
+         "托尔图加"]
 used_names = []
 
 class npc():
@@ -56,9 +57,6 @@ class npc():
                         base.loader.loadTexture("NPCs/faces/face07.png"),
                         base.loader.loadTexture("NPCs/faces/face08.png"),
                         base.loader.loadTexture("NPCs/faces/face09.png"),
-                        
-                        
-                        
         ]
         self.emblems = [
                         base.loader.loadTexture("NPCs/emblems/emblem00.png"),
@@ -102,13 +100,27 @@ class npc():
         self.cm = CardMaker('card')
         self.card = render.attachNewNode(self.cm.generate())
         npc_dialog_text = self.dialogs[self.id]
+
+        # Load a random font
+        font_paths = glob.glob("fonts/text/*.ttf")
+        font_path = choice(font_paths)
+        font = loader.load_font(font_path)
+
+        # Create a TextNode object
+        text_node = TextNode("my_text_node")
+        text_node.set_font(font)
+
+        # Set the text content
+        text_node.set_text(npc_dialog_text)
+
         new_npc = { "id" : self.id,
                     "name" : npc.get("name"),
-                   "nametag" : self.nametag,
-                   "face": self.face,
-                   "emblem": self.emblem,
-                   "model": npcModel,
-                   "dialog": npc_dialog_text
+                    "nametag" : self.nametag,
+                    "face": self.face,
+                    "emblem": self.emblem,
+                    "model": npcModel,
+                    "dialog": npc_dialog_text,
+                    "text_node": text_node,
         }
         self.id += 1
         return new_npc
@@ -118,4 +130,3 @@ class npc():
         self.emblem.set_h(self.emblem, -1)
             
         return task.cont
-    

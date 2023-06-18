@@ -1,34 +1,9 @@
 from random import choice
-
+import os
 
 class BGM():
     def __init__(self):
-        self.songs = [
-            'Flag', 
-            'Excellent', 
-            'FlagTracker', 
-            'HallofSunrise',
-            'NightDrive', 
-            'SpaceField', 
-            'StarlightVocals',
-            'Trich', 
-            'WalkThePath', 
-            'Whisper', 
-            'WishingWell', 
-            'Womper',
-            'YouMightBeRight', 
-            'The_Spirit_Flag_Instrumental', 
-            'Through_my_Heart_Instrumental', 
-            'Today2', 
-            'TitleScreen',
-            'Celestial',
-            'TheGreatJourney',
-            'TheSpiritsTwo',
-            'SpiritsMarch',
-            'SuperSignal',
-            'Ambience00',
-            'The_Spirits'
-        ]
+        self.songs = self.get_music("music/")
 
         self.music = {}
         for song in self.songs:
@@ -59,7 +34,13 @@ class BGM():
         self.current_music = self.music[choice(self.songs)]
         #base.playMusic(self.current_music, 1, 1, None, 0)
             
-        
+    def get_music(self, directory):
+        wav_filenames = []
+        for filename in os.listdir(directory):
+            if filename.endswith('.ogg'):
+                wav_filenames.append(os.path.splitext(filename)[0])
+        return wav_filenames
+
     def playMusic(self, track = None, loop = True, volume = 1):
         print("Starting Music...")
         if(self.current_music.status == 2):

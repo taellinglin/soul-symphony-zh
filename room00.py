@@ -23,6 +23,7 @@ from panda3d.core import BitMask32
 from panda3d.core import TextNode
 from panda3d.bullet import BulletRigidBodyNode
 from panda3d.bullet import BulletBodyNode
+import os
 
 from direct.showbase.InputStateGlobal import inputState
 class room00(Stage):
@@ -50,8 +51,8 @@ class room00(Stage):
         self.color_idx = -1
         self.clock = 0
         self.npcs =[]
+        
         base.disableMouse()
-
         
     def enter(self, lvl = None):
         if lvl == None:
@@ -87,6 +88,7 @@ class room00(Stage):
         self.dialog_card = TextNode('dialog_card')
         self.dialog_card.align = 2
         self.dialog_card.setWordwrap(40)
+        self.dialog_card.setFont(choice(base.fonts))
         self.dialog_card_node = aspect2d.attach_new_node(self.dialog_card)
         self.dialog_card_node.setScale(0.08)
         base.scoreboard.show()
@@ -116,6 +118,7 @@ class room00(Stage):
                         for n, npc_mount in enumerate(self.level.npc_mounts):
                             if((npc_mount.getPos().getXy() - self.player.ballNP.getPos().getXy()).length() < 5):
                                 self.dialog_card.text = self.level.npcs[n].get('dialog')
+                                self.dialog_card.setFont(choice(base.fonts))
                                 self.dialog_card_node.show()
                                 base.bgm.playSfx('start-dialog')
                                 self.player.force = Vec3(0,0,0)
@@ -124,7 +127,8 @@ class room00(Stage):
                     if len(self.level.portals):
                         for p, portal in enumerate(self.level.portals):
                             if((portal.getPos().getXy() - self.player.ballNP.getPos().getXy()).length() < 5):
-                                self.dialog_card.text = choice(["Let's Trip!", "C'mon now!", "Yeah! Onward!", "We're out!", "Abscond!", "Let's get Lost!", "Sayonara!", "Nigeru!", "Outta here!"])
+                                self.dialog_card.setFont(choice(base.fonts))
+                                self.dialog_card.text = choice(["出发吧！", "快点！", "耶！前进！", "我们走了！", "逃离！", "让我们迷失吧！", "再见！", "逃跑！", "离开这里！"])
                                 self.dialog_card_node.show()
                                 self.player.force = Vec3(0,0,0)
                                 self.player.torque = Vec3(0,0,0)
