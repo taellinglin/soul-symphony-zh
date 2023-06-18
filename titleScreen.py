@@ -35,7 +35,7 @@ class TitleScreen(Stage):
         base.cam.look_at(render)
         self.logo()
         self.star()
-        self.press_start()
+        #self.press_start()
         self.glyph_rings = GlyphRings(font=base.loader.load_font('fonts/konnarian/Daemon.otf'))
         base.bgm.playMusic('Lin', True)
         base.bgm.playSfx('soul-symphony')
@@ -82,7 +82,7 @@ class TitleScreen(Stage):
         return task.cont
 
     def exit(self, data):
-        self.subtitle.detachNode()
+        #self.subtitle.detachNode()
         self.glyph_rings.center.detachNode()
         self.bg2.detachNode()
         self.star_decal.detachNode()
