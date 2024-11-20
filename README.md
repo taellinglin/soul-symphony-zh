@@ -62,7 +62,8 @@
 
 ### 项目结构
 
-```soul-symphony/ │ 
+```
+soul-symphony/ │ 
                ├── assets/ # 视觉和音频资产 
                │ ├── models/ # 3D 模型和传送门资产 
                │ ├── music/ # 背景音乐（.wav 文件） 
@@ -71,7 +72,9 @@
                ├── portals.py # 传送门逻辑 
                ├── main.py # 主应用入口点 
                ├── requirements.txt # Python 依赖 
-               └── README.md # 项目文档```
+               └── README.md # 项目文档
+```
+
 ## 🤝 贡献
 
 欢迎贡献！如果你想改进该项目，请按照以下步骤：
