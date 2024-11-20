@@ -62,7 +62,7 @@
 
 ### 项目结构
 
-soul-symphony/ │ 
+```soul-symphony/ │ 
                ├── assets/ # 视觉和音频资产 
                │ ├── models/ # 3D 模型和传送门资产 
                │ ├── music/ # 背景音乐（.wav 文件） 
@@ -71,7 +71,7 @@ soul-symphony/ │
                ├── portals.py # 传送门逻辑 
                ├── main.py # 主应用入口点 
                ├── requirements.txt # Python 依赖 
-               └── README.md # 项目文档
+               └── README.md # 项目文档```
 ## 🤝 贡献
 
 欢迎贡献！如果你想改进该项目，请按照以下步骤：
@@ -80,15 +80,15 @@ soul-symphony/ │
 
     创建一个新分支：
 
-git checkout -b feature-name
+    ```git checkout -b feature-name```
 
 提交你的更改：
 
-git commit -m "功能描述"
+    ```git commit -m "功能描述"```
 
 推送到你的分支：
 
-    git push origin feature-name
+    ```git push origin feature-name```
 
     创建一个拉取请求（Pull Request）。
 

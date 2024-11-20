@@ -201,7 +201,7 @@ class SoulParticles:
             else:
                 #print("Error: self.p0 or self.p0.renderer is None during color cycling.")
             
-            self.time_since_last_change = 0.0  # Reset the timer
+                self.time_since_last_change = 0.0  # Reset the timer
             
         return task.cont  # Continue the task
 
@@ -215,6 +215,7 @@ class SoulParticles:
             #print(f"Randomized color: {random_color}")
         else:
             #print("Error: self.p0 or self.p0.renderer is None during random color update.")
+            pass
 
     def cleanup(self):
         """Clean up the particle system and associated resources."""
