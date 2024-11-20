@@ -44,7 +44,7 @@
 
     ```python main.py```
 
-或
+    或
 
     ```./start_soul_symphony.bat```
 
