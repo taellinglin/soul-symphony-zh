@@ -74,7 +74,6 @@ soul-symphony/ │
                ├── requirements.txt # Python 依赖 
                └── README.md # 项目文档
 ```
-
 ## 🤝 贡献
 
 欢迎贡献！如果你想改进该项目，请按照以下步骤：
@@ -164,6 +163,7 @@ Follow these steps to set up and run the project locally:
 
 
 ## 📂 Project Structure
+   ```
    soul-symphony/
    │
    ├── assets/                 # Visual and audio assets
@@ -176,6 +176,7 @@ Follow these steps to set up and run the project locally:
    ├── main.py                 # Main application entry point
    ├── requirements.txt        # Python dependencies
    └── README.md               # Project documentation
+   ```
 ## 🤝 Contributing
 
 Contributions are welcome! If you'd like to improve the project, please follow these steps:
@@ -183,7 +184,7 @@ Contributions are welcome! If you'd like to improve the project, please follow t
     Fork the repository.
     Create a new branch:
 
-git checkout -b feature-name
+    ```git checkout -b feature-name```
 
 Commit your changes:
 
@@ -191,7 +192,7 @@ git commit -m "Description of your feature"
 
 Push to your branch:
 
-    git push origin feature-name
+    ```git push origin feature-name```
 
     Create a pull request.
 
