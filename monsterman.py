@@ -123,7 +123,7 @@ class YinYangMonster(NodePath):
             color_writer.add_data4f(r, g, b, a)
 
     def update(self, task):
-        print("Updating monster")
+        #print("Updating monster")
         delta_time = globalClock.get_dt()
         self.update_velocity(delta_time)
         self.update_position(delta_time)
@@ -136,26 +136,26 @@ class YinYangMonster(NodePath):
         """Kick the monster in a random direction."""
         direction = Vec3(random.uniform(-1, 1), random.uniform(-1, 1), 0).normalized()
         self.velocity = direction * self.kick_power  # Apply the kick power to the velocity
-        print(f"Initial velocity after kick-off: {self.velocity}")
+        #print(f"Initial velocity after kick-off: {self.velocity}")
 
 
     def update_velocity(self, delta_time):
         self.velocity += LVector3f(0, 0, -9.8) * delta_time  # Apply gravity
-        print(f"Velocity: {self.velocity}")
+        #print(f"Velocity: {self.velocity}")
 
 
 
     def update_position(self, delta_time):
         self.position += self.velocity * delta_time
         self.set_pos(self.position)  # Update the NodePath's position in the scene graph
-        print(f"Position: {self.position}")
+        #print(f"Position: {self.position}")
 
         
     def update_hpr(self):
         if self.velocity.length() > 0:
             direction = self.velocity.normalized()
             self.hpr = LVecBase3f(direction.getX(), direction.getY(), 0)  # Update heading
-            print(f"Updated hpr: {self.hpr}")
+            #print(f"Updated hpr: {self.hpr}")
 
 
 class MonsterManager:

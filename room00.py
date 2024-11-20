@@ -12,9 +12,11 @@ from stageflow import Stage
 from level import level
 from player import player
 from npc import npc
+
+from soulparticles import SoulParticles
 from dialog import dialog
 from panda3d.core import LVecBase4f
-
+import string
 from panda3d.core import BitMask32
 from panda3d.core import NodePath
 from panda3d.core import InputDevice
@@ -27,7 +29,8 @@ from panda3d.bullet import BulletRigidBodyNode
 from panda3d.bullet import BulletBodyNode
 from panda3d.core import ClipPlaneAttrib, Plane, LVecBase3
 from direct.interval.IntervalGlobal import Sequence, Wait, Parallel
-from panda3d.core import TransparencyAttrib, CardMaker, NodePath, Vec4, Vec3, Point3, LVector3, ColorWriteAttrib
+from panda3d.core import TransparencyAttrib, CardMaker, NodePath, Vec4, Vec3, Point3, LVector3, ColorWriteAttrib, Texture
+from panda3d.physics import LinearVectorForce
 from direct.gui.OnscreenImage import OnscreenImage
 from direct.interval.LerpInterval import LerpColorInterval, LerpScaleInterval
 from direct.interval.IntervalGlobal import Sequence, LerpPosInterval
@@ -39,7 +42,19 @@ import numpy as np
 import math
 from direct.showbase.InputStateGlobal import inputState
 from panda3d.core import KeyboardButton
+from panda3d.core import PNMImage
 from healthbar import HealthBar
+from direct.particles.ParticleEffect import ParticleEffect
+from direct.particles import Particles
+from direct.particles import ForceGroup  # Correct import for ForceGroup
+from direct.particles import ParticleManagerGlobal
+from direct.particles import Particles
+from panda3d.physics import RectangleEmitter
+from panda3d.physics import BaseParticleEmitter, BaseParticleRenderer
+from panda3d.physics import PointParticleFactory, SpriteParticleRenderer
+from panda3d.physics import LinearNoiseForce, DiscEmitter
+import glob
+from panda3d.core import Filename
 
 class room00(Stage):
     def __init__(self, exit_stage="main_menu", lvl=None, audio_amplitude=None):
@@ -48,7 +63,7 @@ class room00(Stage):
                 self.lvl = 0
             else:
                 self.lvl = lvl
-                
+            base.enableParticles()
             self.exit_stage = exit_stage
             self.globalClock = globalClock
             self.rotation_speed = 60 # Degrees per second
@@ -109,6 +124,9 @@ class room00(Stage):
             self.stream.start()
                     # Initialize color intervals for cycling through colors
             base.disableMouse()  # Disable mouse control
+            self.font_path = "fonts/konnarian/Daemon.otf"
+            self.texture_directory = 'stars/'
+            self.level_min_bound, self.level_max_bound = 1024, 1024
             
     def star(self):
 
@@ -251,7 +269,8 @@ class room00(Stage):
         self.dialog_card_node.setScale(0.08)
         base.scoreboard.show()
         self.level.audio.audio3d.attachListener(base.cam)
-
+        self.particles = SoulParticles(self.texture_directory, self.level.worldNP)
+        self.particles.create_matrix_effect(t=self.level.worldNP)
         base.accept("gamepad-face_a", self.actionA)
         base.accept("space", self.actionA)
         base.accept("gamepad-face_a-up", self.actionAUp)
@@ -605,6 +624,11 @@ class room00(Stage):
         base.flow.transition(self.exit_stage)
         
     def exit(self, data):
+        # Cleanup particles if they exist
+        if hasattr(self, 'particles'):
+            # Disable the particle system
+            self.particles.cleanup()  # Clean up any particle resources
+            self.particles = None  # Dereference particles to fully clean up
         self.star_node.removeNode()
         self.star_decal.removeNode()
         self.imageObject2.removeNode()
