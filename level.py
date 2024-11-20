@@ -320,7 +320,7 @@ class level():
 
             
     
-    def spawn_on_floor(self, num_monsters=100):
+    def spawn_on_floor(self, num_monsters=10):
         """Spawn a specified number of monsters on the floor using the existing floor collision geometry."""
     
         # Step 1: Get the existing floor collision geometry

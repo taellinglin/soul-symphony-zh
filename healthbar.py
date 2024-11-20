@@ -68,7 +68,6 @@ class HealthBar(DirectObject):
 
     def cycle_colors(self, task):
         """Optional color cycling effect (periodic updates)."""
-        if task.time % 1.0 < 0.1:  # Update color every second (or adjust for faster/slower cycling)
-            self.current_color_index = (self.current_color_index + 1) % len(self.colors)
-            self.fg_bar.set_color(self.colors[self.current_color_index])
+        self.current_color_index = (self.current_color_index + 1) % len(self.colors)
+        self.fg_bar.set_color(self.colors[self.current_color_index])
         return Task.cont

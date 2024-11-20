@@ -16,7 +16,11 @@ from room00 import room00
 from stageflow.prefab import Quit
 import os
 import time  # Ensure you import time for timing the recording
+from panda3d.core import GraphicsPipe
 
+
+
+# Now you can use native_width and native_height
 class Base(ShowBase):
     def __init__(self):
         ShowBase.__init__(self)
@@ -86,10 +90,19 @@ class Base(ShowBase):
 # Initialize the game
 base = Base()
 
+# Get the default graphics pipe
+pipe = base.win.getPipe()
+
+# Get the native resolution of the screen
+native_width = pipe.getDisplayWidth()
+native_height = pipe.getDisplayHeight()
+print(native_height)
+print(native_width)
+
 # Set up window properties
 wp = WindowProperties()
 wp.setFullscreen(1)
-wp.setSize(1920, 1080)
+wp.setSize(native_width, native_height)  # Set to native screen resolution
 base.openMainWindow()
 base.win.requestProperties(wp)
 
