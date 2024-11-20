@@ -1,0 +1,59 @@
+ # Reset the effect and set scale
+self.reset()
+self.setScale(0.0001, 0.000100, 0.000100)
+
+# Create a new particle system
+p0 = Particles.Particles('particles-1')
+
+# Particles parameters
+p0.setFactory("PointParticleFactory")
+p0.setRenderer("SpriteParticleRenderer")
+p0.setEmitter("RectangleEmitter")
+p0.setPoolSize(512)  # Number of particles
+p0.setBirthRate(0.05)  # Rate of particle creation
+p0.setLitterSize(128)  # Number of particles per burst
+p0.setLitterSpread(2)  # Spread of particles within each burst
+p0.setSystemLifespan(2.0)  # Lifespan of the entire particle system (in seconds)
+p0.setLocalVelocityFlag(1)  # Local velocity flag
+p0.setSystemGrowsOlderFlag(0)  # Particles should not grow older
+
+# Factory parameters (control particle behavior)
+p0.factory.setLifespanBase(5.0)  # Base lifespan of each particle
+p0.factory.setLifespanSpread(0.5)  # Spread in particle lifespan
+p0.factory.setMassBase(0.01)  # Mass of each particle
+p0.factory.setMassSpread(0.001)  # Variation in particle mass
+p0.factory.setTerminalVelocityBase(1.0)  # Terminal velocity of particles
+p0.factory.setTerminalVelocitySpread(0.5)  # Spread in terminal velocity
+
+# Renderer parameters (control appearance)
+p0.renderer.setAlphaMode(BaseParticleRenderer.PRALPHAUSER)
+p0.renderer.setUserAlpha(0.10)  # Full opacity
+p0.renderer.setTexture(loader.loadTexture('stars/00041-2773312458.png'))  # Texture for particles
+p0.renderer.setColor(LVector4(1.0, 1.0, 1.0, 1.0))  # White color (RGBA)
+p0.renderer.setXScaleFlag(True)  # Disable scaling along X-axis
+p0.renderer.setYScaleFlag(True)  # Disable scaling along Y-axis
+p0.renderer.setAnimAngleFlag(False)  # No animation on particle angle
+p0.renderer.setInitialXScale(0.01)  # Initial size of particles (X)
+p0.renderer.setFinalXScale(0.01)  # Final size of particles (X)
+p0.renderer.setInitialYScale(0.01)  # Initial size of particles (Y)
+p0.renderer.setFinalYScale(0.01)  # Final size of particles (Y)
+p0.renderer.setNonanimatedTheta(1.0)  # No rotation on the particles
+p0.renderer.setAlphaBlendMethod(BaseParticleRenderer.PPBLENDLINEAR)  # Linear blend for transparency
+p0.renderer.setAlphaDisable(False)  # Keep alpha blending enabled
+
+# Emitter parameters (control emission behavior)
+p0.emitter.setEmissionType(BaseParticleEmitter.ETCUSTOM)  # Emit particles in a radiating pattern
+p0.emitter.setAmplitude(1.0)  # No amplitude (adjust if you need more force)
+p0.emitter.setAmplitudeSpread(0.0)  # No spread in amplitude
+p0.emitter.setOffsetForce(LVector3(0.0, 0.0, -9.2))  # Apply a slight downward force
+p0.emitter.setExplicitLaunchVector(LVector3(0.0, 0.0, -1.0))  # Emit particles downward
+p0.emitter.setRadiateOrigin(LPoint3(0.0, 0.0, 0.0))  # Emit from the origin (0,0,0)
+p0.emitter.setMinBound(LVector3(-256.0, -256.0, 256.0))  # Minimum bounds of the emitter area
+p0.emitter.setMaxBound(LVector3(256, 256, -256.0))  # Maximum bounds of the emitter area
+
+# Add the particles to the effect
+self.addParticles(p0)
+
+# Apply force groups (e.g., gravity or other forces)
+f0 = ForceGroup.ForceGroup('default')
+self.addForceGroup(f0)
