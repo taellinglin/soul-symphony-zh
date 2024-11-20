@@ -33,20 +33,20 @@
 
 2. 安装依赖：
 
-pip install -r requirements.txt
+    ```pip install -r requirements.txt```
 
 3. 设置 Git LFS（如果处理 .wav 或其他大型文件）：
 
-git lfs install
-git lfs pull
+    ```git lfs install
+    git lfs pull```
 
 4. 运行应用：
 
-python main.py
+    ```python main.py```
 
 或
 
-    ./start_soul_symphony.bat
+    ```./start_soul_symphony.bat```
 
 ## 🎨 工作原理
 
