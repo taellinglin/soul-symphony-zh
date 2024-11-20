@@ -37,8 +37,8 @@
 
 3. 设置 Git LFS（如果处理 .wav 或其他大型文件）：
 
-    ```git lfs install
-    git lfs pull```
+    ```git lfs install```
+    ```git lfs pull```
 
 4. 运行应用：
 
