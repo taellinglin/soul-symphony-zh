@@ -305,7 +305,7 @@ class level():
                 collision_point = entry.getSurfacePoint(self.worldNP)
                 print(f"Spawn {i}: Placing monster at {collision_point}")
                 # Adjust the Z value of the collision point to move the monster 0.25 units above the floor
-                new_collision_point = Point3(collision_point.x, collision_point.y, collision_point.z - 0.25)
+                new_collision_point = Point3(collision_point.x, collision_point.y, collision_point.z + 0.25)
         
                 # Use the collision point to place a monster
                 monster = self.monster_manager.create_monster(i)
@@ -320,7 +320,7 @@ class level():
 
             
     
-    def spawn_on_floor(self, num_monsters=1000):
+    def spawn_on_floor(self, num_monsters=100):
         """Spawn a specified number of monsters on the floor using the existing floor collision geometry."""
     
         # Step 1: Get the existing floor collision geometry
