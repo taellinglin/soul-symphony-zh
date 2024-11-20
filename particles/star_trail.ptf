@@ -1,0 +1,25 @@
+#Panda3D Particle Effect
+
+particles {
+  system ParticleSystem {
+    particles_per_second 300
+    lifespan_base 0.5
+    factory PointParticleFactory {
+      lifespan_base 0.5
+    }
+    renderer LineParticleRenderer {
+      line_scale_factor 1.0
+      color_start [1 1 1 1]
+      color_end [1 1 0 0]
+      alpha_mode PRALPHA_USER
+      blend_method PPBLEND_LERP
+    }
+    emitter PointEmitter {
+      location Point3 0.0 0.0 0.0
+      radius 0.05
+    }
+    physics {
+      gravity 0.0
+    }
+  }
+}

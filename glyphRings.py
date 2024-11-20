@@ -4,13 +4,14 @@ from panda3d.core import NodePath
 from panda3d.core import TextNode
 from panda3d.core import DirectionalLight
 from panda3d.core import AmbientLight
+from panda3d.core import Vec4
 from random import randint, choice
 
 
 class GlyphRings():
     def __init__(self, font, number_of_rings=16, characters_in_ring=16):
         self.font = font
-        self.font.set_render_mode(TextFont.RMSolid)
+        self.font.set_render_mode(5)
 
         self.rings = []
         self.center = NodePath('center')
@@ -29,12 +30,20 @@ class GlyphRings():
                 glyph_node.set_two_sided(1)
                 glyph_node.set_r(90*randint(0,4))
                 glyph_node.wrt_reparent_to(ring)
-                glyph_node.setRenderMode(TextFont.RMSolid, 2.0)
-            ring.set_scale(16-r)
+                glyph_node.setRenderMode(5, 2.0)
+            ring.set_scale(32-r*2)
             self.rings.append(ring)
         self.center.reparent_to(render)
 
-        self.colors = [(1,0,0,1), (0,1,1,1), (1,1,0,1), (1,0,1,1)]
+        self.colors = [
+            Vec4(1, 0, 0, 1),      # Red
+            Vec4(1, 0.5, 0, 1),    # Orange
+            Vec4(1, 1, 0, 1),      # Yellow
+            Vec4(0, 1, 0, 1),      # Green
+            Vec4(0, 0, 1, 1),      # Blue
+            Vec4(0.29, 0, 0.51, 1),# Indigo
+            Vec4(0.56, 0, 1, 1)    # Violet
+        ]
         self.clock = 0
         self.ring_speed = 1
         self.char_speed = 0.01

@@ -4,6 +4,7 @@ import os
 class BGM():
     def __init__(self):
         self.songs = self.get_music("music/")
+        self.available_songs = self.songs.copy()  # A list to keep track of unplayed songs
 
         self.music = {}
         for song in self.songs:
@@ -30,9 +31,7 @@ class BGM():
             self.sfx[s] = base.loader.load_sfx("audio/{}.wav".format(s))
 
         self.current_sfx = self.sfx['soul-symphony']
-        #base.playSfx(self.current_sfx)
-        self.current_music = self.music[choice(self.songs)]
-        #base.playMusic(self.current_music, 1, 1, None, 0)
+        self.current_music = self.select_random_song()
             
     def get_music(self, directory):
         wav_filenames = []
@@ -41,27 +40,37 @@ class BGM():
                 wav_filenames.append(os.path.splitext(filename)[0])
         return wav_filenames
 
-    def playMusic(self, track = None, loop = True, volume = 1):
+    def select_random_song(self):
+        # Check if there are any available songs left
+        if not self.available_songs:
+            self.available_songs = self.songs.copy()  # Reset available songs
+            print("All songs have been played. Resetting playlist.")
+
+        # Choose a song randomly from available ones
+        selected_song = choice(self.available_songs)
+        self.available_songs.remove(selected_song)  # Remove the selected song to avoid repeats
+
+        return self.music[selected_song]
+
+    def playMusic(self, track=None, loop=True, volume=1):
         print("Starting Music...")
-        if(self.current_music.status == 2):
+        if self.current_music.status == 2:
             self.current_music.stop()
         
-        if track == None:
-            self.current_music = self.music[choice(self.songs)]
+        if track is None:
+            self.current_music = self.select_random_song()
         else:
-            print(self.songs.index(track))
             self.current_music = self.music[track]
+
         self.current_music.setLoop(loop)
         self.current_music.setVolume(volume)
         self.current_music.play()
-        
-        
+
     def stopMusic(self):
-        #if (self.current_music.status()== 2):
         self.current_music.stop()
-            
-    def playSfx(self, sfx = None, volume = 1, pitch = 1, loop = False):
-        if sfx == None:
+
+    def playSfx(self, sfx=None, volume=1, pitch=1, loop=False):
+        if sfx is None:
             print("No sfx provided.")
             return
         if self.current_sfx.status != self.current_sfx.PLAYING:
@@ -70,15 +79,12 @@ class BGM():
             self.current_sfx.setVolume(volume)
             self.current_sfx.setLoop(loop)
             self.current_sfx.play()
-            
-    def stopSfx(self, sfx = None):
-        if sfx == None:
+
+    def stopSfx(self, sfx=None):
+        if sfx is None:
             sfx = self.current_sfx
         if self.current_sfx.status == self.current_sfx.PLAYING:
             sfx.stop()
-        
+
     def is_playing_sfx(self):
-        if self.current_sfx.status == self.current_sfx.PLAYING:
-            return True
-        else:
-            return False
+        return self.current_sfx.status == self.current_sfx.PLAYING

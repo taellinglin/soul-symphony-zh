@@ -9,6 +9,7 @@ from bgm import BGM
 from random import choice, shuffle
 from dialog import dialog
 import glob
+import os
 
 names = ["迪米特里",
          "蒙杜",
@@ -46,28 +47,28 @@ class npc():
     
     def __init__(self):
         self.names = names
-        self.faces = [
-                        base.loader.loadTexture("NPCs/faces/face00.png"),
-                        base.loader.loadTexture("NPCs/faces/face01.png"),
-                        base.loader.loadTexture("NPCs/faces/face02.png"),
-                        base.loader.loadTexture("NPCs/faces/face03.png"),
-                        base.loader.loadTexture("NPCs/faces/face04.png"),
-                        base.loader.loadTexture("NPCs/faces/face05.png"),
-                        base.loader.loadTexture("NPCs/faces/face06.png"),
-                        base.loader.loadTexture("NPCs/faces/face07.png"),
-                        base.loader.loadTexture("NPCs/faces/face08.png"),
-                        base.loader.loadTexture("NPCs/faces/face09.png"),
-        ]
-        self.emblems = [
-                        base.loader.loadTexture("NPCs/emblems/emblem00.png"),
-                        base.loader.loadTexture("NPCs/emblems/emblem01.png"),
-                        base.loader.loadTexture("NPCs/emblems/emblem02.png"),
-        ]
+        # Path to your directories
+        faces_dir = "NPCs/faces"
+        emblems_dir = "NPCs/emblems"
+        # Load textures from the directories
+        self.faces = self.load_textures_from_directory(faces_dir)
+        self.emblems = self.load_textures_from_directory(emblems_dir)
         base.task_mgr.add(self.update, "npc_update")
         self.npc_dialog = dialog()
         self.dialogs = self.npc_dialog.get_dialogs()
         self.id = 0
-        
+    # Function to load all textures in a directory
+    def load_textures_from_directory(self, directory):
+        textures = []
+        # Iterate through the files in the directory
+        for filename in os.listdir(directory):
+            # Check if the file is a PNG file
+            if filename.endswith(".png"):
+                # Construct the full file path
+                texture_path = os.path.join(directory, filename)
+                # Load the texture and append it to the list
+                textures.append(base.loader.loadTexture(texture_path))
+        return textures
     def load_npc(self):
         
         npcModel = base.loader.loadModel("NPCs/npc01.bam")
@@ -86,10 +87,12 @@ class npc():
         }
         self.nametag = npcModel.find("**/npcNametag")
         self.face = npcModel.find("**/npcFace")
+        self.face.clearTexture()
         self.face.set_two_sided(True)
         self.nametag.hide()
         
         self.emblem = npcModel.find("**/npcEmblem")
+        self.emblem.clearTexture()
         self.emblem.set_two_sided(True)
         ts1 = TextureStage('ts1')
         ts2 = TextureStage('ts2')
@@ -97,7 +100,10 @@ class npc():
             self.face.set_texture(stage, npc.get("face"), 1)
         for stage in self.emblem.find_all_texture_stages():
             self.emblem.set_texture(stage, npc.get("emblem"), 1)
+
+        self.emblem.setScale(3,3,3)
         self.cm = CardMaker('card')
+        
         self.card = render.attachNewNode(self.cm.generate())
         npc_dialog_text = self.dialogs[self.id]
 
