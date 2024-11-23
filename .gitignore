@@ -9,3 +9,4 @@ __pycache__
 .wav
 !audio/*.wav
 .mp4
+.venv
