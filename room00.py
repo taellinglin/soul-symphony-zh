@@ -234,7 +234,7 @@ class room00(Stage):
 
             self.base_transparency = 0  # Base transparency value
 
-            self.fs = 192000  # Sampling frequency
+            self.fs = 96000  # Sampling frequency
 
             self.buffer_size = 64  # Size of audio buffer
 
