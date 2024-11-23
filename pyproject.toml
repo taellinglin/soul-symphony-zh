@@ -1,0 +1,32 @@
+[build-system]
+requires = [
+    "setuptools >= 61",
+    "wheel",
+    "setuptools_scm",
+    "panda3d-pman",
+    "panda3d-blend2bam"
+]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "SoulSymphony"
+version = "0.1.0"
+dependencies = [
+    "panda3d",
+    "panda3d-pman",
+]
+requires-python = ">= 3.8"
+
+[project.optional-dependencies]
+test = [
+    "pytest",
+]
+
+[tool.setuptools.packages.find]
+namespaces = false
+
+[tool.pman.build_apps]
+plugins = [
+    "pandagl",
+    "p3openal_audio",
+]

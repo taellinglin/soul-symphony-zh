@@ -1,25 +1,23 @@
 import os
 import wave
-import cv2
 import time
 import numpy as np
-import subprocess  # To use ffmpeg
-from datetime import datetime
 import sounddevice as sd
+import imageio
+import subprocess
+from datetime import datetime
 
 class ScreenRecorder:
     def __init__(self, base):
         self.base = base  # Reference to the ShowBase instance
-        self.audio_buffer = []  # Initialize audio buffer as an empty list
-        self.screenshot_folder = "screenshots"
-        self.screencapture_folder = "screencaptures"
         self.recording = False
-        self.record_start_time = None
         self.video_writer = None
         self.audio_filename = None
         self.audio_frames = []
         self.audio_stream = None
-        self.sample_rate = 192000  # 192 kbps for stereo audio
+        self.screenshot_folder = "screenshots"
+        self.screencapture_folder = "screencaptures"
+        self.sample_rate = 192000  # 192 kHz for stereo audio
         self.channels = 2  # Stereo audio
 
         # Setup folders and input events
@@ -70,35 +68,23 @@ class ScreenRecorder:
     def start_recording(self):
         """Initialize video and audio recording."""
         try:
-            # Use a common capture datetime for both video and audio files
             capture_datetime = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-            video_filename = os.path.join(self.screencapture_folder, f"capture_{capture_datetime}.avi")
+            video_filename = os.path.join(self.screencapture_folder, f"capture_{capture_datetime}.mp4")
             audio_filename = os.path.join(self.screencapture_folder, f"audio_{capture_datetime}.wav")
 
             print(f"Starting video recording to: {video_filename} and audio to {audio_filename}")
-
             self.recording = True
             self.record_start_time = time.time()
 
-            # Set up OpenCV video writer
-            window_size = self.base.win.getSize()
-            fps = 60  # Set your desired FPS
-            self.video_writer = cv2.VideoWriter(
-                video_filename,
-                cv2.VideoWriter_fourcc(*'XVID'),
-                fps,
-                (window_size.getX(), window_size.getY())
-            )
-
-            if not self.video_writer.isOpened():
+            # Set up imageio video writer (60 FPS)
+            self.video_writer = imageio.get_writer(video_filename, fps=60)
+            if not self.video_writer:
                 print("Error: Video writer failed to open!")
                 self.recording = False
                 return
 
             # Start audio recording using sounddevice
             self.audio_filename = audio_filename
-
-            # Set the stream to record in stereo at 192kHz
             self.audio_stream = sd.InputStream(
                 channels=self.channels,
                 samplerate=self.sample_rate,
@@ -106,7 +92,6 @@ class ScreenRecorder:
                 callback=self.audio_callback
             )
             self.audio_stream.start()
-
             print("Audio stream opened successfully.")
 
             # Start tasks to capture frames and audio
@@ -121,7 +106,7 @@ class ScreenRecorder:
         if self.recording:
             try:
                 self.recording = False
-                self.video_writer.release()
+                self.video_writer.close()
                 self.audio_stream.stop()
 
                 # Save the recorded audio
@@ -132,16 +117,12 @@ class ScreenRecorder:
                 wf.writeframes(b''.join(self.audio_frames))
                 wf.close()
 
-                # Use ffmpeg to combine the video and audio
+                # Combine video and audio using ffmpeg
                 output_file = self.audio_filename.replace(".wav", "_final.mp4")
-                
-                # Ensure you're using the correct video file name
-                video_file = self.audio_filename.replace("audio", "capture").replace(".wav", ".avi")
+                video_file = self.audio_filename.replace("audio", "capture").replace(".wav", ".mp4")
                 audio_file = self.audio_filename
-
                 print(f"Combining video and audio using ffmpeg into {output_file}")
                 self.combine_audio_video(video_file, audio_file, output_file)
-
                 print("Video and audio recording stopped.")
             except Exception as e:
                 print(f"Error stopping video and audio recording: {e}")
@@ -157,16 +138,16 @@ class ScreenRecorder:
             return task.done
 
         try:
-            # Get the current frame as a numpy array
+            # Capture the current frame as a numpy array (RGB)
             tex = self.base.win.getScreenshot()
             img_data = tex.getRamImageAs("RGB")
             img = np.frombuffer(img_data, dtype=np.uint8).reshape(tex.getYSize(), tex.getXSize(), 3)
 
             # Flip the image vertically (Panda3D stores images upside-down)
-            img = cv2.flip(img, 0)
+            img = np.flipud(img)
 
             # Write the frame to the video
-            self.video_writer.write(img)
+            self.video_writer.append_data(img)
         except Exception as e:
             print(f"Error recording frame: {e}")
             return task.done
