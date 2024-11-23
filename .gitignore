@@ -6,3 +6,6 @@ __pycache__
 .mp4
 .blend
 .blend1
+.wav
+!audio/*.wav
+.mp4
