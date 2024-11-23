@@ -10,4 +10,5 @@ __pycache__
 !audio/*.wav
 .mp4
 .venv
-blend2bam
+blend2bams
+screencaptures/*.wav
