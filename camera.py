@@ -1,5 +1,6 @@
 from panda3d.core import Vec3
 
+
 class CameraController:
     def __init__(self, player, base_zoom=10, min_zoom=5, max_zoom=20, elasticity=0.1):
         self.player = player  # Ensure this is a NodePath
@@ -28,13 +29,17 @@ class CameraController:
 
         # Calculate target zoom
         zoom_factor = speed * 2
-        self.target_zoom = max(self.min_zoom, min(self.max_zoom, self.base_zoom + zoom_factor))
+        self.target_zoom = max(
+            self.min_zoom, min(self.max_zoom, self.base_zoom + zoom_factor)
+        )
 
         # Smooth zoom transition
         self.current_zoom += (self.target_zoom - self.current_zoom) * self.elasticity
 
         # Update camera position
-        camera_position = current_position + Vec3(0, -self.current_zoom, self.current_zoom / 2)
+        camera_position = current_position + Vec3(
+            0, -self.current_zoom, self.current_zoom / 2
+        )
         base.cam.set_pos(camera_position)
 
         # Make the camera look at the player

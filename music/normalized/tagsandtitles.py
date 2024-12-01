@@ -3,6 +3,7 @@ import shutil
 from mutagen.oggvorbis import OggVorbis
 from mutagen.id3 import ID3, TIT2, TPE1, TALB, TRCK
 
+
 def tag_and_copy_files():
     input_directory = "./"  # Directory containing the .ogg files
     output_directory = "./tagged"  # Directory to copy tagged files to
@@ -43,6 +44,6 @@ def tag_and_copy_files():
         except Exception as e:
             print(f"Error processing {ogg_file}: {e}")
 
+
 if __name__ == "__main__":
     tag_and_copy_files()
-

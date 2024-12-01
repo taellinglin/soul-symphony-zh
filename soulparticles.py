@@ -23,10 +23,9 @@ from panda3d.core import Filename, LVector3, LVector4, LPoint3, LPoint3f
 import random
 from panda3d.core import Point3
 
+
 class SoulParticles:
-
     def __init__(self, texture_directory, parent_node):
-
         self.texture_directory = texture_directory
 
         self.parent_node = parent_node
@@ -36,21 +35,13 @@ class SoulParticles:
         self.p = ParticleEffect()
 
         self.colors = [
-
             LVector4(1.0, 0.0, 0.0, 1.0),  # Red
-
             LVector4(1.0, 0.5, 0.0, 1.0),  # Orange
-
             LVector4(1.0, 1.0, 0.0, 1.0),  # Yellow
-
             LVector4(0.0, 1.0, 0.0, 1.0),  # Green
-
             LVector4(0.0, 0.0, 1.0, 1.0),  # Blue
-
             LVector4(0.29, 0.0, 0.51, 1.0),  # Indigo
-
-            LVector4(0.93, 0.51, 0.93, 1.0)  # Violet
-
+            LVector4(0.93, 0.51, 0.93, 1.0),  # Violet
         ]
 
         self.color_index = 0
@@ -62,10 +53,7 @@ class SoulParticles:
         self.dt = globalClock.get_dt()
         self.angular_velocities = []
 
-        
-
     def load_textures(self, directory):
-
         """Load all textures from the specified directory."""
 
         print(f"Loading textures from directory: {directory}")
@@ -75,46 +63,36 @@ class SoulParticles:
         textures = []
 
         for file in texture_files:
-
             texture = loader.loadTexture(Filename.fromOsSpecific(file))
 
             if texture:
-
                 textures.append(texture)
 
                 print(f"Loaded texture: {file}")
 
             else:
-
                 print(f"Failed to load texture: {file}")
 
         print(f"Total textures loaded: {len(textures)}")
 
         return textures
 
-
-
     def create_matrix_effect(self, t):
-
         print("Creating matrix effect...")
 
         self.p.cleanup()
 
         self.p = ParticleEffect()
 
-         # Reset the effect and set scale
+        # Reset the effect and set scale
 
         self.p.reset()
 
         self.p.setScale(1, 1, 1)
 
-
-
         # Create a new particle system
 
-        self.p0 = Particles.Particles('particles-1')
-
-
+        self.p0 = Particles.Particles("particles-1")
 
         # Particles parameters
 
@@ -132,13 +110,13 @@ class SoulParticles:
 
         self.p0.setLitterSpread(128)  # Spread of particles within each burst
 
-        self.p0.setSystemLifespan(20)  # Lifespan of the entire particle system (in seconds)
+        self.p0.setSystemLifespan(
+            20
+        )  # Lifespan of the entire particle system (in seconds)
 
         self.p0.setLocalVelocityFlag(1)  # Local velocity flag
 
         self.p0.setSystemGrowsOlderFlag(0)  # Particles should not grow older
-
-
 
         # Factory parameters (control particle behavior)
 
@@ -150,11 +128,11 @@ class SoulParticles:
 
         self.p0.factory.setMassSpread(9)  # Variation in particle mass
 
-        self.p0.factory.setTerminalVelocityBase(1000.0)  # Terminal velocity of particles
+        self.p0.factory.setTerminalVelocityBase(
+            1000.0
+        )  # Terminal velocity of particles
 
         self.p0.factory.setTerminalVelocitySpread(500)  # Spread in terminal velocity
-
-
 
         # Renderer parameters (control appearance)
 
@@ -162,7 +140,9 @@ class SoulParticles:
 
         self.p0.renderer.setUserAlpha(0.5)  # Full opacity
 
-        self.p0.renderer.setTexture(base.loader.loadTexture('stars/00041-2773312458.png'))  # Texture for particles
+        self.p0.renderer.setTexture(
+            base.loader.loadTexture("stars/00041-2773312458.png")
+        )  # Texture for particles
 
         self.p0.renderer.setColor(LVector4(1.0, 1.0, 1.0, 1.0))  # White color (RGBA)
 
@@ -182,69 +162,74 @@ class SoulParticles:
 
         self.p0.renderer.setNonanimatedTheta(180.0)  # No rotation on the particles
 
-        self.p0.renderer.setAlphaBlendMethod(BaseParticleRenderer.PPBLENDLINEAR)  # Linear blend for transparency
+        self.p0.renderer.setAlphaBlendMethod(
+            BaseParticleRenderer.PPBLENDLINEAR
+        )  # Linear blend for transparency
 
         # Set blending to additive
-        self.p0.renderer.setAlphaBlendMethod(BaseParticleRenderer.PR_ALPHA_IN)  # Additive blending mode
+        self.p0.renderer.setAlphaBlendMethod(
+            BaseParticleRenderer.PR_ALPHA_IN
+        )  # Additive blending mode
         self.p0.renderer.setAlphaDisable(False)
 
         # Emitter parameters (control emission behavior)
 
-        self.p0.emitter.setEmissionType(BaseParticleEmitter.ETCUSTOM)  # Emit particles in a radiating pattern
+        self.p0.emitter.setEmissionType(
+            BaseParticleEmitter.ETCUSTOM
+        )  # Emit particles in a radiating pattern
 
-        self.p0.emitter.setAmplitude(100.0)  # No amplitude (adjust if you need more force)
+        self.p0.emitter.setAmplitude(
+            100.0
+        )  # No amplitude (adjust if you need more force)
 
         self.p0.emitter.setAmplitudeSpread(100.0)  # No spread in amplitude
 
-        self.p0.emitter.setOffsetForce(LVector3(0.0, 0.0, -90.2))  # Apply a slight downward force
+        self.p0.emitter.setOffsetForce(
+            LVector3(0.0, 0.0, -90.2)
+        )  # Apply a slight downward force
 
-        self.p0.emitter.setExplicitLaunchVector(LVector3(0.0, 0.0, -90.0))  # Emit particles downward
+        self.p0.emitter.setExplicitLaunchVector(
+            LVector3(0.0, 0.0, -90.0)
+        )  # Emit particles downward
 
-        self.p0.emitter.setRadiateOrigin(LPoint3(0.0, 0.0, 0.0))  # Emit from the origin (0,0,0)
+        self.p0.emitter.setRadiateOrigin(
+            LPoint3(0.0, 0.0, 0.0)
+        )  # Emit from the origin (0,0,0)
 
-        self.p0.emitter.setMinBound(LPoint3(-1000, -1000, -1000))  # Minimum bounds of the emitter area
+        self.p0.emitter.setMinBound(
+            LPoint3(-1000, -1000, -1000)
+        )  # Minimum bounds of the emitter area
 
-        self.p0.emitter.setMaxBound(LPoint3f(1000, 1000, 1000))  # Maximum bounds of the emitter area
+        self.p0.emitter.setMaxBound(
+            LPoint3f(1000, 1000, 1000)
+        )  # Maximum bounds of the emitter area
         # New part: Apply angular velocity to particles for spinning effect
         for i in range(self.p0.getLivingParticles()):
-            angular_velocity = random.uniform(-18, 18)  # Random angular velocity (in degrees)
+            angular_velocity = random.uniform(
+                -18, 18
+            )  # Random angular velocity (in degrees)
             self.p0.factory.setAngularVelocityBase(angular_velocity)
-
 
         # Add the particles to the effect
 
         self.p.addParticles(self.p0)
 
-
-
         # Apply force groups (e.g., gravity or other forces)
 
-        f0 = ForceGroup.ForceGroup('default')
+        f0 = ForceGroup.ForceGroup("default")
 
         self.p.addForceGroup(f0)
-
-
-
-
-
-    
-
-
-
-
 
         # Load and add textures
 
         textures = self.load_textures(self.texture_directory)
 
         if not textures:
-
-            raise FileNotFoundError(f"No textures found in directory: {self.texture_directory}")
-
-
+            raise FileNotFoundError(
+                f"No textures found in directory: {self.texture_directory}"
+            )
 
         for texture in textures:
-
             self.p0.renderer.addTexture(texture)
 
         print(f"Added {len(textures)} textures to renderer.")
@@ -253,47 +238,37 @@ class SoulParticles:
 
         self.p.reparentTo(self.t)
 
-
-
         print("Starting particle effect...")
 
-        
-
-        base.taskMgr.add(self.update, 'star_update')
+        base.taskMgr.add(self.update, "star_update")
 
         self.p.start(self.t)
 
-        
-
     def loadParticleConfig(self, filename):
+        # Start of the code from steam.ptf
 
-            # Start of the code from steam.ptf
+        self.p.cleanup()
 
-            self.p.cleanup()
+        self.p = ParticleEffect()
 
-            self.p = ParticleEffect()
+        self.p.loadConfig(Filename(filename))
 
-            self.p.loadConfig(Filename(filename))
+        # Sets particles to birth relative to the teapot, but to render at
 
-            # Sets particles to birth relative to the teapot, but to render at
+        # toplevel
 
-            # toplevel
+        self.p.start(self.t)
 
-            self.p.start(self.t)
-
-            self.p.setPos(0, 0.000, 0)
+        self.p.setPos(0, 0.000, 0)
 
     def load_font_glyphs(self, font_path):
-
         """Loads glyphs from the font and returns them as textures."""
 
         print(f"Loading glyphs from font: {font_path}")
 
         glyph_textures = []
 
-
-
-        text_node = TextNode('glyph')
+        text_node = TextNode("glyph")
 
         text_node.setFont(loader.loadFont(font_path))
 
@@ -301,39 +276,27 @@ class SoulParticles:
 
         text_node.setAlign(TextNode.A_center)
 
-
-
         for char in "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789":
-
             text_node.setText(char)
 
             texture = self.create_texture_from_text(text_node)
 
             if texture:
-
                 glyph_textures.append(texture)
 
                 print(f"Created texture for glyph: {char}")
 
             else:
-
                 print(f"Failed to create texture for glyph: {char}")
-
-
 
         print(f"Total glyph textures created: {len(glyph_textures)}")
 
         return glyph_textures
 
-
-
     def create_texture_from_text(self, text_node):
-
         """Creates a texture from the rendered text node."""
 
         print(f"Creating texture from text node with text: {text_node.getText()}")
-
-
 
         cm = CardMaker("text_card")
 
@@ -342,8 +305,6 @@ class SoulParticles:
         text_node_path = card.attachNewNode(text_node)
 
         text_node_path.setScale(1)  # Ensure proper scaling for the render
-
-
 
         # Capture image from the text node
 
@@ -355,13 +316,9 @@ class SoulParticles:
 
         base.win.getScreenshot(img)
 
-
-
         texture = Texture()
 
         texture.load(img)
-
-
 
         card.removeNode()  # Clean up the temporary card
 
@@ -369,10 +326,7 @@ class SoulParticles:
 
         return texture
 
-    
-
     def update(self, task):
-
         """
 
         Update the particle system with a color cycle.
@@ -387,38 +341,26 @@ class SoulParticles:
 
         self.time_since_last_change += dt
 
-        
-
         if self.time_since_last_change >= self.color_change_interval:
-
             # Cycle to the next color in the ROYGBIV array
 
             self.color_index = (self.color_index + 1) % len(self.colors)
 
-            
-
-            if self.p0 and self.p0.renderer:  # Check if self.p0 and its renderer are valid
-
+            if (
+                self.p0 and self.p0.renderer
+            ):  # Check if self.p0 and its renderer are valid
                 self.p0.renderer.setColor(self.colors[self.color_index])
 
-                #print(f"Cycled to color: {self.colors[self.color_index]}")
+                # print(f"Cycled to color: {self.colors[self.color_index]}")
 
             else:
-
-                #print("Error: self.p0 or self.p0.renderer is None during color cycling.")
-
-            
+                # print("Error: self.p0 or self.p0.renderer is None during color cycling.")
 
                 self.time_since_last_change = 0.0  # Reset the timer
 
-            
-
         return task.cont  # Continue the task
 
-
-
     def randomize_color(self):
-
         """
 
         Set the particle color to a random color from the ROYGBIV list.
@@ -426,44 +368,34 @@ class SoulParticles:
         """
 
         if self.p0 and self.p0.renderer:  # Check if self.p0 and its renderer are valid
-
             random_color = random.choice(self.colors)
 
             self.p0.renderer.setColor(random_color)
 
-            #print(f"Randomized color: {random_color}")
+            # print(f"Randomized color: {random_color}")
 
         else:
-
-            #print("Error: self.p0 or self.p0.renderer is None during random color update.")
+            # print("Error: self.p0 or self.p0.renderer is None during random color update.")
 
             pass
 
-
-
     def cleanup(self):
-
         """Clean up the particle system and associated resources."""
 
         print("Cleaning up particle effect...")
 
-        
-
         # Stop the particle effect
 
         if self.p:
-
             self.p.cleanup()  # Clean up the particle effect resources
 
             self.p = None  # Set the particle effect reference to None to release it
 
-        
-
         # Reset any textures or other resources
 
-        self.p0 = None  # Remove the particle system (optional, as cleanup is already done)
-
-        
+        self.p0 = (
+            None  # Remove the particle system (optional, as cleanup is already done)
+        )
 
         # Optional: Reset color cycling state
 
@@ -471,15 +403,9 @@ class SoulParticles:
 
         self.time_since_last_change = 0.0
 
-        
-
         # Optional: Remove any additional tasks if needed
 
-        if 'star_update' in base.taskMgr.getTasks():
-
-            base.taskMgr.remove('star_update')
-
-        
+        if "star_update" in base.taskMgr.getTasks():
+            base.taskMgr.remove("star_update")
 
         print("Cleanup completed.")
-

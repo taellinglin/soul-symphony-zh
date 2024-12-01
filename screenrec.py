@@ -7,6 +7,7 @@ import imageio
 import subprocess
 from datetime import datetime
 
+
 class ScreenRecorder:
     def __init__(self, base):
         self.base = base  # Reference to the ShowBase instance
@@ -35,8 +36,8 @@ class ScreenRecorder:
 
     def setup_input_events(self):
         """Bind input events for screenshots and recording."""
-        self.base.accept('f11', self.handle_select_press)  # Screenshot on 'F11'
-        self.base.accept('f12', self.handle_select_hold)   # Toggle recording on 'F12'
+        self.base.accept("f11", self.handle_select_press)  # Screenshot on 'F11'
+        self.base.accept("f12", self.handle_select_hold)  # Toggle recording on 'F12'
 
     def handle_select_press(self):
         """Handle single press of 'F11' for taking a screenshot."""
@@ -50,7 +51,9 @@ class ScreenRecorder:
         if not self.recording:
             self.start_recording()
         else:
-            elapsed = time.time() - self.record_start_time if self.record_start_time else 0
+            elapsed = (
+                time.time() - self.record_start_time if self.record_start_time else 0
+            )
             if elapsed >= 3:
                 self.stop_recording()
 
@@ -69,10 +72,16 @@ class ScreenRecorder:
         """Initialize video and audio recording."""
         try:
             capture_datetime = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-            video_filename = os.path.join(self.screencapture_folder, f"capture_{capture_datetime}.mp4")
-            audio_filename = os.path.join(self.screencapture_folder, f"audio_{capture_datetime}.wav")
+            video_filename = os.path.join(
+                self.screencapture_folder, f"capture_{capture_datetime}.mp4"
+            )
+            audio_filename = os.path.join(
+                self.screencapture_folder, f"audio_{capture_datetime}.wav"
+            )
 
-            print(f"Starting video recording to: {video_filename} and audio to {audio_filename}")
+            print(
+                f"Starting video recording to: {video_filename} and audio to {audio_filename}"
+            )
             self.recording = True
             self.record_start_time = time.time()
 
@@ -88,8 +97,8 @@ class ScreenRecorder:
             self.audio_stream = sd.InputStream(
                 channels=self.channels,
                 samplerate=self.sample_rate,
-                dtype='int16',
-                callback=self.audio_callback
+                dtype="int16",
+                callback=self.audio_callback,
             )
             self.audio_stream.start()
             print("Audio stream opened successfully.")
@@ -110,16 +119,18 @@ class ScreenRecorder:
                 self.audio_stream.stop()
 
                 # Save the recorded audio
-                wf = wave.open(self.audio_filename, 'wb')
+                wf = wave.open(self.audio_filename, "wb")
                 wf.setnchannels(self.channels)  # Stereo audio
                 wf.setsampwidth(2)  # 2 bytes (16-bit)
                 wf.setframerate(self.sample_rate)
-                wf.writeframes(b''.join(self.audio_frames))
+                wf.writeframes(b"".join(self.audio_frames))
                 wf.close()
 
                 # Combine video and audio using ffmpeg
                 output_file = self.audio_filename.replace(".wav", "_final.mp4")
-                video_file = self.audio_filename.replace("audio", "capture").replace(".wav", ".mp4")
+                video_file = self.audio_filename.replace("audio", "capture").replace(
+                    ".wav", ".mp4"
+                )
                 audio_file = self.audio_filename
                 print(f"Combining video and audio using ffmpeg into {output_file}")
                 self.combine_audio_video(video_file, audio_file, output_file)
@@ -141,7 +152,9 @@ class ScreenRecorder:
             # Capture the current frame as a numpy array (RGB)
             tex = self.base.win.getScreenshot()
             img_data = tex.getRamImageAs("RGB")
-            img = np.frombuffer(img_data, dtype=np.uint8).reshape(tex.getYSize(), tex.getXSize(), 3)
+            img = np.frombuffer(img_data, dtype=np.uint8).reshape(
+                tex.getYSize(), tex.getXSize(), 3
+            )
 
             # Flip the image vertically (Panda3D stores images upside-down)
             img = np.flipud(img)
@@ -175,8 +188,20 @@ class ScreenRecorder:
 
             # Run the FFmpeg command to combine video and audio
             command = [
-                'ffmpeg', '-i', video_file, '-i', audio_file,
-                '-c:v', 'libx264', '-c:a', 'aac', '-b:a', '44.1k', '-strict', 'experimental', output_file
+                "ffmpeg",
+                "-i",
+                video_file,
+                "-i",
+                audio_file,
+                "-c:v",
+                "libx264",
+                "-c:a",
+                "aac",
+                "-b:a",
+                "44.1k",
+                "-strict",
+                "experimental",
+                output_file,
             ]
             subprocess.run(command, check=True)
             print(f"Output video with audio saved as {output_file}")
