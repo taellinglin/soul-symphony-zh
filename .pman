@@ -4,7 +4,7 @@ export_dir = "build/"
 converters = [ "blend2bam", "native2bam",]
 
 [general]
-name = "Soul Symphony"
+name = "灵魂交响乐"
 
 [run]
 main_file = "main.py"
@@ -13,4 +13,4 @@ main_file = "main.py"
 physics_engine = "bullet"
 
 [python]
-path = "C:\\Panda3D-1.10.10-x64\\python\\ppython.EXE"
+path = "./Scripts/python.exe"

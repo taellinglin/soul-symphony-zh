@@ -1,3 +1,4 @@
+wheel
 chardet==5.2.0
 charset-normalizer==3.4.0
 colorama==0.4.6
@@ -6,11 +7,12 @@ panda3d-blend2bam==0.26.0
 panda3d-gltf==1.2.1
 panda3d-pman==0.16.0
 panda3d-simplepbr==0.12.0
-pyaudio
-git+https://github.com/spatialaudio/python-sounddevice.git
+pycparser
+https://github.com/spatialaudio/python-sounddevice/archive/refs/tags/0.5.1.tar.gz
 pydub
+https://files.pythonhosted.org/packages/26/1d/8878c7752febb0f6716a7e1a52cb92ac98871c5aa522cba181878091607c/PyAudio-0.2.14.tar.gz
 psutil==5.9.7
-numpy==1.25.0
+numpy
 imageio
 pandas
 pytest
@@ -19,6 +21,7 @@ threadpoolctl
 configparser
 importlib_resources
 jaraco.path
-pycparser
 winapi
-
+pexpect
+twisted
+zope.interface

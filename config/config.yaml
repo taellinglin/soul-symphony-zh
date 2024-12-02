@@ -15,6 +15,6 @@ paths:
 
 # Logging configuration
 logging:
-  level: "INFO"  # Options might include 'DEBUG', 'INFO', 'WARN', 'ERROR'
+  level: "ERROR"  # Options might include 'DEBUG', 'INFO', 'WARN', 'ERROR'
   log_file: "log/soul_symphony.log"
 

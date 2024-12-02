@@ -1,2 +1,16 @@
+[build]
+asset_dir = "build/assets/"
+export_dir = "build/"
+converters = [ "blend2bam", "native2bam",]
+
+[general]
+name = "灵魂交响乐"
+
+[run]
+main_file = "main.py"
+
+[blend2bam]
+physics_engine = "bullet"
+
 [python]
-path = "C:\\Panda3D-1.10.10-x64\\python\\ppython.EXE"
+path = "./Scripts/python.EXE"

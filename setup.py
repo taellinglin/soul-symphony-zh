@@ -13,8 +13,12 @@ ASSET_DIR = CONFIG["build"]["asset_dir"]
 MAIN_FILE = CONFIG["run"]["main_file"]
 
 # Path to your DLLs
-dll_dir = os.path.join(os.getcwd(), "dll")  # Adjust the path if needed
-dll_files = [(os.path.join("bin", dll), os.path.join(dll_dir, dll)) for dll in os.listdir(dll_dir) if dll.endswith(".dll")]
+dll_dir = os.path.join(os.getcwd(), "lib")
+dll_files = [
+    os.path.join(dll_dir, dll)
+    for dll in os.listdir(dll_dir)
+    if dll.endswith(".dll") or dll.endswith(".pyd") or dll.endswith(".dylib")
+]
 
 setup(
     name=APP_NAME,
@@ -38,6 +42,12 @@ setup(
     },
     options={
         "build_apps": {
+            "include_modules": {
+                "*": [
+                    "pyaudio",  # Underlying PortAudio library
+                    "numpy",    # Required by sounddevice
+                ]
+            },
             "platforms": [
                 "win32",
                 "win_amd64",
@@ -51,9 +61,9 @@ setup(
                 "**/*.egg",
                 "**/*.bam",
                 "**/*.otf",
-                "**/*.dll",  # Dynamically include all DLLs from the build folder
+                "lib/*",
             ],
-            "exclude_patterns": [".venv/*", "./dist/*"],
+            "exclude_patterns": [".venv/*", "./dist/*", "./build/*"],
             "rename_paths": {
                 EXPORT_DIR: "assets/",
             },
@@ -74,10 +84,10 @@ setup(
                 ],
             },
             "use_optimized_wheels": True,
-            "log_filename": f"./build/logs/output.log",
+            "log_filename": "./build/logs/output.log",
         },
     },
     data_files=[
-        ('bin', dll_files),  # This places DLLs in the 'bin/' directory of the build
+        ("lib", dll_files),  # This places DLL, PYD, and DYLIB files in the 'lib/' directory of the build
     ],
 )

@@ -1,4 +1,5 @@
 build
+dist
 .eggs
 .pyc
 __pycache__
@@ -12,3 +13,4 @@ __pycache__
 .venv
 blend2bams
 screencaptures/*.wav
+.idea
