@@ -62,7 +62,8 @@ setup(
                 "**/*.bam",
                 "**/*.otf",
                 "**/*.ttf",
-                "NPCS/**/*.png",
+                "NPCs/**/*.png",
+                "NPCs/"
                 "lib/*",
             ],
             "exclude_patterns": [".venv/*", "./dist/*", "./build/*"],
