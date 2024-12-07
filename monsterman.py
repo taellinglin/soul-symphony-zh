@@ -1,3 +1,4 @@
+
 from panda3d.core import (
     Geom,
     GeomNode,
@@ -22,6 +23,8 @@ import math
 import random
 
 
+
+    
 class YinYangMonster(NodePath):
     def __init__(self, parent_node, size=1):
         super().__init__("YinYangMonster")
@@ -97,6 +100,7 @@ class YinYangMonster(NodePath):
 
         yang_color_writer = GeomVertexWriter(vertex_data_yang, "color")
 
+    
         # Function to add vertices
 
         def add_vertex(writer_v, writer_n, writer_c, x, y, z, nx, ny, nz, r, g, b, a):
@@ -255,6 +259,7 @@ class YinYangMonster(NodePath):
 
             color_writer.add_data4f(r, g, b, a)
 
+    
     def update(self, task):
         # print("Updating monster")
 
@@ -276,16 +281,19 @@ class YinYangMonster(NodePath):
         self.velocity = (
             direction * self.kick_power
         )  # Apply the kick power to the velocity
+    
 
         # print(f"Initial velocity after kick-off: {self.velocity}")
 
     def update_velocity(self, delta_time):
+    
         self.velocity += LVector3f(0, 0, -9.8) * delta_time  # Apply gravity
 
         # print(f"Velocity: {self.velocity}")
 
     def update_position(self, delta_time):
         self.position += self.velocity * delta_time
+    
 
         self.set_pos(self.position)  # Update the NodePath's position in the scene graph
 
@@ -297,9 +305,12 @@ class YinYangMonster(NodePath):
 
             self.hpr = LVecBase3f(
                 direction.getX(), direction.getY(), 0
+    
             )  # Update heading
 
+    
             # print(f"Updated hpr: {self.hpr}")
+
 
 
 class MonsterManager:

@@ -1,8 +1,13 @@
+
 from panda3d.core import Vec3
 
 
+
+    
 class CameraController:
+
     def __init__(self, player, base_zoom=10, min_zoom=5, max_zoom=20, elasticity=0.1):
+
         self.player = player  # Ensure this is a NodePath
         self.base_zoom = base_zoom
         self.min_zoom = min_zoom
@@ -15,9 +20,11 @@ class CameraController:
 
         # Add the update task
         taskMgr.add(self.update_camera, "update_camera_task")
+    
 
     def update_camera(self, task):
         # Check if player NodePath is valid
+
         if self.player.is_empty():
             print("Player NodePath is empty. Skipping camera update.")
             return task.cont

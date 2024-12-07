@@ -1,3 +1,4 @@
+
 import math
 
 from panda3d.core import TextFont
@@ -15,6 +16,8 @@ from panda3d.core import Vec4
 from random import randint, choice
 
 
+
+    
 class GlyphRings:
     def __init__(self, font, number_of_rings=16, characters_in_ring=16):
         self.font = font
@@ -75,6 +78,7 @@ class GlyphRings:
 
         self.ring_speed = 1
 
+    
         self.char_speed = 0.01
 
     def update(self, dt):

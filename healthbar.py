@@ -1,3 +1,4 @@
+
 from panda3d.core import NodePath, CardMaker, Vec4
 
 from direct.task import Task
@@ -5,8 +6,10 @@ from direct.task import Task
 from direct.showbase.DirectObject import DirectObject
 
 
+
 class HealthBar(DirectObject):
     def __init__(
+    
         self, parent=None, max_health=100, height=0.025, position=(-2, 0, 1 - 0.025)
     ):  # Positioned at the top
         self.max_health = max_health
@@ -55,6 +58,7 @@ class HealthBar(DirectObject):
 
         # Start cycling colors periodically based on task or health change
 
+    
         taskMgr.add(self.cycle_colors, "CycleColors")
 
     def create_bar(self, color, width, height):

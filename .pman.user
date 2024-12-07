@@ -13,4 +13,4 @@ main_file = "main.py"
 physics_engine = "bullet"
 
 [python]
-path = "./Scripts/python.EXE"
+path = "C:/Users/User/Miniconda3"

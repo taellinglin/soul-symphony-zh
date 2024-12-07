@@ -1,3 +1,4 @@
+
 from panda3d.core import TextNode
 
 from panda3d.core import NodePath
@@ -58,6 +59,8 @@ names = [
 used_names = []
 
 
+
+    
 class npc:
     def __init__(self):
         self.names = names
@@ -82,6 +85,7 @@ class npc:
 
         self.id = 0
 
+    
     # Function to load all textures in a directory
 
     def load_textures_from_directory(self, directory):
@@ -100,6 +104,7 @@ class npc:
                 # Load the texture and append it to the list
 
                 textures.append(base.loader.loadTexture(texture_path))
+    
 
         return textures
 
@@ -189,6 +194,7 @@ class npc:
             "text_node": text_node,
         }
 
+    
         self.id += 1
 
         return new_npc

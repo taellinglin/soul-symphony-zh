@@ -1,7 +1,10 @@
+
 from random import choice
 import os
 
 
+
+    
 class BGM:
     def __init__(self, default_volume=1):
         self.default_volume = default_volume  # Default volume to be used for all tracks
@@ -36,6 +39,7 @@ class BGM:
             self.sfx[s] = base.loader.load_sfx("audio/{}.wav".format(s))
 
         self.current_sfx = self.sfx["soul-symphony"]
+    
         self.current_music = self.select_random_song()
 
     def get_music(self, directory):
@@ -43,6 +47,7 @@ class BGM:
         for filename in os.listdir(directory):
             if filename.endswith(".ogg"):
                 wav_filenames.append(os.path.splitext(filename)[0])
+    
         return wav_filenames
 
     def select_random_song(self):
@@ -54,6 +59,7 @@ class BGM:
         # Choose a song randomly from available ones
         selected_song = choice(self.available_songs)
         self.available_songs.remove(
+    
             selected_song
         )  # Remove the selected song to avoid repeats
         return self.music[selected_song]
@@ -71,8 +77,10 @@ class BGM:
 
         # Use the provided volume, or default if not provided
         volume = volume if volume is not None else self.default_volume
+    
 
         self.current_music.setLoop(loop)
+    
         self.current_music.setVolume(volume)  # Set equalized volume here
         self.current_music.play()
 
@@ -88,11 +96,13 @@ class BGM:
             self.current_sfx = self.sfx[sfx]
 
             # Use the provided volume, or default if not provided
+    
             volume = volume if volume is not None else self.default_volume
 
             self.current_sfx.setPlayRate(pitch)
             self.current_sfx.setVolume(volume)  # Set equalized volume here
             self.current_sfx.setLoop(loop)
+    
             self.current_sfx.play()
 
     def stopSfx(self, sfx=None):

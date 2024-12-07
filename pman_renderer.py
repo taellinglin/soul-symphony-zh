@@ -1,6 +1,8 @@
+
 import functools
 
 
+    
 def get_renderer():
     modname = "pman.nullrenderer"
     attrs = ("NullRenderer",)

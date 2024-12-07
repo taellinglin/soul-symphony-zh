@@ -1,3 +1,4 @@
+
 import os
 
 from audio3d import audio3d
@@ -53,6 +54,8 @@ from panda3d.core import (
 DEBUG = False
 
 
+
+    
 class level:
     def __init__(self, lvl):
         self.audio = audio3d()
@@ -132,6 +135,7 @@ class level:
 
         # self.place_letters()
 
+    
         base.task_mgr.add(self.update, "level_update")
 
     def load_textures_from_directory(self, directory):
@@ -149,19 +153,25 @@ class level:
         ]
 
         return textures
+    
 
     def create_yin_yang(self):
+    
         # Create and return a Yin-Yang monster
+
 
         return YinYangMonster(parent_node=self.render)
 
     def get_npcs(self, num_npcs):
+    
+
         for n in range(num_npcs):
             new_npc = npc()
 
             self.npcs.append(new_npc.load_npc())
 
     def place_npcs(self):
+
         if len(self.npc_mounts):
             for n, npc in enumerate(self.npc_mounts):
                 npcObject = self.npcs[n]
@@ -184,6 +194,7 @@ class level:
 
                 # frame.set_pos(npc,(0,0,5))
 
+    
                 npcObject.get("model").attach_new_node(face.get_node(0))
 
                 npcObject.get("model").attach_new_node(emblem.get_node(0))
@@ -191,7 +202,9 @@ class level:
                 npcObject.get("model").instance_to(self.npc_mounts[n])
 
     def update_task(self, task):
+
         dt = globalClock.get_dt()  # Get the delta time for this frame
+    
 
         self.monster_manager.update_monsters(dt)
 
@@ -199,6 +212,7 @@ class level:
 
     def load_world(self):
         # World
+
 
         self.worldNP = render.attachNewNode("World")
 
@@ -216,6 +230,7 @@ class level:
 
         # self.debugNP.showTightBounds()
 
+    
         # self.debugNP.showBounds()
 
         self.world = BulletWorld()
@@ -225,6 +240,7 @@ class level:
         self.world.setDebugNode(self.debugNP.node())
 
     def load_ground(self):
+
         self.ground = self.levels[self.lvl]
 
         self.npc_mounts = self.ground.findAllMatches("**/npc**")
@@ -316,6 +332,7 @@ class level:
                 for stage in base_node.find_all_texture_stages():
                     base_node.set_texture(stage, self.base_texture, 1)
 
+    
                 for stage in flower_node.find_all_texture_stages():
                     flower_node.set_texture(stage, self.flower_texture, 1)
 
@@ -326,6 +343,7 @@ class level:
         # A helper function to check if a node is already in the parent-child chain
 
         def is_in_parent_chain(node, parent):
+
             current_parent = node.getParent()
 
             while current_parent:
@@ -635,6 +653,7 @@ class level:
                 self.monsters.append(monster)
 
                 print(f"Spawned monster at: {spawn_pos}")
+    
 
             else:
                 print(
@@ -680,6 +699,7 @@ class level:
 
             # Ensure two-sided rendering
 
+    
             letter_path.setAttrib(CullFaceAttrib.make(CullFaceAttrib.MCullNone))
 
             letter_path.setTwoSided(True)
@@ -689,6 +709,7 @@ class level:
             print(f"Position: {letter_path.getPos()}")
 
             print(f"Two-sided: {letter_path.getTwoSided()}")
+
 
     def update(self, task):
         self.audio.update(task)

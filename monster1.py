@@ -1,3 +1,4 @@
+
 from panda3d.core import (
     NodePath,
     Vec3,
@@ -28,6 +29,8 @@ import math
 from procweapon import ProceduralWeaponSwinger
 
 
+
+    
 class ProceduralMonster(NodePath):
     def __init__(self, parent=None, event_handler=None):
         super().__init__("ProceduralMonster")
@@ -86,6 +89,7 @@ class ProceduralMonster(NodePath):
 
         # Add the collision checking task
 
+    
     def setup_collision_system(self):
         # Add all collision nodes to the traverser
 
@@ -93,10 +97,12 @@ class ProceduralMonster(NodePath):
             self.collision_traverser.add_collider(node, self.collision_handler)
 
         # Optionally display collision geometry for debugging
+    
 
         self.collision_traverser.show_collisions(base.render)
 
     def handle_collision_in(self, entry):
+    
         print(
             f"Collision detected! From: {entry.get_from_node_path()} To: {entry.get_into_node_path()}"
         )
@@ -414,11 +420,13 @@ class ProceduralMonster(NodePath):
             self.event_handler.accept(
                 f"{part.get_name()}-into", self.on_petal_collision
             )
+    
 
     # Add collision for the entire flower (physics cage around petals and body)
 
     def create_physics_cage(self):
         # Create a bounding box or sphere around the entire flower creature
+
 
         min_x = (
             min(petal.get_pos().x for petal in self.body_parts) - 1.0

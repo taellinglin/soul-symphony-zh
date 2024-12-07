@@ -1,3 +1,4 @@
+
 from math import pi
 
 from math import sin
@@ -11,7 +12,7 @@ import sys
 
 from direct.showbase.PythonUtil import randFloat
 
-from stageflow.core import Stage
+from stageflow import Stage
 
 from random import choice
 
@@ -24,7 +25,7 @@ from level import level
 from player import player
 
 from npc import npc
-
+from motionBlur import MotionBlur
 
 from soulparticles import SoulParticles
 
@@ -74,13 +75,20 @@ from panda3d.physics import LinearVectorForce
 
 from direct.gui.OnscreenImage import OnscreenImage
 
-from direct.interval.LerpInterval import LerpColorInterval, LerpScaleInterval
+from direct.interval.LerpInterval import (
+    LerpScaleInterval,
+    LerpColorInterval,
+    LerpColorScaleInterval,
+    LerpFunctionInterval,
+)
 
 from direct.interval.IntervalGlobal import Sequence, LerpPosInterval
-
+import pyaudio
+print(pyaudio.get_portaudio_version_text())
 import os
 
-import sounddevice as sd
+os.environ["SD_ENABLE_ASIO"] = "1"
+
 
 from pydub import AudioSegment
 
@@ -95,6 +103,8 @@ from direct.showbase.InputStateGlobal import inputState
 from panda3d.core import KeyboardButton
 
 from panda3d.core import PNMImage
+from direct.task import Task
+
 
 from healthbar import HealthBar
 
@@ -119,12 +129,20 @@ from panda3d.physics import LinearNoiseForce, DiscEmitter
 import glob
 
 from panda3d.core import Filename
-# Define minimum and maximum FOV
-MIN_FOV = 30   # Narrowest (closer zoom)
-MAX_FOV = 90   # Widest (farthest zoom)
 
-class room00(Stage):
+# Define minimum and maximum FOV
+MIN_FOV = 30  # Narrowest (closer zoom)
+MAX_FOV = 90  # Widest (farthest zoom)
+
+
+class WorldCage(Stage):
+    # Add this as a class variable (outside __init__)
+
+    _textures = None  # Class-level storage for textures
+
     def __init__(self, exit_stage="main_menu", lvl=None, audio_amplitude=None):
+    
+    
         super().__init__()  # Initialize the ShowBase
         self.zooming_out = False
         self.zooming_in = False
@@ -205,33 +223,13 @@ class room00(Stage):
         self.clock = 0
 
         self.npcs = []
-
-        self.audio_amplitude = audio_amplitude  # Amplitude array to sync transparency
-
-        self.current_amplitude_idx = 0  # Index for amplitude tracking
-
-        self.transparency = 0.15
-
-        self.base_transparency = 0  # Base transparency value
-
-        self.fs = 96000  # Sampling frequency
-
-        self.buffer_size = 64  # Size of audio buffer
-
-        self.audio_data = np.array([])  # Initialize as an empty array
-
+        self.transparency = 0.05
         self.zoom_level = 30
-        # Start audio stream
-
-        self.stream = sd.InputStream(
-            samplerate=self.fs,
-            channels=2,
-            blocksize=self.buffer_size,
-            callback=self.audio_callback,
-        )
-
-        self.stream.start()
-
+        self.fs = 96000  # Sampling frequency
+        self.buffer_size = 256  # Size of audio buffer
+        self.audio_data = np.array([])  # Buffer for storing audio data
+        self.pyaudio_instance = pyaudio.PyAudio()
+        self.stream = None
         # Initialize color intervals for cycling through colors
 
         base.disableMouse()  # Disable mouse control
@@ -242,9 +240,18 @@ class room00(Stage):
 
         self.level_min_bound, self.level_max_bound = 1024, 1024
 
+        self.textures_loaded = False  # Add this flag
+
+        self.color_cycle_task = None  # Track the color cycling task
+
+        self.current_color_index = 0
+
+        self.motion_blur = MotionBlur()
+
     def star(self):
         # Load the star image
 
+    
         self.star_node = NodePath("star_node")
 
         self.star_card = CardMaker("star_card")
@@ -284,6 +291,7 @@ class room00(Stage):
     def create_star_pulse(self):
         # Star 1 pulsing effect
 
+    
         self.star_pulse = Sequence(
             LerpScaleInterval(
                 self.imageObject2, 1, scale=(0, 0, 0), startScale=(4, 4, 4)
@@ -313,6 +321,7 @@ class room00(Stage):
         self.star_pulse2.loop()
 
     def rotate_star(self, task):
+    
         dt = self.globalClock.get_dt()
 
         new_hpr = self.imageObject2.getHpr() + LVector3(0, 0, self.rotation_speed * dt)
@@ -328,6 +337,7 @@ class room00(Stage):
         return task.cont  # Continue the task
 
     def centerPivot(self, NP):
+    
         pivot = NP.getBounds().getCenter()
 
         parent = NP.getParent()
@@ -342,23 +352,103 @@ class room00(Stage):
 
         return newNP
 
-    def audio_callback(self, indata, frames, time, status):
-        if status:
-            # print(status)
+    def initialize_audio(self):
+        """Initialize and start the audio stream using pyaudio."""
+        self.audio_data = np.zeros(self.buffer_size, dtype=np.float32)  # Reset buffer
+        
+        def audio_callback(in_data, frame_count, time_info, status):
+            # Convert byte data to numpy array
+            audio_buffer = np.frombuffer(in_data, dtype=np.float32)
+            self.audio_data = np.append(self.audio_data, audio_buffer)
+            
+            # Truncate buffer if it exceeds a certain size
+            if len(self.audio_data) > self.fs:
+                self.audio_data = self.audio_data[-self.fs:]
+            
+            return (None, pyaudio.paContinue)
 
-            pass
+        self.stream = self.pyaudio_instance.open(
+            format=pyaudio.paFloat32,
+            channels=1,  # Mono
+            rate=self.fs,
+            input=True,
+            frames_per_buffer=self.buffer_size,
+            stream_callback=audio_callback,
+        )
 
-        self.audio_data = indata.flatten()  # Flatten the audio buffer
+        self.stream.start_stream()
+        print("Audio stream initialized and started.")
+
+    def process_audio(self):
+        """Process the captured audio data."""
+        if len(self.audio_data) > 0:
+            # Perform FFT and other analyses
+            samples = self.audio_data[-self.buffer_size:]  # Process the latest buffer
+            spectrum = np.fft.fft(samples)
+            freqs = np.fft.fftfreq(len(samples), 1 / self.fs)
+            
+            # Example: Split frequencies into bands and compute amplitudes
+            band_indices = np.array_split(np.argsort(freqs), 7)
+            amplitudes = [np.abs(spectrum[indices]).mean() for indices in band_indices]
+
+            # Map amplitudes to transparency or other visual effects
+            transparencies = np.clip(amplitudes / np.max(amplitudes), 0, 0.5)
+            print("Transparencies:", transparencies)
+
+    def cleanup_audio(self):
+        """Stop and close the audio stream and cleanup resources."""
+        if self.stream and self.stream.is_active():
+            self.stream.stop_stream()
+            self.stream.close()
+        
+        self.pyaudio_instance.terminate()
+        self.audio_data = np.array([])
+        print("Audio stream and resources cleaned up.")
 
     def enter(self, lvl=None):
+    
+        self.initialize_audio()
+        print("Entered new level or portal, audio stream reset.")
+        # Set initial fade state
+        base.win.setClearColor(Vec4(0, 0, 0, 1))  # Start with opaque black background
+        render2d.setColorScale(0, 0, 0, 1)  # Start fully black
+
+        # Create fade in interval for render2d color scale
+        fade_in = LerpColorScaleInterval(
+            render2d,
+            0.5,
+            Vec4(1, 1, 1, 1),  # Fade to normal
+            Vec4(0, 0, 0, 1),  # Start fully black
+            blendType="easeInOut",
+        )
+
+        def cleanup_fade():
+            # Restore normal state after fading
+            render2d.clearColorScale()
+            base.win.setClearColorActive(False)
+
+        fade_in.setDoneEvent("fadeInDone")
+        fade_in.start()
+        base.accept("fadeInDone", cleanup_fade)
+
+        self.cleanup_level()
+        self.motion_blur = MotionBlur()
         if lvl == None:
             lvl = self.lvl
 
         self.lvl = lvl
 
+        # Only load textures once
+        if not self.textures_loaded:
+            # Load textures and other persistent resources here
+            self.load_textures()
+            self.textures_loaded = True
+
         self.star()
 
-        self.healthbar = HealthBar(parent=base.aspect2d)  # Create the health bar
+        # Ensure healthbar is initialized
+        if not hasattr(self, "healthbar"):
+            self.healthbar = HealthBar(parent=base.aspect2d)  # Create the health bar
 
         self.healthbar.max_health = 100  # Directly setting the max health
 
@@ -515,11 +605,10 @@ class room00(Stage):
         inputState.watchWithModifiers("cam-right", "gamepad-trigger_right")
 
         inputState.watchWithModifiers("cam-left", "gamepad-trigger_left")
-        
+
         inputState.watchWithModifiers("cam-right", "gamepad-shoulder_right")
 
         inputState.watchWithModifiers("cam-left", "gamepad-shoulder_left")
-        
 
         print("level: " + str(self.lvl))
 
@@ -574,25 +663,33 @@ class room00(Stage):
         base.accept("gamepad-face_b-up", self.actionBUp)
 
         base.accept("shift-up", self.actionBUp)
-        
-         # Watch for modifier combinations
+
+        # Watch for modifier combinations
         base.accept("gamepad-shoulder-left", self.set_zoom_out, [True])  # L1 pressed
-        base.accept("gamepad-shoulder-left-up", self.set_zoom_out, [False])  # L1 released
+        base.accept(
+            "gamepad-shoulder-left-up", self.set_zoom_out, [False]
+        )  # L1 released
         base.accept("gamepad-shoulder-right", self.set_zoom_in, [True])  # R1 pressed
-        base.accept("gamepad-shoulder-right-up", self.set_zoom_in, [False])  # R1 released
+        base.accept(
+            "gamepad-shoulder-right-up", self.set_zoom_in, [False]
+        )  # R1 released
 
         # Task to handle modifiers
         base.taskMgr.add(self.handle_zoom, "HandleZoom")
 
+        self.start_color_cycling()  # Start color cycling once
 
+    
     def set_zoom_out(self, state):
         print("Zoom Out")
         self.zooming_out = state
 
+    
     def set_zoom_in(self, state):
         print("Zoom in")
         self.zooming_in = state
 
+    
     def handle_zoom(self, task):
         if self.zooming_out:
             self.zoom_fov(-0.2)
@@ -600,6 +697,7 @@ class room00(Stage):
             self.zoom_fov(0.2)
         return task.cont
 
+    
     def zoom_fov(self, delta):
         current_fov = base.camLens.get_fov()[0]
         new_fov = current_fov + delta
@@ -608,9 +706,9 @@ class room00(Stage):
         self.zoom_level = new_fov
         print(f"Zoom adjusted: FOV is now {new_fov}")
 
-
     def actionA(self):
         # Check if the player is touching the ground
+    
 
         result = self.level.world.contactTestPair(
             self.player.ballNP.node(), self.level.floorNP.node()
@@ -689,6 +787,7 @@ class room00(Stage):
 
                         self.player.ballNP.node().setLinearDamping(1)
 
+    
     def actionAUp(self):
         if self.player.ballNP.node().getLinearDamping() == 1:
             self.player.ballNP.node().setLinearDamping(0)
@@ -713,16 +812,19 @@ class room00(Stage):
 
                 return
 
+    
     def actionB(self):
         self.player.ballNP.node().setAngularDamping(0.82)
 
         self.player.ballNP.node().setLinearDamping(0.82)
 
+    
     def actionBUp(self):
         self.player.ballNP.node().setAngularDamping(0)
 
         self.player.ballNP.node().setLinearDamping(0)
 
+    
     def processInput(self, dt):
         force = Vec3(0, 0, 0)
 
@@ -766,7 +868,6 @@ class room00(Stage):
 
         if inputState.isSet("turnRight"):
             torque.setZ(-1.0)
-            
 
         force *= 100.0
 
@@ -784,6 +885,7 @@ class room00(Stage):
 
     def update(self, task):
         # Get the linear velocity vector
+    
 
         velocity = self.player.ballNP.get_node(0).getLinearVelocity()
 
@@ -887,7 +989,7 @@ class room00(Stage):
 
                     volume = abs(mpoint.getDistance())
 
-                    pitch = (volume/4) + 0.5
+                    pitch = (volume / 4) + 0.5
 
                     base.bgm.playSfx(choice(self.player.boings), volume, pitch)
 
@@ -907,7 +1009,7 @@ class room00(Stage):
 
                     volume = abs(mpoint.getDistance())
 
-                    pitch = (volume/4) + 0.5
+                    pitch = (volume / 4) + 0.5
 
                     base.bgm.playSfx(choice(self.player.boings), volume, pitch)
 
@@ -1160,6 +1262,7 @@ class room00(Stage):
         self.processInput(dt)
 
         # Camera positioning based on player's ball position
+        self.level.world.doPhysics(dt, 25, 2.0 / 360.0)
 
         base.cam.set_x(self.player.ballNP.get_x())
 
@@ -1171,22 +1274,55 @@ class room00(Stage):
 
         # Perform physics update
 
-        self.level.world.doPhysics(dt, 25, 2.0 / 360.0)
-
         return task.cont
 
     def transition(self, exit_stage, lvl=None):
-        if exit_stage == None:
-            self.exit_stage = "main_menu"
+    
+        # Create a full-screen fade effect using a color fade
+        fade_card = aspect2d.attachNewNode("fade_card")
+        fade_card.setScale(2)  # Covers the entire screen
+        fade_card.setTransparency(TransparencyAttrib.MAlpha)
+        fade_card.setColor(0, 0, 0, 0)  # Start transparent
 
-        else:
-            self.exit_stage = exit_stage
+        # Create fade-out effect using LerpFunctionInterval
+        def fade_color(t):
+        
+            fade_card.setColor(0, 0, 0, t)
 
-        base.flow.transition(self.exit_stage)
+        fade_out = LerpFunctionInterval(
+            fade_color, duration=0.5, fromData=0, toData=1, blendType="easeInOut"
+        )
+
+        def complete_transition(task=None):
+        
+            fade_card.removeNode()
+            self.exit_stage = "main_menu" if exit_stage is None else exit_stage
+            base.flow.transition(self.exit_stage)
+            return Task.done
+
+        fade_out.setDoneEvent("fadeOutDone")
+        fade_out.start()
+        base.accept("fadeOutDone", complete_transition)
+    
 
     def exit(self, data):
-        # Cleanup particles if they exist
+           # Stop and close the audio stream
+        if hasattr(self, "stream") and self.stream.is_active():  # Use is_active() instead of active
+            self.stream.stop_stream()
+            self.stream.close()
 
+        # Reset the audio data array
+        self.audio_data = np.array([])
+
+        # Reset amplitude tracking index
+        self.current_amplitude_idx = 0
+
+        # Print confirmation of cleanup
+        print(
+            "Audio stream and associated resources have been successfully cleaned up."
+        )
+        # Cleanup particles if they exist
+        self.motion_blur.cleanup()
         if hasattr(self, "particles"):
             # Disable the particle system
 
@@ -1268,9 +1404,6 @@ class room00(Stage):
         base.ignore("gamepad-shoulder_left-up")
         base.ignore("gamepad-shoulder_right")
         base.ignore("gamepad-shoulder_right-up")
-        
-        
-        
 
         # self.ball.detachNode()
 
@@ -1291,4 +1424,102 @@ class room00(Stage):
 
             node.removeNode()
 
+        self.stop_color_cycling()  # Stop color cycling when exiting
+
         return data
+
+    def cleanup_level(self):
+        """Clean up any existing level resources before creating a new one"""
+        self.stop_color_cycling()  # Stop color cycling before cleanup
+
+        if self.motion_blur is not None:
+            self.motion_blur.cleanup()
+            self.motion_blur = None
+        else:
+            print("Warning: motion_blur is None and cannot be cleaned up.")
+
+        if hasattr(self, "level"):
+            # Clean up physics world
+            if hasattr(self.level, "world"):
+                if hasattr(self.level, "floorNP") and self.level.floorNP:
+                    self.level.world.removeRigidBody(self.level.floorNP.node())
+                if hasattr(self.level, "wallsNP") and self.level.wallsNP:
+                    self.level.world.removeRigidBody(self.level.wallsNP.node())
+
+            # Clean up audio
+            if hasattr(self.level, "audio"):
+                self.level.audio.stopLoopingAudio()
+
+            # Clean up debug visualization
+            if hasattr(self.level, "debugNP"):
+                self.level.debugNP.detachNode()
+                self.level.debugNP.removeNode()
+
+            # Clean up NPCs
+            if hasattr(self.level, "npc_mounts"):
+                for npc in self.level.npc_mounts:
+                    npc.detachNode()
+                    npc.removeNode()
+
+            # Clean up portals
+            if hasattr(self.level, "portals"):
+                for portal in self.level.portals:
+                    portal.detachNode()
+                    portal.removeNode()
+
+            # Clean up world node
+            if hasattr(self.level, "worldNP"):
+                self.level.worldNP.removeNode()
+
+    def load_textures(self):
+        """Load textures only if they haven't been loaded before"""
+        if WorldCage._textures is None:  # Only load if not already loaded
+            print("Loading textures from directory:", self.texture_directory)
+            texture_files = sorted(
+                [
+                    f
+                    for f in os.listdir(self.texture_directory)
+                    if f.endswith(".png") or f.endswith(".jpg")
+                ]
+            )
+
+            WorldCage._textures = [
+                base.loader.loadTexture(os.path.join(self.texture_directory, texture))
+                for texture in texture_files
+            ]
+            print(f"Total textures loaded: {len(WorldCage._textures)}")
+        else:
+            print("Using previously loaded textures")
+
+        self.textures = WorldCage._textures  # Reference the class textures
+        self.textures_loaded = True
+
+    def create_matrix_effect(self):
+        """Create matrix particle effect using cached textures"""
+        print("Creating matrix effect...")
+        if not self.textures_loaded:
+            print("Loading textures from directory: stars/")
+            self.load_textures()
+        # Use self.textures for particle system setup
+        # ... rest of particle system creation code ...
+
+    def start_color_cycling(self):
+        """Start the color cycling task if not already running"""
+        if self.color_cycle_task is None:
+            self.color_cycle_task = taskMgr.add(self.update_colors, "color_cycle_task")
+
+    def stop_color_cycling(self):
+        """Stop the color cycling task if running"""
+        if self.color_cycle_task is not None:
+            taskMgr.remove(self.color_cycle_task)
+            self.color_cycle_task = None
+
+    def update_colors(self, task):
+        """Update colors for various game elements"""
+        self.current_color_index = (self.current_color_index + 1) % len(self.colors)
+        current_color = self.colors[self.current_color_index]
+
+        # Apply the color to relevant objects
+        # Add any objects you want to cycle colors for
+
+        return task.cont

@@ -1,3 +1,4 @@
+
 from direct.showbase import Audio3DManager
 
 from random import choice
@@ -5,6 +6,8 @@ from random import choice
 from random import shuffle
 
 
+
+    
 class audio3d:
     def __init__(self):
         self.audio3d = Audio3DManager.Audio3DManager(base.sfxManagerList[0], camera)
@@ -25,8 +28,10 @@ class audio3d:
 
         self.audio3d.setDopplerFactor(3)
 
+    
         self.playing_loops = []
 
+    
     def enter(self):
         base.task_mgr.add(self.update, "update")
 
@@ -67,12 +72,14 @@ class audio3d:
                     if loop:
                         self.playing_loops.append(sfx3d)
 
+    
                     print("Attached sound to object.")
 
                     print(str(obj))
 
     def update(self, task):
         self.audio3d.update()
+    
 
         # print(str(self.audio3d.getListenerVelocity()))
 

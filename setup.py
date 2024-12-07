@@ -17,7 +17,7 @@ dll_dir = os.path.join(os.getcwd(), "lib")
 dll_files = [
     os.path.join(dll_dir, dll)
     for dll in os.listdir(dll_dir)
-    if dll.endswith(".dll") or dll.endswith(".pyd") or dll.endswith(".dylib")
+    if dll.endswith(".dll") or dll.endswith(".pyd")
 ]
 
 setup(
@@ -45,7 +45,7 @@ setup(
             "include_modules": {
                 "*": [
                     "pyaudio",  # Underlying PortAudio library
-                    "numpy",    # Required by sounddevice
+                    "numpy",  # Required by sounddevice
                 ]
             },
             "platforms": [
@@ -61,13 +61,15 @@ setup(
                 "**/*.egg",
                 "**/*.bam",
                 "**/*.otf",
+                "**/*.ttf",
+                "NPCS/**/*.png",
                 "lib/*",
             ],
             "exclude_patterns": [".venv/*", "./dist/*", "./build/*"],
             "rename_paths": {
                 EXPORT_DIR: "assets/",
             },
-            "gui_apps": {
+            "console_apps": {
                 APP_NAME: MAIN_FILE,
             },
             "plugins": [
@@ -88,6 +90,9 @@ setup(
         },
     },
     data_files=[
-        ("lib", dll_files),  # This places DLL, PYD, and DYLIB files in the 'lib/' directory of the build
+        (
+            "lib",
+            dll_files,
+        ),  # This places DLL, PYD, and DYLIB files in the 'lib/' directory of the build
     ],
 )

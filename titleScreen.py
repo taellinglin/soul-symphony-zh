@@ -1,3 +1,4 @@
+
 import sys
 
 from glyphRings import GlyphRings
@@ -30,9 +31,13 @@ import math
 
 from stageflow import Stage
 
+from motionBlur import MotionBlur
+
 
 class TitleScreen(Stage):
+
     def __init__(self, exit_stage="main_menu"):
+    
         self.exit_stage = exit_stage
 
         self.colors = [
@@ -52,8 +57,10 @@ class TitleScreen(Stage):
         self.wave_amplitude = 0.125  # Amplitude of the wave effect
 
         self.wave_frequency = 5.0
+        self.motion_blur = MotionBlur()
 
     def enter(self, data):
+    
         self.data = data
 
         base.accept("enter", self.transition, [self.exit_stage])
@@ -98,7 +105,6 @@ class TitleScreen(Stage):
 
     def cycle_colors(self, task):
         # Set the color of the object to the current color in the array
-
         self.imageObject.setColor(self.colors[self.current_color_index])
 
         # Move to the next color in the array
@@ -110,11 +116,13 @@ class TitleScreen(Stage):
         return task.cont
 
     def transition(self, exit_stage):
+    
         base.flow.transition(self.exit_stage)
 
     def create_logo_wave(self):
         # Define the wave parameters
 
+    
         wave_scale_min = (1.45, 1, 0.65)  # Minimum scale values
 
         wave_scale_max = (1.55, 1, 0.55)  # Maximum scale values
@@ -128,6 +136,7 @@ class TitleScreen(Stage):
         def update_wave(task):
             # Calculate the current time in the wave cycle
 
+        
             current_time = (task.time % wave_duration) / wave_duration
 
             scale_factor = wave_scale_min[0] + (
@@ -496,6 +505,7 @@ class TitleScreen(Stage):
 
         self.star_pulse2.loop()
 
+    
     def rotate_star(self, task):
         dt = self.globalClock.get_dt()
 
@@ -511,6 +521,7 @@ class TitleScreen(Stage):
 
         return task.cont  # Continue the task
 
+    
     def centerPivot(self, NP):
         pivot = NP.getBounds().getCenter()
 
@@ -524,6 +535,7 @@ class TitleScreen(Stage):
 
         return newNP
 
+    
     def press_start(self):
         press_start = base.loader.loadModel("models/press_start.bam")
 
@@ -541,6 +553,7 @@ class TitleScreen(Stage):
 
         self.subtitle = press_start
 
+    
     def update(self, task):
         dt = self.globalClock.get_dt()
 
@@ -584,6 +597,7 @@ class TitleScreen(Stage):
         self.particle.cleanup()
 
         self.glyph_rings.center.detachNode()
+        self.motion_blur.cleanup()
 
         base.cam.reparentTo(render)
 

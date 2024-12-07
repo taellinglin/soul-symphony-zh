@@ -1,8 +1,11 @@
+
 from random import choice
 
 from panda3d.core import NodePath, TextNode, CullFaceAttrib
 
 
+
+    
 class Letters:
     def __init__(self):
         self.letters = [
@@ -45,10 +48,12 @@ class Letters:
 
         for f, font in enumerate(self.fonts):
             for l, letter in enumerate(self.letters):
+    
                 self.letter_nodes.append(self.make_letter(font, letter))
 
     def enter(self):
         base.taskMgr.add(self.update, "letter_update")
+    
 
     def make_letter(self, font=None, letter=None):
         # Create a TextNode
@@ -86,6 +91,7 @@ class Letters:
 
         # Reparent it to the render tree (scene graph)
 
+    
         letter_node.reparentTo(render)
 
         return letter_node

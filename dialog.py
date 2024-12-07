@@ -1,8 +1,11 @@
+
 from random import randrange
 
 from random import shuffle
 
 
+
+    
 class dialog:
     def __init__(self):
         self.dialogs = [
@@ -64,6 +67,7 @@ class dialog:
 
         self.dialog_pointer = 0
 
+    
     def get_dialog(self, dialog):
         # get_dialog() is random or get_dialog(n) is direct.
 
@@ -86,8 +90,10 @@ class dialog:
 
                 self.get_dialog()
 
+    
         elif dialog >= 0 and dialog <= len(self.dialogs):
             return list_copy.pop(dialog)
+    
 
     def get_dialogs(self):
         return self.dialogs

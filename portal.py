@@ -1,3 +1,4 @@
+
 from direct.showbase.Loader import Loader
 
 from audio3d import audio3d
@@ -5,8 +6,10 @@ from audio3d import audio3d
 from panda3d.core import NodePath
 
 
+
 class Portal:
     def __init__(self):
+    
         # Load the model for the portal
 
         self.model = base.loader.loadModel("components/portal00.bam")
@@ -51,8 +54,10 @@ class Portal:
 
         # Optional: Scale the portal to a suitable size
 
+    
         self.model.setScale(2)  # Adjust the scale of the portal
 
+    
     def warp(self):
         pass
 

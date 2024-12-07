@@ -8,25 +8,16 @@ from gamepadInput import GamepadInput
 
 from bgm import BGM
 
-from motionBlur import MotionBlur
-
 from titleScreen import TitleScreen
-
-from intro import Intro
-
-from intro2 import Intro2
-
-from intro3 import Intro3
 
 from stageflow import Flow
 
 from stageflow.panda3d import Panda3DSplash
 
-from letterMatching import LetterMatching
 
 from scoreboard import scoreboard
 
-from room00 import room00
+from worldcage import WorldCage
 
 from stageflow.prefab import Quit
 
@@ -52,7 +43,7 @@ class Base(ShowBase):
 
         self.bgm = BGM()
 
-        self.motion_blur = MotionBlur()
+        # self.motion_blur = MotionBlur()
 
         self.disable_mouse()
 
@@ -62,22 +53,15 @@ class Base(ShowBase):
 
         self.fonts = self.get_fonts("fonts/text/")
 
-        self.levels = ["room00", "room01", "room02", "room03"]
+        self.levels = ["worldcage"]
 
         # Setup stage flow
 
         self.flow = Flow(
             stages=dict(
                 splash=Panda3DSplash(exit_stage="title_screen"),
-                title_screen=TitleScreen(exit_stage="room00"),
-                intro=Intro(exit_stage="intro2"),
-                intro2=Intro2(exit_stage="intro3"),
-                intro3=Intro3(exit_stage="lettermatching"),
-                letter_matching=LetterMatching(exit_stage="room00"),
-                room00=room00(exit_stage="quit", lvl=0),
-                room01=room00(exit_stage="quit", lvl=1),
-                room02=room00(exit_stage="quit", lvl=2),
-                room03=room00(exit_stage="quit", lvl=3),
+                title_screen=TitleScreen(exit_stage="worldcage"),
+                worldcage=WorldCage(exit_stage="quit", lvl=0),
                 quit=Quit(),
             ),
             initial_stage="title_screen",
@@ -139,8 +123,6 @@ class Base(ShowBase):
 
 
 def main():
-    # Initialize the game
-
     base = Base()
 
     # Get the default graphics pipe

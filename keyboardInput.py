@@ -1,6 +1,9 @@
+
 from panda3d.core import InputDevice
 
 
+
+    
 class KeyboardInput:
     def __init__(self):
         self.keyboard = None

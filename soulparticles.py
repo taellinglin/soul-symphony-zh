@@ -1,3 +1,4 @@
+
 from direct.particles.ParticleEffect import ParticleEffect
 
 from direct.particles import Particles
@@ -18,7 +19,7 @@ from panda3d.physics import LinearNoiseForce, DiscEmitter
 
 import glob
 
-from panda3d.core import Filename, LVector3, LVector4, LPoint3, LPoint3f
+from panda3d.core import Filename, LVector3, LVector4, LPoint3, LPoint3f, CardMaker
 
 import random
 from panda3d.core import Point3
@@ -78,6 +79,7 @@ class SoulParticles:
         return textures
 
     def create_matrix_effect(self, t):
+    
         print("Creating matrix effect...")
 
         self.p.cleanup()
@@ -246,7 +248,6 @@ class SoulParticles:
 
     def loadParticleConfig(self, filename):
         # Start of the code from steam.ptf
-
         self.p.cleanup()
 
         self.p = ParticleEffect()

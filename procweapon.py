@@ -1,3 +1,4 @@
+
 from panda3d.core import (
     NodePath,
     Vec3,
@@ -17,8 +18,12 @@ from direct.task import Task
 import math
 
 
+
+    
 class ProceduralWeaponSwinger(NodePath):
+"""Generated docstring placeholder."""
     def __init__(self, parent=None, weapon_type="sword"):
+    """Generated docstring placeholder."""
         super().__init__("ProceduralWeaponSwinger")
 
         self.reparent_to(parent if parent else base.render)

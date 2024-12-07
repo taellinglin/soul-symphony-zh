@@ -2,11 +2,10 @@ import os
 import wave
 import time
 import numpy as np
-import sounddevice as sd
 import imageio
 import subprocess
+import pyaudio
 from datetime import datetime
-
 
 class ScreenRecorder:
     def __init__(self, base):
@@ -15,6 +14,7 @@ class ScreenRecorder:
         self.video_writer = None
         self.audio_filename = None
         self.audio_frames = []
+        self.pyaudio_instance = pyaudio.PyAudio()
         self.audio_stream = None
         self.screenshot_folder = "screenshots"
         self.screencapture_folder = "screencaptures"
@@ -92,15 +92,17 @@ class ScreenRecorder:
                 self.recording = False
                 return
 
-            # Start audio recording using sounddevice
+            # Start audio recording using pyaudio
             self.audio_filename = audio_filename
-            self.audio_stream = sd.InputStream(
+            self.audio_stream = self.pyaudio_instance.open(
+                format=pyaudio.paInt16,
                 channels=self.channels,
-                samplerate=self.sample_rate,
-                dtype="int16",
-                callback=self.audio_callback,
+                rate=self.sample_rate,
+                input=True,
+                frames_per_buffer=1024,
+                stream_callback=self.audio_callback,
             )
-            self.audio_stream.start()
+            self.audio_stream.start_stream()
             print("Audio stream opened successfully.")
 
             # Start tasks to capture frames and audio
@@ -116,12 +118,13 @@ class ScreenRecorder:
             try:
                 self.recording = False
                 self.video_writer.close()
-                self.audio_stream.stop()
+                self.audio_stream.stop_stream()
+                self.audio_stream.close()
 
                 # Save the recorded audio
                 wf = wave.open(self.audio_filename, "wb")
                 wf.setnchannels(self.channels)  # Stereo audio
-                wf.setsampwidth(2)  # 2 bytes (16-bit)
+                wf.setsampwidth(self.pyaudio_instance.get_sample_size(pyaudio.paInt16))
                 wf.setframerate(self.sample_rate)
                 wf.writeframes(b"".join(self.audio_frames))
                 wf.close()
@@ -167,17 +170,13 @@ class ScreenRecorder:
 
         return task.cont
 
-    def audio_callback(self, indata, frames, time, status):
+    def audio_callback(self, in_data, frame_count, time_info, status):
         """Callback function for audio capture."""
         if status:
             print(f"Audio stream status: {status}")
         if self.recording:
-            # Flatten and store the audio data for future use
-            audio_data = indata.flatten()
-            print(f"Captured {len(audio_data)} audio samples")
-
             # Save audio data into audio_frames
-            self.audio_frames.append(audio_data.tobytes())  # Ensure it's in byte format
+            self.audio_frames.append(in_data)
 
     def combine_audio_video(self, video_file, audio_file, output_file):
         """Combine video and audio using ffmpeg."""

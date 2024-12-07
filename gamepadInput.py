@@ -1,6 +1,9 @@
+
 from panda3d.core import InputDevice
 
 
+
+    
 class GamepadInput:
     def __init__(self):
         self.gamepad = None
