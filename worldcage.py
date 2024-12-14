@@ -1,64 +1,34 @@
-
 from math import pi
-
 from math import sin
-
 from math import cos
-
 import random
-
 import sys
-
-
 from direct.showbase.PythonUtil import randFloat
-
 from stageflow import Stage
-
 from random import choice
-
 from random import randint
-
 from stageflow import Stage
-
-from level import level
-
+from level import Level
 from player import player
-
 from npc import npc
 from motionBlur import MotionBlur
-
 from soulparticles import SoulParticles
-
 from dialog import dialog
-
+from doormanager import DoorManager
 from panda3d.core import LVecBase4f
-
 import string
-
 from panda3d.core import BitMask32
-
 from panda3d.core import NodePath
-
 from panda3d.core import InputDevice
-
 from panda3d.core import TextureStage
-
 from panda3d.core import Vec3
-
 from panda3d.core import BitMask32
-
 from panda3d.core import TextNode
-
 from panda3d.core import Material
-
 from panda3d.bullet import BulletRigidBodyNode
-
 from panda3d.bullet import BulletBodyNode
-
 from panda3d.core import ClipPlaneAttrib, Plane, LVecBase3
-
 from direct.interval.IntervalGlobal import Sequence, Wait, Parallel
-
 from panda3d.core import (
     TransparencyAttrib,
     CardMaker,
@@ -70,90 +40,78 @@ from panda3d.core import (
     ColorWriteAttrib,
     Texture,
 )
-
 from panda3d.physics import LinearVectorForce
-
 from direct.gui.OnscreenImage import OnscreenImage
-
 from direct.interval.LerpInterval import (
     LerpScaleInterval,
     LerpColorInterval,
     LerpColorScaleInterval,
     LerpFunctionInterval,
 )
-
 from direct.interval.IntervalGlobal import Sequence, LerpPosInterval
 import pyaudio
 print(pyaudio.get_portaudio_version_text())
 import os
-
-os.environ["SD_ENABLE_ASIO"] = "1"
-
-
 from pydub import AudioSegment
-
 from pydub.playback import play
-
 import numpy as np
-
 import math
-
 from direct.showbase.InputStateGlobal import inputState
-
 from panda3d.core import KeyboardButton
-
 from panda3d.core import PNMImage
 from direct.task import Task
-
-
 from healthbar import HealthBar
-
 from direct.particles.ParticleEffect import ParticleEffect
-
 from direct.particles import Particles
-
-from direct.particles import ForceGroup  # Correct import for ForceGroup
-
+from direct.particles import ForceGroup
 from direct.particles import ParticleManagerGlobal
-
 from direct.particles import Particles
-
 from panda3d.physics import RectangleEmitter
-
 from panda3d.physics import BaseParticleEmitter, BaseParticleRenderer
-
 from panda3d.physics import PointParticleFactory, SpriteParticleRenderer
-
 from panda3d.physics import LinearNoiseForce, DiscEmitter
-
 import glob
-
 from panda3d.core import Filename
+from direct.showbase.ShowBase import ShowBase
+from direct.showbase import DirectObject
+from direct.task.Task import Task
+from level import Level
+from panda3d.core import PerspectiveLens
+
+
 
 # Define minimum and maximum FOV
 MIN_FOV = 30  # Narrowest (closer zoom)
 MAX_FOV = 90  # Widest (farthest zoom)
 
-
 class WorldCage(Stage):
     # Add this as a class variable (outside __init__)
-
     _textures = None  # Class-level storage for textures
 
-    def __init__(self, exit_stage="main_menu", lvl=None, audio_amplitude=None):
-    
-    
+    def __init__(self, exit_stage="quit", lvl=None, arcade_lvl=None):
         super().__init__()  # Initialize the ShowBase
+        if hasattr(self, "player"):
+            self.player.removeNode()
         self.zooming_out = False
         self.zooming_in = False
-        if lvl is None:
-            self.lvl = 0
+        # Get the window width and height
+        window_width = base.win.getXSize()
+        window_height = base.win.getYSize()
+    
+        # Calculate the correct aspect ratio
+        aspect_ratio = window_width / window_height
 
+        # Update the camera lens
+        lens = base.cam.node().getLens()  # Get the lens for the camera
+        lens.setAspectRatio(aspect_ratio)
+        if lvl is None and arcade_lvl is None:
+            self.lvl = 0
         else:
             self.lvl = lvl
+            self.arcade_lvl = arcade_lvl
 
         base.enableParticles()
-
+        base.cam.node().get_lens().set_fov(45)
         self.exit_stage = exit_stage
 
         self.globalClock = globalClock
@@ -161,23 +119,20 @@ class WorldCage(Stage):
         self.rotation_speed = 60  # Degrees per second
 
         # Initialize colors (ROYGBIV)
-
-        # Assuming player health is already initialized
-
         self.colors = []
 
         phase_frags = 6
 
         # Keep track of jump state
-
         self.on_ground = False
 
         self.jump_count = 0  # Tracks how many jumps have been performed
 
         # Define the ROYGBIV color pattern
-
         for phase in [0.5 * pi * (i / float(phase_frags)) for i in range(phase_frags)]:
-            self.colors.append((1, sin(phase), 0, 1))  # Red to Orange
+            self.colors.append(
+                (1, sin(phase), 0, 1)
+            )  # Red to Orange
 
         for phase in [0.5 * pi * (i / float(phase_frags)) for i in range(phase_frags)]:
             self.colors.append((1 - sin(phase), 1, 0, 1))  # Orange to Yellow
@@ -195,7 +150,6 @@ class WorldCage(Stage):
             self.colors.append((1, 0, 1 - sin(phase), 1))  # Blue to Violet
 
         # Maintain a base colors list for cycling
-
         self.base_colors = [
             (1, 0, 0, 1),  # Red
             (1, 0.5, 0, 1),  # Orange
@@ -207,7 +161,6 @@ class WorldCage(Stage):
         ]
 
         # Define a range of colors to choose from
-
         self.color_choices = [
             (1, 0, 0),  # Red
             (1, 0.5, 0),  # Orange
@@ -246,12 +199,10 @@ class WorldCage(Stage):
 
         self.current_color_index = 0
 
-        self.motion_blur = MotionBlur()
+        self.motion_blur = None
 
     def star(self):
         # Load the star image
-
-    
         self.star_node = NodePath("star_node")
 
         self.star_card = CardMaker("star_card")
@@ -271,7 +222,6 @@ class WorldCage(Stage):
         self.imageObject3.setTransparency(TransparencyAttrib.MAlpha)
 
         # Correctly attach the generated node
-
         self.star_spinner = self.star_node.attach_new_node(self.star_card.generate())
 
         self.star_spinner.setPos(0, 0, 0)  # Center it at the origin
@@ -281,17 +231,13 @@ class WorldCage(Stage):
         self.star_decal.setScale(1.0, 1.0, 1.0)
 
         # Call the method to create the pulsing effect for the star
-
         self.create_star_pulse()
 
         # Initialize a task to continuously rotate the star
-
         self.rotate_task = base.taskMgr.add(self.rotate_star, "rotate_star")
 
     def create_star_pulse(self):
         # Star 1 pulsing effect
-
-    
         self.star_pulse = Sequence(
             LerpScaleInterval(
                 self.imageObject2, 1, scale=(0, 0, 0), startScale=(4, 4, 4)
@@ -306,7 +252,6 @@ class WorldCage(Stage):
         self.star_pulse.loop()
 
         # Star 2 pulsing effect
-
         self.star_pulse2 = Sequence(
             LerpScaleInterval(
                 self.imageObject3, 1, scale=(4, 4, 4), startScale=(0, 0, 0)
@@ -321,23 +266,22 @@ class WorldCage(Stage):
         self.star_pulse2.loop()
 
     def rotate_star(self, task):
-    
-        dt = self.globalClock.get_dt()
-
-        new_hpr = self.imageObject2.getHpr() + LVector3(0, 0, self.rotation_speed * dt)
-
-        new_hpr2 = self.imageObject3.getHpr() + LVector3(
-            0, 0, -self.rotation_speed * dt
+        dt = globalClock.get_dt()
+        new_hpr = self.imageObject2.getHpr() + LVector3(
+            0, 
+            0, 
+            self.rotation_speed * dt
         )
-
-        self.imageObject2.setHpr(new_hpr)  # Set the new HPR
-
+        new_hpr2 = self.imageObject3.getHpr() + LVector3(
+            0, 
+            0, 
+            -self.rotation_speed * dt
+        )
+        self.imageObject2.setHpr(new_hpr)
         self.imageObject3.setHpr(new_hpr2)
-
-        return task.cont  # Continue the task
+        return task.cont
 
     def centerPivot(self, NP):
-    
         pivot = NP.getBounds().getCenter()
 
         parent = NP.getParent()
@@ -354,14 +298,15 @@ class WorldCage(Stage):
 
     def initialize_audio(self):
         """Initialize and start the audio stream using pyaudio."""
-        self.audio_data = np.zeros(self.buffer_size, dtype=np.float32)  # Reset buffer
+        self.audio_data = np.zeros(
+            self.buffer_size, 
+            dtype=np.float32
+        )  # Reset buffer
         
         def audio_callback(in_data, frame_count, time_info, status):
-            # Convert byte data to numpy array
             audio_buffer = np.frombuffer(in_data, dtype=np.float32)
             self.audio_data = np.append(self.audio_data, audio_buffer)
             
-            # Truncate buffer if it exceeds a certain size
             if len(self.audio_data) > self.fs:
                 self.audio_data = self.audio_data[-self.fs:]
             
@@ -369,7 +314,7 @@ class WorldCage(Stage):
 
         self.stream = self.pyaudio_instance.open(
             format=pyaudio.paFloat32,
-            channels=1,  # Mono
+            channels=1,
             rate=self.fs,
             input=True,
             frames_per_buffer=self.buffer_size,
@@ -405,8 +350,7 @@ class WorldCage(Stage):
         self.audio_data = np.array([])
         print("Audio stream and resources cleaned up.")
 
-    def enter(self, lvl=None):
-    
+    def enter(self, data=None):
         self.initialize_audio()
         print("Entered new level or portal, audio stream reset.")
         # Set initial fade state
@@ -431,12 +375,13 @@ class WorldCage(Stage):
         fade_in.start()
         base.accept("fadeInDone", cleanup_fade)
 
-        self.cleanup_level()
+        self.cleanup()
+       
         self.motion_blur = MotionBlur()
-        if lvl == None:
-            lvl = self.lvl
+        if data is None:
+            data = str(base.levels[self.lvl])
 
-        self.lvl = lvl
+        #self.level = Level(player=self.player, lvl=self.lvl, arcade_lvl=None)
 
         # Only load textures once
         if not self.textures_loaded:
@@ -510,7 +455,6 @@ class WorldCage(Stage):
         )
 
         # Initialize color intervals for cycling through colors for star3
-
         self.star_color_cycle2 = Sequence(
             # Mirrored ROYGBIV Color Interpolation with staggered time for interference pattern
             LerpColorInterval(
@@ -565,16 +509,13 @@ class WorldCage(Stage):
         )
 
         # Loop the color sequence indefinitely
-
         self.star_color_cycle.loop()
 
         # Initialize color intervals for cycling through colors for star3
-
         self.star_color_cycle2.loop()
 
         # print("Roll Test Area Entered...")
-
-        base.cam.set_z(24)
+        base.cam.set_z(60)
 
         base.bgm.playMusic(None, True, 0.8)
 
@@ -609,23 +550,21 @@ class WorldCage(Stage):
         inputState.watchWithModifiers("cam-right", "gamepad-shoulder_right")
 
         inputState.watchWithModifiers("cam-left", "gamepad-shoulder_left")
-
-        print("level: " + str(self.lvl))
-
-        self.level = level(self.lvl)
-
-        self.level.get_npcs(21)
-
-        self.level.place_npcs()
-
         self.player = player()
+        if hasattr(self, 'level'):
+            self.level.cleanup()
+        print("level: " + str(self.lvl))
+        if self.lvl is not None and self.arcade_lvl is None:
+            self.level = Level(player=self.player, lvl=self.lvl)
+        else:
+            self.level = Level(player=self.player, arcade_lvl=self.arcade_lvl)
+        
 
         self.player.ballNP.reparentTo(self.level.worldNP)
-
+        
         self.level.world.attachRigidBody(self.player.ballNP.node())
-
-        self.player.ballNP.setPos(choice(self.level.portals).getPos() + (0, 0, 3))
-
+        
+        
         self.dialog = dialog()
 
         self.dialog_card = TextNode("dialog_card")
@@ -673,23 +612,20 @@ class WorldCage(Stage):
         base.accept(
             "gamepad-shoulder-right-up", self.set_zoom_in, [False]
         )  # R1 released
-
+        
         # Task to handle modifiers
-        base.taskMgr.add(self.handle_zoom, "HandleZoom")
-
+        #base.taskMgr.add(self.handle_zoom,  "HandleZoom
+        taskMgr.add(self.processInput, "processInput")
         self.start_color_cycling()  # Start color cycling once
-
-    
+        
     def set_zoom_out(self, state):
         print("Zoom Out")
         self.zooming_out = state
 
-    
     def set_zoom_in(self, state):
         print("Zoom in")
         self.zooming_in = state
 
-    
     def handle_zoom(self, task):
         if self.zooming_out:
             self.zoom_fov(-0.2)
@@ -697,7 +633,6 @@ class WorldCage(Stage):
             self.zoom_fov(0.2)
         return task.cont
 
-    
     def zoom_fov(self, delta):
         current_fov = base.camLens.get_fov()[0]
         new_fov = current_fov + delta
@@ -708,123 +643,126 @@ class WorldCage(Stage):
 
     def actionA(self):
         # Check if the player is touching the ground
-    
-
         result = self.level.world.contactTestPair(
             self.player.ballNP.node(), self.level.floorNP.node()
         )
 
         if result.getNumContacts() > 0:
             self.on_ground = True
-
             self.jump_count = 0  # Reset the jump count when on the ground
-
         else:
             self.on_ground = False
 
         # If player is on the ground or has performed less than 2 jumps
-
         if self.jump_count < 2:
             # Apply a jump force when the action is triggered
-
             self.player.ballNP.node().applyCentralImpulse(Vec3(0, 0, 128 + 32))
-
             base.bgm.playSfx("ball-jump")
-
-            # Increment the jump counter
-
             self.jump_count += 1
 
-            # Perform extra actions if near NPC mounts
-
-            if len(self.level.npc_mounts):
-                for n, npc_mount in enumerate(self.level.npc_mounts):
-                    if (
-                        npc_mount.getPos().getXy() - self.player.ballNP.getPos().getXy()
-                    ).length() < 5:
-                        self.dialog_card.text = self.level.npcs[n].get("dialog")
-
-                        self.dialog_card.setFont(choice(base.fonts))
-
-                        self.dialog_card_node.show()
-
-                        base.bgm.playSfx("start-dialog")
-
-                        self.player.force = Vec3(0, 0, 0)
-
-                        self.player.torque = Vec3(0, 0, 0)
-
-                        self.player.ballNP.node().setLinearDamping(1)
-
-            # Perform actions if near portals
-
-            if len(self.level.portals):
+            # Check for portal interactions
+            if len(self.level.portals) > 1:  # Need at least 2 portals to warp
                 for p, portal in enumerate(self.level.portals):
-                    if (
-                        portal.getPos().getXy() - self.player.ballNP.getPos().getXy()
-                    ).length() < 5:
+                    if (portal.getPos().getXy() - self.player.ballNP.getPos().getXy()).length() < 5:
+                        # Find the next portal in sequence (wrap around to first if at end)
+                        next_portal_index = (p + 1) % len(self.level.portals)
+                        destination_portal = self.level.portals[next_portal_index]
+                        
+                        # Show teleport dialog
                         self.dialog_card.setFont(choice(base.fonts))
-
-                        self.dialog_card.text = choice(
-                            [
-                                "出发吧！",
-                                "快点！",
-                                "耶！前进！",
-                                "我们走了！",
-                                "逃离！",
-                                "让我们迷失吧！",
-                                "再见！",
-                                "逃跑！",
-                                "离开这里！",
-                            ]
-                        )
-
+                        self.dialog_card.text = choice([
+                            "传送！", "瞬移！", "闪现！", "穿越空间！",
+                            "空间跳跃！", "传送门启动！", "空间转移！"
+                        ])
                         self.dialog_card_node.show()
+                        
+                        # Play teleport sound
+                        base.bgm.playSfx("warp")  # Add appropriate sound effect
+                        
+                        # Get destination position (slightly above portal to prevent immediate re-trigger)
+                        dest_pos = destination_portal.getPos()
+                        dest_pos.setZ(dest_pos.getZ() + 2)  # Lift player slightly above destination portal
+                        
+                        # Teleport player
+                        self.player.ballNP.setPos(dest_pos)
+                        
+                        # Reset velocity to prevent carrying momentum through portal
+                        self.player.ballNP.node().setAngularVelocity(Vec3(0, 0, 0))
+                        
+                        # Optional: Add visual effect at both portals
+                        # You could add particle effects or other visual indicators here
+                        
+                        return  # Exit after teleporting
 
-                        self.player.force = Vec3(0, 0, 0)
-
-                        self.player.torque = Vec3(0, 0, 0)
-
-                        self.player.ballNP.node().setLinearDamping(1)
-
-    
-    def actionAUp(self):
-        if self.player.ballNP.node().getLinearDamping() == 1:
-            self.player.ballNP.node().setLinearDamping(0)
-
-        self.dialog_card_node.hide()
-
-        for p, portal in enumerate(self.level.portals):
-            if (
-                portal.getPos().getXy() - self.player.ballNP.getPos().getXy()
-            ).length() < 5:
-                self.dialog_card.text = choice(
-                    ["Ok!", "Alright!", "Affirmative!", "Totally!"]
-                )
-
-                self.dialog_card_node.hide()
-
-                base.bgm.stopSfx()
-
-                base.bgm.playSfx("warp")
-
-                self.transition(choice(base.levels))
-
-                return
-
-    
+            # Check for door interactions
+            if len(self.level.doors):
+                for door in self.level.doors:
+                    if (door.getPos().getXy() - self.player.ballNP.getPos().getXy()).length() < 5:
+                        self.dialog_card.setFont(choice(base.fonts))
+                        self.dialog_card.text = choice([
+                            "出发吧！", "快点！", "耶！前进！", "我们走了！",
+                            "逃离！", "让我们迷失吧！", "再见！", "逃跑！", "离开这里！"
+                        ])
+                        self.dialog_card_node.show()
+                        base.bgm.playSfx('door_open')
+                        
+                        # Set the current door in the door manager
+                        self.level.door_manager.set_current_door(door)
+                        print(f"Selected door: {door.getName()}")
+                        self.level.cleanup()
+                        self.reset_level()
+                        
+                        #load another level here
+                        
+                        return  # Exit after selecting a door
+    def reset_level(self):
+        """Reset level, music, and audio with proper cleanup"""
+        print("Resetting level, music, and audio...")
+        
+        # Stop all tasks first
+        #taskMgr.removeTasksMatching('*')
+        #taskMgr.remove('level_update')
+        
+        taskMgr.remove('processInput')
+        taskMgr.remove('update')
+        taskMgr.remove('level_update')
+        taskMgr.remove('HandleZoom')
+        taskMgr.remove('process_audio')
+        # Stop current music and effects
+        if hasattr(base, 'bgm'):
+            base.bgm.stopSfx()
+            base.bgm.stopMusic()
+        
+        
+        # Pick random level
+        random_lvl = random.randrange(len(base.levels))
+        print(f"Loading random level: {random_lvl}")
+        
+        self.player = player()
+        self.level = Level(player=self.player, lvl=random_lvl)
+        self.player.ballNP.reparentTo(self.level.worldNP)
+        
+        self.level.world.attachRigidBody(self.player.ballNP.node())
+        base.task_mgr.add(self.update, "update")
+        base.task_mgr.add(self.level.update, "level_update")
+        base.task_mgr.add(self.processInput, "processInput")
+        
+        self.start_color_cycling()
+        # Play random music track
+        if hasattr(base, 'bgm'):
+            base.bgm.playMusic(None, True, 0.8)
+        print(self.level.worldNP.ls())
+        print("Level reset complete!")
     def actionB(self):
         self.player.ballNP.node().setAngularDamping(0.82)
 
         self.player.ballNP.node().setLinearDamping(0.82)
 
-    
     def actionBUp(self):
         self.player.ballNP.node().setAngularDamping(0)
 
         self.player.ballNP.node().setLinearDamping(0)
 
-    
     def processInput(self, dt):
         force = Vec3(0, 0, 0)
 
@@ -882,21 +820,86 @@ class WorldCage(Stage):
         self.player.ballNP.node().applyCentralForce(force)
 
         self.player.ballNP.node().applyTorque(torque)
+        
+        # Check for door interactions
+        if len(self.level.doors):
+            for door in self.level.doors:
+                if (door.getPos().getXy() - self.player.ballNP.getPos().getXy()).length() < 5:
+                    self.dialog_card.setFont(choice(base.fonts))
+                    self.dialog_card.text = choice([
+                        "出发吧！", "快点！", "耶！前进！", "我们走了！",
+                        "逃离！", "让我们迷失吧！", "再见！", "逃跑！", "离开这里！"
+                    ])
+                    self.dialog_card_node.show()
+                    
+                    
+                    # Set the current door in the door manager
+                    self.level.door_manager.set_current_door(door)
+                    print(f"Selected door: {door.getName()}")
+                    return  # Exit after selecting a door
+
+    def actionAUp_wrapper(self):
+        """Wrapper method to handle the button release without requiring a door parameter"""
+        if hasattr(self, 'level') and hasattr(self.level, 'door_manager'):
+            current_door = self.level.door_manager.get_current_door()
+            if current_door:
+                if current_door != self.level.door_manager.get_current_door():
+                    print(f"Selected door: {current_door.getName()}")
+                    self.level.door_manager.set_current_door(current_door)
+                else:
+                    print(f"Current door already set: {current_door.getName()}")
+                self.actionAUp(current_door)  # Pass the door if available
+                # Clear the current door after processing
+                self.level.door_manager.set_current_door(None)
+            else:
+                print("No current door selected")
+                self.actionAUp()  # Call actionAUp with no door (optional)
+        else:
+            print("No level or door manager available")
+        self.actionAUp()  # Call actionAUp with no door (optional)
+
+    def actionAUp(self, door=None):
+        """Handle the 'A' button release action for doors"""
+        if door is None:
+            print("No door provided")
+            return
+        
+        if not self.level or not self.level.door_manager:
+            print("No level or door manager available")
+            return
+        
+        # Get the door name/id from the NodePath
+        door_name = door.getName()
+        
+        # Find the matching door configuration
+        door_data = None
+        for d in self.level.door_manager.door_data.get('doors', []):
+            if d['id'] == door_name:
+                door_data = d
+                break
+        
+        if door_data and not door_data['locked']:
+            # Get random level index
+            random_lvl = random.randrange(len(base.levels))
+            print(f"Transitioning to random level: {random_lvl}")
+            
+            # Cleanup and reinitialize
+            
+            self.level = Level(player=self.player, lvl=random_lvl)
+            
+        else:
+            print(f"Door {door_name} is locked!")
 
     def update(self, task):
         # Get the linear velocity vector
-    
-
         velocity = self.player.ballNP.get_node(0).getLinearVelocity()
 
         # Calculate the magnitude of the velocity vector
-
         velocity_magnitude = (
             velocity.length()
         )  # Get the length (magnitude) of the vector
 
         # Map the magnitude to a transparency value in the range [0.15, 1.0]
-
         max_velocity = (
             2000.0  # Define a maximum expected velocity (this may need tuning)
         )
@@ -906,41 +909,32 @@ class WorldCage(Stage):
         max_transparency = 0.125  # Maximum opacity (fully opaque)
 
         # Normalize the transparency based on the velocity magnitude
-
         if velocity_magnitude > 0:
             # Normalize the velocity to a range between 0 and 1
-
             normalized_velocity = min(1, velocity_magnitude / max_velocity)
 
             # Set transparency so that lower velocity means higher transparency
-
             self.transparency = min_transparency + (
                 max_transparency - min_transparency
             ) * (1 - normalized_velocity)
 
         else:
             # If the ball is stationary, set transparency to minimum (most transparent)
-
             self.transparency = max_transparency
 
         # Set the rotation speed based on the velocity
-
         self.rotation_speed = velocity_magnitude * 2
 
         # Initialize color intervals for cycling through colors
-
         # Update the listener's velocity based on the player's ball position
-
         self.level.audio.audio3d.setListenerVelocity(
             self.player.ballNP.get_node(0).getLinearVelocity()
         )
 
         # Update the color index for cycling through colors
-
         self.color_idx = (self.color_idx + 1) % len(self.colors)
 
         # Update ball roll speed based on linear velocity
-
         self.player.ball_roll.setPlayRate(
             0.05
             * (
@@ -949,82 +943,78 @@ class WorldCage(Stage):
                 + abs(self.player.ballNP.get_node(0).getLinearVelocity().getZ())
             )
         )
-
+        
         # Check proximity to NPC mounts and show/hide nametags
-
         for n, npc_mount in enumerate(self.level.npc_mounts):
-            nametag = npc_mount.find("**/npcNametag")
+            nametag = npc_mount.find("**/npcNametag**")
 
             if (
                 npc_mount.getPos().getXy() - self.player.ballNP.getPos().getXy()
             ).length() < 5:
-                if nametag.isHidden():
-                    nametag.show()
+                if nametag:
+                    if nametag.isHidden():
+                        nametag.show()
+                        base.bgm.playSfx("hover")
+                    else:
+                        nametag.hide()
+                else:
+                    print("Nametag does not exist.")
+                    
+        # Check to see if floorNP, wallsNP, and player exist
+        if hasattr(self.level, 'floorNP') and hasattr(self.level, 'wallsNP') and hasattr(self.player, 'ballNP'):
+            # Check for contacts with the floor and walls
+            result = self.level.world.contactTestPair(
+                self.player.ballNP.node(), self.level.floorNP.node()
+            )
 
-                    base.bgm.playSfx("hover")
+            result2 = self.level.world.contactTestPair(
+                self.player.ballNP.node(), self.level.wallsNP.node()
+            )
+
+            # Handle bouncing sound when contacting the floor
+            if result.getNumContacts() > 0:
+                contact = result.getContacts()[0]
+
+                if contact.getNode1() == self.level.floorNP.node():
+                    if not self.player.boing:
+                        self.player.boing = True
+
+                        mpoint = contact.getManifoldPoint()
+
+                        volume = abs(mpoint.getDistance())
+
+                        pitch = (volume / 4) + 0.5
+
+                        base.bgm.playSfx(choice(self.player.boings), volume, pitch)
 
             else:
-                nametag.hide()
+                self.player.boing = False
 
-        # Check for contacts with the floor and walls
+            # Handle bouncing sound when contacting the walls
+            if result2.getNumContacts() > 0:
+                contact2 = result2.getContacts()[0]
 
-        result = self.level.world.contactTestPair(
-            self.player.ballNP.node(), self.level.floorNP.node()
-        )
+                if contact2.getNode1() == self.level.wallsNP.node():
+                    if not self.player.boing:
+                        self.player.boing = True
 
-        result2 = self.level.world.contactTestPair(
-            self.player.ballNP.node(), self.level.wallsNP.node()
-        )
+                        mpoint = contact2.getManifoldPoint()
 
-        # Handle bouncing sound when contacting the floor
+                        volume = abs(mpoint.getDistance())
 
-        if result.getNumContacts() > 0:
-            contact = result.getContacts()[0]
+                        pitch = (volume / 4) + 0.5
 
-            if contact.getNode1() == self.level.floorNP.node():
-                if not self.player.boing:
-                    self.player.boing = True
+                        base.bgm.playSfx(choice(self.player.boings), volume, pitch)
 
-                    mpoint = contact.getManifoldPoint()
-
-                    volume = abs(mpoint.getDistance())
-
-                    pitch = (volume / 4) + 0.5
-
-                    base.bgm.playSfx(choice(self.player.boings), volume, pitch)
-
-        else:
-            self.player.boing = False
-
-        # Handle bouncing sound when contacting the walls
-
-        if result2.getNumContacts() > 0:
-            contact2 = result2.getContacts()[0]
-
-            if contact2.getNode1() == self.level.wallsNP.node():
-                if not self.player.boing:
-                    self.player.boing = True
-
-                    mpoint = contact2.getManifoldPoint()
-
-                    volume = abs(mpoint.getDistance())
-
-                    pitch = (volume / 4) + 0.5
-
-                    base.bgm.playSfx(choice(self.player.boings), volume, pitch)
-
-        else:
-            self.player.boing = False
+            else:
+                self.player.boing = False
 
         # Iterate through each monster in the scene
-
         for monster in self.level.monsters:
             # Retrieve the combined node for the monster
-
             yin_yang_np = monster.yin_yang_np  # This holds the whole symbol
 
             # Perform contact tests with the Yin (black) and Yang (white) parts
-
             result_yin = self.level.world.contactTestPair(
                 self.player.ballNP.node(), monster.yin_np.node()
             )  # Black part
@@ -1034,13 +1024,11 @@ class WorldCage(Stage):
             )  # White part
 
             # Decrease player's health if colliding with the Yin (black part)
-
             if result_yin.getNumContacts() > 0:
                 contact_yin = result_yin.getContacts()[0]
 
                 if contact_yin.getNode1() == monster.yin_np.node():
                     # Decrease player's health by 10%
-
                     new_health = self.player.health - (self.player.max_health * 0.1)
 
                     self.update_health(new_health)  # Update health bar and health value
@@ -1050,13 +1038,11 @@ class WorldCage(Stage):
                     )
 
             # Heal player's health if colliding with the Yang (white part)
-
             if result_yang.getNumContacts() > 0:
                 contact_yang = result_yang.getContacts()[0]
 
                 if contact_yang.getNode1() == monster.yang_np.node():
                     # Increase player's health by 10%, ensuring it doesn't exceed max
-
                     new_health = self.player.health + (self.player.max_health * 0.1)
 
                     self.player.health = min(self.player.max_health, new_health)
@@ -1070,13 +1056,11 @@ class WorldCage(Stage):
                     )
 
         # Update scoreboard and player color
-
         base.scoreboard.score_node.setColor(choice(self.colors))
 
         self.player.ballNP.set_color(choice(self.colors))
 
         # Check for interactions with letters
-
         for l, letter in enumerate(render.findAllMatches("**/letter**")):
             letter.set_h(letter, 1)
 
@@ -1097,9 +1081,6 @@ class WorldCage(Stage):
 
         if self.audio_data.size > 0:
             # Limit the number of samples processed to avoid overflow
-
-            # Limit the number of samples processed to avoid overflow
-
             max_samples = 512
 
             if len(self.audio_data) > max_samples:
@@ -1108,7 +1089,6 @@ class WorldCage(Stage):
             samples = np.array(self.audio_data)[:max_samples]
 
             # Proceed with your FFT and transparency updates
-
             spectrum = np.fft.fft(samples)
 
             freqs = np.fft.fftfreq(len(samples), 1 / self.fs)
@@ -1118,14 +1098,15 @@ class WorldCage(Stage):
             amplitudes = [np.abs(spectrum[indices]).mean() for indices in band_indices]
 
             transparencies = np.clip(amplitudes / np.max(amplitudes), 0, 0.5)
-
+            if hasattr(self.level, 'floorNP') and hasattr(self.level, 'wallsNP') and hasattr(self.player, 'ballNP'):
             # Update the ground, floor, walls, and ceiling colors based on transparency
-
-            objects_to_update = {
-                "floor": self.level.floor.get_children(),
-                "walls": self.level.walls.get_children(),
-                "ceil": self.level.ceil.get_children(),
-            }
+                objects_to_update = {
+                    "floor": self.level.floor.get_children(),
+                    "walls": self.level.walls.get_children(),
+                    "ceil": self.level.ceil.get_children(),
+                }
+            else:
+                objects_to_update = {}
 
             for i, (key, children) in enumerate(objects_to_update.items()):
                 for obj in children:
@@ -1137,7 +1118,6 @@ class WorldCage(Stage):
                     )  # Randomly select a color
 
                     # Ensure the index for transparencies does not exceed its length
-
                     transparency_value = (
                         transparencies[i] if i < len(transparencies) else 0.05
                     )  # Default to 1.0 if out of bounds
@@ -1148,13 +1128,11 @@ class WorldCage(Stage):
 
             for p, portal in enumerate(self.level.portals):
                 # Find the base and flower nodes
-
                 base_node = portal.find("**/base")
 
                 flower_node = portal.find("**/flower")
 
                 # Make flower rotate or adjust orientation based on time or clock
-
                 flower_node.setHpr(self.clock * 30, self.clock * 30, self.clock * 30)
 
                 flower_node.setScale(2 * ((sin(self.clock) + 1) / 2))
@@ -1162,23 +1140,19 @@ class WorldCage(Stage):
                 base_node.setScale(sin(self.clock) * 2)
 
                 # Apply transparency if necessary
-
                 flower_node.setTransparency(
                     TransparencyAttrib.MAlpha
                 )  # Make the part use alpha transparency
 
                 # Set the color write to False using ColorWriteAttrib for the flower node
-
                 flower_node.setDepthTest(True)
 
                 base_node.setH(-self.clock)
 
                 # Randomly choose a color from the color choices list
-
                 color_choice = random.choice(self.color_choices)
 
                 # Create the emissive color using the selected color_choice
-
                 emission_color = LVecBase4f(
                     color_choice[0],
                     color_choice[1],
@@ -1187,11 +1161,9 @@ class WorldCage(Stage):
                 )  # Use RGB and set alpha to 1 for full opacity
 
                 # Randomly choose a color from the color choices list
-
                 color_choice = random.choice(self.color_choices)
 
                 # Create the emissive color using the selected color_choice
-
                 emission_color2 = LVecBase4f(
                     color_choice[0], color_choice[1], color_choice[2], 0.75
                 )  # Use RGB and set alpha to 1 for full opacity
@@ -1201,30 +1173,36 @@ class WorldCage(Stage):
                 base_node.setColor(emission_color2)
 
             for n, npc_node in enumerate(self.level.npc_mounts):
+                # Find emblem and face nodes
                 emblem = npc_node.find("**/npcEmblem")
-
                 face = npc_node.find("**/npcFace")
-
-                # Set random colors for emblem and face
-
-                color_choice = random.choice(self.color_choices)
-
-                emblem.set_color(
-                    LVecBase4f(color_choice[0], color_choice[1], color_choice[2], 0.5)
-                )  # Emblem color with some transparency
-
-                color_choice = random.choice(self.color_choices)
-
-                face.set_color(
-                    LVecBase4f(color_choice[0], color_choice[1], color_choice[2], 1)
-                )  # Face color fully opaque
+                nametag = npc_node.find("**/npcNametag")
+                
+                # Check proximity for nametag
+                if (npc_node.getPos().getXy() - self.player.ballNP.getPos().getXy()).length() < 5:
+                    if nametag and not nametag.isEmpty():
+                        if nametag.isHidden():
+                            nametag.show()
+                            base.bgm.playSfx("hover")
+                    else:
+                        if nametag and not nametag.isEmpty():
+                            nametag.hide()
+                
+                # Handle emblem and face colors only if they exist
+                if emblem and not emblem.isEmpty():
+                    color_choice = choice(self.color_choices)
+                    emblem.setTransparency(TransparencyAttrib.MAlpha)
+                    emblem.setColor(LVecBase4f(color_choice[0], color_choice[1], color_choice[2], 0.5))
+                
+                if face and not face.isEmpty():
+                    color_choice = choice(self.color_choices)
+                    face.setTransparency(TransparencyAttrib.MAlpha)
+                    face.setColor(LVecBase4f(color_choice[0], color_choice[1], color_choice[2], 1))
 
                 # Get the current time
-
                 time = globalClock.getFrameTime()
 
                 # Calculate Z position with a sine wave
-
                 amplitude = 0.05  # Amplitude of the oscillation
 
                 period = 2.0  # Duration of one full oscillation (2 seconds)
@@ -1234,27 +1212,19 @@ class WorldCage(Stage):
                 )  # Frequency to complete one oscillation in 2 seconds
 
                 # Calculate the new Z offset based on sine wave
-
                 bobbing_height = amplitude * math.sin(frequency * time)
 
                 # Get the original position of the NPC (should be stored when the bobbing starts)
-
                 original_pos = (
                     npc_node.getPos()
                 )  # Get the current position (this should be the original position at start)
 
                 # Apply the oscillation relative to the original position (only change the Z value)
-
                 npc_node.setZ(original_pos.getZ() + bobbing_height)
 
                 npc_node.setDepthTest(False)
 
-            #    print(npc_node)
-
-            #    print(color_choice)
-
         # Increment clock and get delta time
-
         self.clock += 1
 
         dt = globalClock.getDt()
@@ -1273,11 +1243,12 @@ class WorldCage(Stage):
         base.cam.look_at(self.player.ballNP)
 
         # Perform physics update
-
         return task.cont
 
     def transition(self, exit_stage, lvl=None):
-    
+        """Generic transition method that can handle both worldcage and arcade transitions"""
+        print(f"Transitioning to {exit_stage} level {lvl}")
+        
         # Create a full-screen fade effect using a color fade
         fade_card = aspect2d.attachNewNode("fade_card")
         fade_card.setScale(2)  # Covers the entire screen
@@ -1286,7 +1257,6 @@ class WorldCage(Stage):
 
         # Create fade-out effect using LerpFunctionInterval
         def fade_color(t):
-        
             fade_card.setColor(0, 0, 0, t)
 
         fade_out = LerpFunctionInterval(
@@ -1294,19 +1264,56 @@ class WorldCage(Stage):
         )
 
         def complete_transition(task=None):
-        
             fade_card.removeNode()
-            self.exit_stage = "main_menu" if exit_stage is None else exit_stage
-            base.flow.transition(self.exit_stage)
+            self.exit_stage = exit_stage
+            
+            # Handle the transition based on the exit stage type
+            if self.exit_stage == "arcade":
+                # Pass both current worldcage level and arcade level
+                transition_data = {
+                    'worldcage_level': self.lvl,
+                    'arcade_level': lvl
+                }
+                base.flow.transition(self.exit_stage, transition_data)
+            else:  # worldcage
+                base.flow.transition(self.exit_stage, lvl)
+            return Task.done
+
+        fade_out.setDoneEvent("fadeOutDone")
+        fade_out.start()
+        base.accept("fadeOutDone", complete_transition)
+
+    def transition_to_current_arcade(self, lvl=None):
+        # Get the current arcade level using the level's method
+        current_arcade_level = self.level.arcade_levels[lvl]
+
+        # Create a full-screen fade effect using a color fade
+        fade_card = aspect2d.attachNewNode("fade_card")
+        fade_card.setScale(2)  # Covers the entire screen
+        fade_card.setTransparency(TransparencyAttrib.MAlpha)
+        fade_card.setColor(0, 0, 0, 0)  # Start transparent
+
+        # Create fade-out effect using LerpFunctionInterval
+        def fade_color(t):
+            fade_card.setColor(0, 0, 0, t)
+
+        fade_out = LerpFunctionInterval(
+            fade_color, duration=0.5, fromData=0, toData=1, blendType="easeInOut"
+        )
+
+        # Define the completion of the transition
+        def complete_transition(task=None):
+            fade_card.removeNode()
+            self.exit_stage = "arcade"
+            base.flow.transition(self.exit_stage, current_arcade_level)
             return Task.done
 
         fade_out.setDoneEvent("fadeOutDone")
         fade_out.start()
         base.accept("fadeOutDone", complete_transition)
     
-
     def exit(self, data):
-           # Stop and close the audio stream
+        # Stop and close the audio stream
         if hasattr(self, "stream") and self.stream.is_active():  # Use is_active() instead of active
             self.stream.stop_stream()
             self.stream.close()
@@ -1325,9 +1332,7 @@ class WorldCage(Stage):
         self.motion_blur.cleanup()
         if hasattr(self, "particles"):
             # Disable the particle system
-
             self.particles.cleanup()  # Clean up any particle resources
-
             self.particles = None  # Dereference particles to fully clean up
 
         self.star_node.removeNode()
@@ -1368,17 +1373,14 @@ class WorldCage(Stage):
 
         for n, npc in enumerate(self.level.npc_mounts):
             npc.detachNode()
-
             npc.removeNode()
 
         for p, portal in enumerate(self.level.portals):
             portal.detachNode()
-
             portal.removeNode()
 
         for l, letter in enumerate(render.findAllMatches("**/letter**")):
             letter.detachNode()
-
             letter.removeNode()
 
         self.level.worldNP.removeNode()
@@ -1409,26 +1411,21 @@ class WorldCage(Stage):
 
         base.bgm.stopMusic()
 
-        base.cam.set_z(1)
-
-        base.cam.set_x(0)
-
-        base.cam.set_y(0)
-
-        base.cam.set_hpr(0, 0, 0)
-
         base.taskMgr.remove("update")
 
         for n, node in enumerate(aspect2d.findAllMatches("**/dialog_card")):
             node.detachNode()
-
             node.removeNode()
 
         self.stop_color_cycling()  # Stop color cycling when exiting
 
         return data
 
-    def cleanup_level(self):
+    def cleanup(self):
+        if hasattr(self, 'renderParent'):
+            del self.renderParent
+        else:
+            print("renderParent attribute not found. Skipping cleanup for it.")
         """Clean up any existing level resources before creating a new one"""
         self.stop_color_cycling()  # Stop color cycling before cleanup
 

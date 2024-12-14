@@ -24,7 +24,6 @@ BALL_SPEED = 10
     
 class player:
     def __init__(self):
-
         self.load_ball()
         self.setup_ball_forces()
         self.ball_roll = base.loader.load_sfx("audio/ball_roll.wav")
@@ -35,13 +34,10 @@ class player:
         self.portal_loop = False
         self.previous_velocity = Vec3(0, 0, 0)  # Initialize previous velocity
     
-
     def update(self):
-    
         # Store the velocity for the next frame
         self.previous_velocity = self.ballNP.node().getLinearVelocity()
     
-
     def get_previous_velocity(self):
         return self.previous_velocity
 
@@ -50,9 +46,9 @@ class player:
         self.ballNP = render.attachNewNode(BulletRigidBodyNode("Sphere"))
         self.ballNP.node().setMass(4)
         self.ballNP.node().addShape(shape)
+        self.ballNP.node().setIntoCollideMask(BitMask32.bit(1))
         self.ballNP.setCollideMask(BitMask32.allOn())
         self.ballNP.node().setDeactivationEnabled(False)
-    
         self.ballNP.node().setRestitution(0.75)
         visualNP = loader.loadModel("models/orb.bam")
         visualNP.clearModelNodes()
@@ -103,7 +99,6 @@ class player:
         else:
             vel1 = Vec3(0, 0, 0)
     
-
         # Calculate relative velocity
         relative_velocity = vel0 - vel1
         impact_velocity = relative_velocity.length()
@@ -111,3 +106,38 @@ class player:
 
     def __destroy__(self):
         self.ball_roll.stop()
+
+    def get_pos(self):
+        """
+        Return the current position of the ball.
+        """
+        # Return the position of the ballNP (BulletRigidBodyNode)
+        return self.ballNP.get_pos()
+
+    def is_empty(self):
+        """
+        Check if the player object is properly initialized and has a valid ballNP.
+        """
+        return self.ballNP is None or self.ballNP.node() is None
+
+    def cleanup(self):
+        """
+        Cleanup function to stop sounds, remove nodes, and clear resources.
+        """
+        # Stop ball roll sound
+        if self.ball_roll:
+            self.ball_roll.stop()
+        
+        # Remove the ball's visual and physics node
+        if self.ballNP:
+            self.ballNP.removeNode()  # Detach the ball's node from the scene
+            self.ballNP = None  # Optionally clear the reference
+
+        # Optionally clear any additional resources you might have
+        self.previous_velocity = Vec3(0, 0, 0)  # Reset velocity
+        self.force = Vec3(0, 0, 0)  # Reset force
+        self.torque = Vec3(0, 0, 0)  # Reset torque
+        self.boing = False  # Reset boing state
+        self.portal_loop = False  # Reset portal loop state
+    def set_player_pos(self, pos):
+        self.ballNP.setPos(pos)

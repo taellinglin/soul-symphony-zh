@@ -1,11 +1,22 @@
-
 from panda3d.core import CardMaker, NodePath
 
 
-
 class MotionBlur:
-    
+    _instance = None  # Class-level attribute to hold the single instance
+
+    def __new__(cls, *args, **kwargs):
+        # Check if an instance already exists
+        if cls._instance is None:
+            # Create a new instance if none exists
+            cls._instance = super().__new__(cls)
+        return cls._instance
+
     def __init__(self):
+        if hasattr(self, "_initialized") and self._initialized:
+            # Prevent re-initialization of an existing instance
+            return
+        self._initialized = True
+
         # Disable clearing the color buffer for the window for blending effect
         base.win.set_clear_color_active(False)
 
@@ -24,7 +35,6 @@ class MotionBlur:
         # Adjust Z order to render the quad above the background
         self.motion_quad.set_bin("background", 0)
         self.motion_quad.set_depth_test(False)
-    
         self.motion_quad.set_depth_write(False)
 
     def cleanup(self):
@@ -33,3 +43,4 @@ class MotionBlur:
         # Proceed with cleanup if motion_quad is valid
         self.motion_quad.removeNode()
         self.motion_quad = None
+        MotionBlur._instance = None  # Allow new instance creation after cleanup

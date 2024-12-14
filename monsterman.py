@@ -1,4 +1,3 @@
-
 from panda3d.core import (
     Geom,
     GeomNode,
@@ -292,10 +291,7 @@ class YinYangMonster(NodePath):
         # print(f"Velocity: {self.velocity}")
 
     def update_position(self, delta_time):
-        self.position += self.velocity * delta_time
-    
-
-        self.set_pos(self.position)  # Update the NodePath's position in the scene graph
+        self.position += self.velocity * delta_time # Update the NodePath's position in the scene graph
 
         # print(f"Position: {self.position}")
 
@@ -310,8 +306,6 @@ class YinYangMonster(NodePath):
 
     
             # print(f"Updated hpr: {self.hpr}")
-
-
 
 class MonsterManager:
     def create_yin_yang(self):
@@ -373,3 +367,11 @@ class MonsterManager:
 
             if random.random() < 0.1:  # Chance to kick off
                 monster.kick_off()
+
+    def cleanup(self):
+        """Clean up all monsters and associated resources"""
+        if hasattr(self, 'monsters'):
+            for monster in self.monsters:
+                if monster is not None:
+                    monster.removeNode()
+            self.monsters = []

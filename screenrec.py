@@ -1,208 +1,128 @@
-import os
-import wave
+﻿import os
 import time
-import numpy as np
 import imageio
-import subprocess
+import numpy as np
 import pyaudio
+import wave
+from panda3d.core import GraphicsOutput, Texture
+from panda3d.core import PNMImage
 from datetime import datetime
 
 class ScreenRecorder:
-    def __init__(self, base):
-        self.base = base  # Reference to the ShowBase instance
-        self.recording = False
-        self.video_writer = None
-        self.audio_filename = None
-        self.audio_frames = []
-        self.pyaudio_instance = pyaudio.PyAudio()
-        self.audio_stream = None
-        self.screenshot_folder = "screenshots"
-        self.screencapture_folder = "screencaptures"
-        self.sample_rate = 192000  # 192 kHz for stereo audio
-        self.channels = 2  # Stereo audio
+    def __init__(self, window, folder="screencapture", fps=60, audio_rate=96000, audio_channels=2):
+        self.window = window
+        self.folder = folder
+        self.fps = fps
+        self.audio_rate = audio_rate
+        self.audio_channels = audio_channels
 
-        # Setup folders and input events
+        self.video_writer = None
+        self.audio_frames = []
+        self.recording = False
+        self.screenshot_count = 0
+
+        self.audio_format = pyaudio.paInt16
+        self.chunk_size = 128
+        self.audio = pyaudio.PyAudio()
+        self.audio_stream = None
+
         self.setup_folders()
-        self.setup_input_events()
 
     def setup_folders(self):
-        """Ensure the required folders exist."""
-        for folder in [self.screenshot_folder, self.screencapture_folder]:
-            if not os.path.exists(folder):
-                os.makedirs(folder)
-                print(f"Created folder: {folder}")
-            else:
-                print(f"Folder already exists: {folder}")
-
-    def setup_input_events(self):
-        """Bind input events for screenshots and recording."""
-        self.base.accept("f11", self.handle_select_press)  # Screenshot on 'F11'
-        self.base.accept("f12", self.handle_select_hold)  # Toggle recording on 'F12'
-
-    def handle_select_press(self):
-        """Handle single press of 'F11' for taking a screenshot."""
-        print("F11 pressed (screenshot).")
-        if not self.recording:
-            self.take_screenshot()
-
-    def handle_select_hold(self):
-        """Handle holding 'F12' for toggling video recording."""
-        print("F12 held (toggle recording).")
-        if not self.recording:
-            self.start_recording()
-        else:
-            elapsed = (
-                time.time() - self.record_start_time if self.record_start_time else 0
-            )
-            if elapsed >= 3:
-                self.stop_recording()
+        os.makedirs(self.folder, exist_ok=True)
+        self.screenshot_folder = os.path.join(self.folder, "screenshots")
+        os.makedirs(self.screenshot_folder, exist_ok=True)
 
     def take_screenshot(self):
-        """Capture and save a screenshot."""
-        timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-        filename = os.path.join(self.screenshot_folder, f"screenshot_{timestamp}.png")
-        print(f"Attempting to save screenshot to: {filename}")
-        success = self.base.win.saveScreenshot(filename)
-        if success:
-            print(f"Screenshot saved as: {filename}")
-        else:
-            print("Failed to save screenshot!")
+        # Create a PNMImage object
+        screenshot_image = PNMImage()
+        
+        # Capture the screenshot and store it in the PNMImage object
+        self.window.win.getScreenshot(screenshot_image)
+        
+        # Get the current datetime
+        current_time = datetime.now()
+        
+        # Format the datetime manually with East Asian characters
+        formatted_time = "{0}年{1}月{2}日_{3}时{4}分{5}秒".format(
+            current_time.year, current_time.month, current_time.day,
+            current_time.hour, current_time.minute, current_time.second)
+        
+        # Create the filename with East Asian characters in it
+        screenshot_filename = "SoulSymphony_{}.png".format(formatted_time)
+        
+        # Save the screenshot with the generated filename
+        screenshot_image.write(screenshot_filename)
 
     def start_recording(self):
-        """Initialize video and audio recording."""
-        try:
-            capture_datetime = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-            video_filename = os.path.join(
-                self.screencapture_folder, f"capture_{capture_datetime}.mp4"
-            )
-            audio_filename = os.path.join(
-                self.screencapture_folder, f"audio_{capture_datetime}.wav"
-            )
+        if self.recording:
+            print("Recording already in progress.")
+            return
 
-            print(
-                f"Starting video recording to: {video_filename} and audio to {audio_filename}"
-            )
-            self.recording = True
-            self.record_start_time = time.time()
+        video_filename = os.path.join(self.folder, f"SoulSymphonyRec_{int(time.time())}.mp4")
+        self.video_writer = imageio.get_writer(video_filename, fps=self.fps, macro_block_size=None)
 
-            # Set up imageio video writer (60 FPS)
-            self.video_writer = imageio.get_writer(video_filename, fps=60)
-            if not self.video_writer:
-                print("Error: Video writer failed to open!")
-                self.recording = False
-                return
+        audio_filename = os.path.join(self.folder, f"audio_{int(time.time())}.wav")
+        self.audio_file = audio_filename
 
-            # Start audio recording using pyaudio
-            self.audio_filename = audio_filename
-            self.audio_stream = self.pyaudio_instance.open(
-                format=pyaudio.paInt16,
-                channels=self.channels,
-                rate=self.sample_rate,
-                input=True,
-                frames_per_buffer=1024,
-                stream_callback=self.audio_callback,
-            )
-            self.audio_stream.start_stream()
-            print("Audio stream opened successfully.")
+        self.audio_stream = self.audio.open(
+            format=self.audio_format,
+            channels=self.audio_channels,
+            rate=self.audio_rate,
+            input=True,
+            frames_per_buffer=self.chunk_size
+        )
 
-            # Start tasks to capture frames and audio
-            self.base.taskMgr.add(self.record_frame, "RecordFrameTask")
-            print("Video and audio recording started.")
-        except Exception as e:
-            print(f"Error starting video and audio recording: {e}")
-            self.recording = False
+        self.recording = True
+        print(f"Recording started: {video_filename}")
 
     def stop_recording(self):
-        """Finalize video and audio recording."""
-        if self.recording:
-            try:
-                self.recording = False
-                self.video_writer.close()
-                self.audio_stream.stop_stream()
-                self.audio_stream.close()
+        if not self.recording:
+            print("No recording to stop.")
+            return
 
-                # Save the recorded audio
-                wf = wave.open(self.audio_filename, "wb")
-                wf.setnchannels(self.channels)  # Stereo audio
-                wf.setsampwidth(self.pyaudio_instance.get_sample_size(pyaudio.paInt16))
-                wf.setframerate(self.sample_rate)
-                wf.writeframes(b"".join(self.audio_frames))
-                wf.close()
+        self.recording = False
 
-                # Combine video and audio using ffmpeg
-                output_file = self.audio_filename.replace(".wav", "_final.mp4")
-                video_file = self.audio_filename.replace("audio", "capture").replace(
-                    ".wav", ".mp4"
-                )
-                audio_file = self.audio_filename
-                print(f"Combining video and audio using ffmpeg into {output_file}")
-                self.combine_audio_video(video_file, audio_file, output_file)
-                print("Video and audio recording stopped.")
-            except Exception as e:
-                print(f"Error stopping video and audio recording: {e}")
-            finally:
-                self.base.taskMgr.remove("RecordFrameTask")
-                self.video_writer = None
-                self.audio_stream = None
-                self.audio_frames = []
+        self.audio_stream.stop_stream()
+        self.audio_stream.close()
+        self.audio.terminate()
 
-    def record_frame(self, task):
-        """Capture the current frame and write it to the video file."""
-        if not self.recording or self.video_writer is None:
-            return task.done
+        if self.video_writer:
+            self.video_writer.close()
 
-        try:
-            # Capture the current frame as a numpy array (RGB)
-            tex = self.base.win.getScreenshot()
-            img_data = tex.getRamImageAs("RGB")
-            img = np.frombuffer(img_data, dtype=np.uint8).reshape(
-                tex.getYSize(), tex.getXSize(), 3
-            )
+        self.save_audio()
+        print("Recording stopped and saved.")
 
-            # Flip the image vertically (Panda3D stores images upside-down)
-            img = np.flipud(img)
+    def record_frame(self):
+        if not self.recording:
+            return
 
-            # Write the frame to the video
-            self.video_writer.append_data(img)
-        except Exception as e:
-            print(f"Error recording frame: {e}")
-            return task.done
+        tex = Texture()
+        self.window.win.getScreenshot(tex)
+        np_image = np.frombuffer(tex.getRamImageAs("RGBA"), dtype=np.uint8)
+        np_image = np_image.reshape((tex.getYSize(), tex.getXSize(), 4))
+        np_image = np.flip(np_image, axis=0)
 
-        return task.cont
+        self.video_writer.append_data(np_image)
 
-    def audio_callback(self, in_data, frame_count, time_info, status):
-        """Callback function for audio capture."""
-        if status:
-            print(f"Audio stream status: {status}")
-        if self.recording:
-            # Save audio data into audio_frames
-            self.audio_frames.append(in_data)
+        audio_data = self.audio_stream.read(self.chunk_size, exception_on_overflow=False)
+        self.audio_frames.append(audio_data)
 
-    def combine_audio_video(self, video_file, audio_file, output_file):
-        """Combine video and audio using ffmpeg."""
-        try:
-            video_file = video_file.replace("\\", "/")
-            audio_file = audio_file.replace("\\", "/")
-            output_file = output_file.replace("\\", "/")
+    def save_audio(self):
+        if not self.audio_frames:
+            return
 
-            # Run the FFmpeg command to combine video and audio
-            command = [
-                "ffmpeg",
-                "-i",
-                video_file,
-                "-i",
-                audio_file,
-                "-c:v",
-                "libx264",
-                "-c:a",
-                "aac",
-                "-b:a",
-                "44.1k",
-                "-strict",
-                "experimental",
-                output_file,
-            ]
-            subprocess.run(command, check=True)
-            print(f"Output video with audio saved as {output_file}")
-        except subprocess.CalledProcessError as e:
-            print(f"Error combining video and audio: {e}")
+        with wave.open(self.audio_file, 'wb') as wf:
+            wf.setnchannels(self.audio_channels)
+            wf.setsampwidth(self.audio.get_sample_size(self.audio_format))
+            wf.setframerate(self.audio_rate)
+            wf.writeframes(b''.join(self.audio_frames))
+
+        print(f"Audio saved to {self.audio_file}")
+
+# Example usage in a Panda3D application
+# recorder = ScreenRecorder(window=base)
+# base.accept("f1", recorder.take_screenshot)
+# base.accept("f2", recorder.start_recording)
+# base.accept("f3", recorder.stop_recording)
+# taskMgr.add(lambda task: recorder.record_frame() or task.cont, "record_frame")

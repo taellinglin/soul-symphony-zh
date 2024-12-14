@@ -1,4 +1,3 @@
-
 from panda3d.core import InputDevice
 
 
@@ -60,3 +59,17 @@ class GamepadInput:
 
         if devices:
             self.connect(devices[0])
+
+    @property
+    def leftStickX(self):
+        """Get the X axis value of the left analog stick"""
+        if self.gamepad:
+            return self.gamepad.findAxis(0).value
+        return 0.0
+        
+    @property
+    def leftStickY(self):
+        """Get the Y axis value of the left analog stick"""
+        if self.gamepad:
+            return self.gamepad.findAxis(1).value
+        return 0.0

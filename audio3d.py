@@ -1,4 +1,3 @@
-
 from direct.showbase import Audio3DManager
 
 from random import choice
@@ -78,7 +77,6 @@ class audio3d:
                     print(str(obj))
 
     def update(self, task):
-        self.audio3d.update()
     
 
         # print(str(self.audio3d.getListenerVelocity()))
@@ -88,3 +86,22 @@ class audio3d:
     def stopLoopingAudio(self):
         for s, sound in enumerate(self.playing_loops):
             sound.stop()
+
+    def cleanup(self):
+        """Clean up audio resources"""
+        print("Cleaning up 3D audio...")
+        # Stop all looping sounds
+        self.stopLoopingAudio()
+        
+        # Remove the update task
+        base.task_mgr.remove("update")
+        
+        # Clear the audio manager
+        if hasattr(self, 'audio3d'):
+            for sfx_list in self.sfx3d.values():
+                for sfx in sfx_list:
+                    sfx.stop()
+            self.audio3d = None
+        
+        self.playing_loops = []
+        print("3D audio cleanup complete")

@@ -32,12 +32,12 @@ import math
 from stageflow import Stage
 
 from motionBlur import MotionBlur
+from panda3d.core import TextureStage
 
 
 class TitleScreen(Stage):
 
-    def __init__(self, exit_stage="main_menu"):
-    
+    def __init__(self, exit_stage="loading", lvl=None, arcade_lvl=None):
         self.exit_stage = exit_stage
 
         self.colors = [
@@ -60,8 +60,6 @@ class TitleScreen(Stage):
         self.motion_blur = MotionBlur()
 
     def enter(self, data):
-    
-        self.data = data
 
         base.accept("enter", self.transition, [self.exit_stage])
 
@@ -95,7 +93,7 @@ class TitleScreen(Stage):
 
         self.inward = True  # To track whether we're moving inward or outward
 
-        base.bgm.playMusic("灵林 - 灵魂交响乐 - 标题画面", True, 1)
+        base.bgm.playMusic("灵林 - 灵魂交响乐 - 魂交响乐", True, 1)
 
         base.bgm.playSfx("soul-symphony")
 
@@ -116,8 +114,10 @@ class TitleScreen(Stage):
         return task.cont
 
     def transition(self, exit_stage):
-    
-        base.flow.transition(self.exit_stage)
+        print(f"Transitioning to {exit_stage}")
+        base.load_stage("worldcage", 0, None)
+        
+        
 
     def create_logo_wave(self):
         # Define the wave parameters
@@ -536,22 +536,6 @@ class TitleScreen(Stage):
         return newNP
 
     
-    def press_start(self):
-        press_start = base.loader.loadModel("models/press_start.bam")
-
-        press_start.setP(90)
-
-        press_start.setX(-0.5)
-
-        press_start.setY(-3.25)
-
-        press_start.setZ(-0.7)
-
-        press_start.setScale(0.15, 0.15, 0.75)
-
-        press_start.reparentTo(base.cam2d)
-
-        self.subtitle = press_start
 
     
     def update(self, task):
@@ -562,7 +546,7 @@ class TitleScreen(Stage):
 
         self.time += dt
 
-        base.camera.setHpr(base.camera, (0.05, 0.05, 0.05))
+        base.cam.setHpr(base.cam, (0.05, 0.05, 0.05))
 
         base.cam.look_at(render)
 
@@ -570,47 +554,51 @@ class TitleScreen(Stage):
 
         return task.cont
 
-    def exit(self, data):
+    def cleanup(self):
+        if hasattr(self, 'renderParent'):
+            del self.renderParent
+        else:
+            print("renderParent attribute not found. Skipping cleanup for it.")
+        # Remove any tasks
         if hasattr(self, "cycle_task"):
             base.taskMgr.remove(self.cycle_task)
-
-            pass
 
         if hasattr(self, "rotate_task"):
             base.taskMgr.remove(self.rotate_task)
 
+        if hasattr(self, "update_task"):
+            #base.taskMgr.remove(self.update_task)
             pass
 
-        if hasattr(self, "update"):
-            base.taskMgr.remove(self.update_task)
-
+        # Remove objects and nodes
         self.imageObject.removeNode()
-
         self.imageObject2.removeNode()
-
         self.imageObject3.removeNode()
-
         self.bg2.removeNode()
-
         self.star_spinner.removeNode()
-
-        self.particle.cleanup()
-
-        self.glyph_rings.center.detachNode()
+        
+        # Check for renderParent before deleting it
+        if hasattr(self, 'renderParent'):
+            del self.renderParent
+        else:
+            print("renderParent attribute not found. Skipping cleanup.")
         self.motion_blur.cleanup()
-
-        base.cam.reparentTo(render)
-
-        base.camera.detachNode()
-
+        # Detach elements
+        self.glyph_rings.center.detachNode()
+        # Stop music and sound
         base.bgm.stopMusic()
 
+        # Ignore events and tasks
         base.ignore("enter")
-
         base.ignore("gamepad-start")
-
         base.taskMgr.remove("update")
-
         base.taskMgr.remove("logo_wave_task")
 
+    def exit(self, data):
+        # Perform cleanup of the current stage
+        self.cleanup() 
+        # Additional exit logic (if any)
+        # Example: Transition to the next stage
+        # (You can add more code here to handle specific exit actions)
+        
         return data

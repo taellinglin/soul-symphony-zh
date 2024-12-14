@@ -1,5 +1,5 @@
 class Stage:
-
+    
     """
 
     To implement a stage, inherit this class, and override its

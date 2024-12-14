@@ -1,0 +1,12 @@
+{
+  "doors": [
+    {
+      "id": "door",
+      "type": "worldcage",
+      "color": [1.0, 0.0, 0.0, 1.0],
+      "locked": false,
+      "stage": 1,
+      "position": [0, 0, 5]
+    }
+  ]
+} 

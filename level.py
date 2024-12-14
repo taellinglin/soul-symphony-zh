@@ -1,4 +1,3 @@
-
 import os
 
 from audio3d import audio3d
@@ -8,7 +7,7 @@ from npc import npc
 from letters import Letters
 
 from math import sin, floor
-
+from doormanager import DoorManager
 from random import choice, randint, uniform
 
 from monsterman import MonsterManager
@@ -16,6 +15,8 @@ from monsterman import MonsterManager
 from monsterman import YinYangMonster
 
 import random
+
+from player import player
 
 from panda3d.bullet import BulletWorld
 
@@ -56,21 +57,25 @@ DEBUG = False
 
 
     
-class level:
-    def __init__(self, lvl):
+class Level:
+    def __init__(self, player=None, lvl=None, arcade_lvl=None):
+        # Add cleanup of existing physics/collision objects if they exist     
+        # Convert lvl to int if it's a string and assign to self.lvl
+        if lvl is None:
+            self.lvl = 0
+        else:
+            self.lvl = lvl
+        self.arcade_lvl = arcade_lvl
         self.audio = audio3d()
-
+        
         self.npcs = []
-
-        self.levels = [
-            base.loader.loadModel("levels/level00.bam"),
-            base.loader.loadModel("levels/level01.bam"),
-            base.loader.loadModel("levels/level02.bam"),
-            base.loader.loadModel("levels/level03.bam"),
-            base.loader.loadModel("levels/maze00.bam"),
-            base.loader.loadModel("levels/maze02.bam"),
-        ]
-
+        self.npc_mounts = []
+        self.portals = []
+        self.player = player
+        self.doors = []
+        self.levels = base.levels
+        self.arcade_levels = []
+        self.current_arcade = arcade_lvl
         self.floortextures = self.load_textures_from_directory(
             "./graphics/patterns/floor"
         )
@@ -83,13 +88,7 @@ class level:
             "./graphics/patterns/ceiling"
         )
 
-        if lvl == None:
-            lvl = randint(0, len(self.levels))
-
-        else:
-            self.lvl = lvl
-
-            # Define colors for cycling
+        # Define colors for cycling
 
         self.colors = [
             Vec4(1, 0, 0, 1),  # Red
@@ -101,12 +100,23 @@ class level:
             Vec4(0.56, 0, 1, 1),  # Violet
         ]
 
-        self.portals = []
-
+        
         self.portal_template = base.loader.loadModel("components/portal00.bam")
 
         self.letterlist = Letters()
+        
+        self.monster_manager = MonsterManager(base.render)
 
+        self.monsters = self.monster_manager.place_monsters([], num_monsters=10)
+        
+
+        self.cTrav = CollisionTraverser()
+
+        self.handler = CollisionHandlerQueue()
+        self.clock = 0
+
+        self.clock2 = 0
+        
         self.load_world()
 
         # Example of how you'd use this:
@@ -115,27 +125,40 @@ class level:
 
         # This loop would typically be part of the Panda3D task manager
 
-        self.monster_manager = MonsterManager(base.render)
-
-        self.monsters = self.monster_manager.place_monsters([], num_monsters=10)
-
-        self.cTrav = CollisionTraverser()
-
-        self.handler = CollisionHandlerQueue()
-
-        self.load_ground()
-
+        
+        self.load_ground(lvl=self.lvl, arcade_lvl=None)
+        
+        # Remove duplicate player creation
+        # self.player = player()  # <- Remove this line
+        
         # Add the update task to Panda3D's task manager to continually update monsters
 
         # base.taskMgr.add(self.monster_manager.update_monsters)  # Add to task manager to continuously update monsters
-
-        self.clock = 0
-
-        self.clock2 = 0
-
-        # self.place_letters()
-
-    
+        print("Level Loading Complete")
+        print("Level Tree:")
+        print("--------------------------------")
+        print("Floor:")
+        print(self.floor)
+        print("--------------------------------")
+        print("Walls:")
+        print(self.walls)
+        print("--------------------------------")
+        print("Ceil:")
+        print(self.ceil)
+        print("--------------------------------")
+        print("Portals:")
+        print(self.portals) # Portals is a NodePath; no need to call `.node()`.
+        print("--------------------------------")
+        print("Player Start:")
+        print(self.player_start)
+        print("--------------------------------")
+        print("Doors:")
+        print(self.doors)
+        print("--------------------------------")
+        print("Letterlist:")
+        print(self.letterlist)
+        print(self.npcs)
+        print(self.npc_mounts)
         base.task_mgr.add(self.update, "level_update")
 
     def load_textures_from_directory(self, directory):
@@ -162,44 +185,40 @@ class level:
 
         return YinYangMonster(parent_node=self.render)
 
-    def get_npcs(self, num_npcs):
-    
+    def setup_npcs(self, npc_mounts):
+        """
+        Create and place NPCs dynamically based on the number of mounts.
+        """
+        self.npcs = []
 
-        for n in range(num_npcs):
-            new_npc = npc()
+        for mount in npc_mounts:
+            # Create and load a new NPC
+            npc_obj = npc().load_npc()
+            self.npcs.append(npc_obj)
 
-            self.npcs.append(new_npc.load_npc())
+            # Get NPC attributes
+            name = npc_obj.get("name")
+            face = npc_obj.get("face")
+            emblem = npc_obj.get("emblem")
 
-    def place_npcs(self):
+            # Create and attach name tag
+            name_node = TextNode(f"npcName_{name}")
+            name_node.text = str(name)
+            name_node.align = TextNode.A_center
+            name_node.font = choice(base.fonts)
+            npc_obj.get("nametag").attach_new_node(name_node)
 
-        if len(self.npc_mounts):
-            for n, npc in enumerate(self.npc_mounts):
-                npcObject = self.npcs[n]
+            # Attach face and emblem if available
+            if face:
+                npc_obj.get("model").attach_new_node(face.get_node(0))
+            if emblem:
+                npc_obj.get("model").attach_new_node(emblem.get_node(0))
 
-                name = self.npcs[n].get("name")
+            # Attach NPC model to the mount
+            npc_obj.get("model").instance_to(mount)
 
-                face = self.npcs[n].get("face")
+        print(f"Successfully created and placed {len(npc_mounts)} NPCs.")
 
-                emblem = self.npcs[n].get("emblem")
-
-                name_node = TextNode("npcName_" + str(name))
-
-                name_node.text = str(name)
-
-                name_node.align = 2
-
-                name_node.font = choice(base.fonts)
-
-                npcObject.get("nametag").attach_new_node(name_node)
-
-                # frame.set_pos(npc,(0,0,5))
-
-    
-                npcObject.get("model").attach_new_node(face.get_node(0))
-
-                npcObject.get("model").attach_new_node(emblem.get_node(0))
-
-                npcObject.get("model").instance_to(self.npc_mounts[n])
 
     def update_task(self, task):
 
@@ -239,42 +258,76 @@ class level:
 
         self.world.setDebugNode(self.debugNP.node())
 
-    def load_ground(self):
 
-        self.ground = self.levels[self.lvl]
+    def load_ground(self, lvl, arcade_lvl=None):
+        """Load the ground model for the specified level"""
 
-        self.npc_mounts = self.ground.findAllMatches("**/npc**")
+        try:
+            level_index = int(lvl)
+        except (ValueError, TypeError):
+            print(f"Warning: Invalid level value '{lvl}'. Using level 0.")
+            level_index = 0
+        
+        # Ensure level_index is within bounds
+        if level_index < 0 or level_index >= len(self.levels):
+            print(f"Warning: Level index {level_index} out of range. Using level 0.")
+            level_index = 0
+        
+        print(f"Loading ground for level: {level_index}")
+         # List all children of the current ground node
 
-        self.floor = self.ground.findAllMatches("**/levelFloor").getPath(0)
+        self.ground = base.loader.loadModel(self.levels[level_index])
+        print(self.ground)
+        if self.ground.findAllMatches("**/npc**") > 0:
+            self.npc_mounts = self.ground.findAllMatches("**/npc**")
+            self.setup_npcs(self.npc_mounts)
+        if self.ground.findAllMatches("**/levelFloor") > 0:
+            self.floor = self.ground.findAllMatches("**/levelFloor").getPath(0)
 
-        self.walls = self.ground.findAllMatches("**/levelWall").getPath(0)
+        if self.ground.findAllMatches("**/levelWall") > 0:
+            self.walls = self.ground.findAllMatches("**/levelWall").getPath(0)
 
-        self.ceil = self.ground.findAllMatches("**/levelCeil").getPath(0)
+        if self.ground.findAllMatches("**/levelCeil") > 0:
+            self.ceil = self.ground.findAllMatches("**/levelCeil").getPath(0)
+        if self.ground.findAllMatches("**/levelFloor") > 0:
+            for stage in self.floor.find_all_texture_stages():
+                self.floor.set_texture(stage, choice(self.floortextures), 1)
+        if self.ground.findAllMatches("**/levelWall") > 0:
+            for stage in self.walls.find_all_texture_stages():
+                self.walls.set_texture(stage, choice(self.walltextures), 1)
+        if self.ground.findAllMatches("**/levelCeil") > 0:
+            for stage in self.ceil.find_all_texture_stages():
+                self.ceil.set_texture(stage, choice(self.ceiltextures), 1)
+        #if self.ground.findAllMatches("**/playerStart") > 0:
 
-        for stage in self.floor.find_all_texture_stages():
-            self.floor.set_texture(stage, choice(self.floortextures), 1)
+        if self.ground.findAllMatches("**/floorCol") > 0:
+            floorCol = (
+                self.ground.findAllMatches("**/floorCol").getPath(0).node().getGeom(0)
+            )
 
-        for stage in self.walls.find_all_texture_stages():
-            self.walls.set_texture(stage, choice(self.walltextures), 1)
+        if self.ground.findAllMatches("**/wallCol") > 0:
+            wallCol = self.ground.findAllMatches("**/wallCol").getPath(0).node().getGeom(0)
 
-        for stage in self.ceil.find_all_texture_stages():
-            self.ceil.set_texture(stage, choice(self.ceiltextures), 1)
+        if self.ground.findAllMatches("**/ceilCol") > 0:
+            ceilCol = self.ground.findAllMatches("**/ceilCol").getPath(0).node().getGeom(0)
+        
+        if self.ground.findAllMatches("**/portal**") > 0:
+            self.portals = self.ground.findAllMatches("**/portal**")
+        if self.ground.findAllMatches("**/playerStart**") > 0:
+            self.player_start = self.ground.findAllMatches("**/playerStart**")
 
-        self.player_start = self.ground.findAllMatches("**/playerStart").getPath(0)
-
-        self.portals = self.ground.findAllMatches("**/portal**")
-
-        floorCol = (
-            self.ground.findAllMatches("**/floorCol").getPath(0).node().getGeom(0)
-        )
-
-        wallCol = self.ground.findAllMatches("**/wallCol").getPath(0).node().getGeom(0)
-
-        ceilCol = self.ground.findAllMatches("**/ceilCol").getPath(0).node().getGeom(0)
-
-        self.player_start = self.ground.findAllMatches("**/playerStart").getPath(0)
-
-        self.portals = self.ground.findAllMatches("**/portal**")
+        
+        # Add safety check for spawn points
+        if not self.portals:
+            print("Warning: No portals or playerStart nodes found in level. Adding default spawn point.")
+            # Create a default spawn point if no spawn positions exist
+            default_spawn = NodePath("default_portal")
+            default_spawn.setPos(0, 0, 5)  # Set a reasonable default position
+            default_spawn.reparentTo(self.ground)
+            if len(self.portals) > 0:
+                self.portals.append(default_spawn)
+        if self.ground.findAllMatches("**/door**") > 0:
+            self.doors = self.ground.findAllMatches("**/door**")
 
         # Load the textures
 
@@ -285,7 +338,7 @@ class level:
         self.flower_texture = base.loader.loadTexture(
             "portals/effect01.png"
         )  # Flower texture
-
+        
         # Check if textures are loaded correctly
 
         if not self.base_texture or not self.flower_texture:
@@ -297,46 +350,46 @@ class level:
         if len(self.portals):
             for p, portal in enumerate(self.portals):
                 # Play the portal sound effect
-
                 self.audio.playSfx("portal_loop", portal, True)
 
-                # Instantiate the portal template
-
+                # Create portal instance
                 portal_instance = self.portal_template.instanceTo(portal)
+                
+                # Only proceed with node setup if instance was created successfully
+                if portal_instance:
+                    portal.setPos(portal.getPos().x, portal.getPos().y, portal.getPos().z)
 
-                portal.setPos(portal.getPos().x, portal.getPos().y, portal.getPos().z)
+                    # Find the base and flower nodes
+                    base_node = portal_instance.find("**/base")
+                    flower_node = portal_instance.find("**/flower")
 
-                # Debug: Check if portal_instance is valid
+                    # Only apply textures if both nodes were found
+                    if base_node and flower_node:
+                        for stage in base_node.find_all_texture_stages():
+                            base_node.set_texture(stage, self.base_texture, 1)
 
-                if not portal_instance:
-                    print(f"Error: Failed to instantiate portal {p}.")
-
-                    continue
-
-                # Print the portal's node hierarchy to see what's inside
-
-                print(f"Portal {p} hierarchy:")
-
-                portal_instance.ls()  # List the hierarchy of the portal instance
-
-                # Check for the base and flower components in the portal hierarchy
-
-                base_node = portal_instance.find(
-                    "**/base"
-                )  # Searching for base node in the portal hierarchy
-
-                flower_node = portal_instance.find(
-                    "**/flower"
-                )  # Searching for flower node in the portal hierarchy
-
-                for stage in base_node.find_all_texture_stages():
-                    base_node.set_texture(stage, self.base_texture, 1)
-
-    
-                for stage in flower_node.find_all_texture_stages():
-                    flower_node.set_texture(stage, self.flower_texture, 1)
-
+                        for stage in flower_node.find_all_texture_stages():
+                            flower_node.set_texture(stage, self.flower_texture, 1)
+                    else:
+                        print(f"Warning: Could not find required nodes for portal {p}")
+                else:
+                    print(f"Warning: Failed to create portal instance {p}")
+        
         # Assuming 'self.letterlist' is properly initialized and contains 'letter_nodes' as a list of NodePaths
+        if self.ground.findAllMatches("**/letter**") > 0:
+            self.letterlist.letter_mounts = self.ground.findAllMatches("**/letter**")
+        if self.ground.findAllMatches("**/door**") > 0:
+            if not hasattr(self, 'door_manager'):
+                self.door_manager = DoorManager(self, "doors.json")
+            self.door_manager.set_player(self.player)
+            self.door_manager.replace_door_nodes()
+            self.doors = self.door_manager.get_doors()
+            for door_model in self.doors:  # Assuming self.doors contains your door models
+                self.door_manager.start_color_cycle(door_model)
+            # OR if you want to start color cycling for all doors at once, modify the DoorManager class
+        # self.door_manager.start_color_cycle_all()  # Create this new method if needed
+
+
 
         self.letterlist.letter_mounts = self.ground.findAllMatches("**/letter**")
 
@@ -379,93 +432,136 @@ class level:
 
         print(f"Current letter nodes: {self.letterlist.letter_nodes}")
 
+
+
         mesh = BulletTriangleMesh()
 
         mesh2 = BulletTriangleMesh()
 
         mesh3 = BulletTriangleMesh()
 
-        mesh.addGeom(floorCol)
+        if floorCol:
+            mesh.addGeom(floorCol)
 
-        mesh2.addGeom(wallCol)
+        if wallCol:
+            mesh2.addGeom(wallCol)
 
-        mesh2.addGeom(ceilCol)
+        if ceilCol:
+            mesh3.addGeom(ceilCol)
 
         shape = BulletTriangleMeshShape(mesh, dynamic=True)
 
         shape2 = BulletTriangleMeshShape(mesh2, dynamic=True)
 
         shape3 = BulletTriangleMeshShape(mesh3, dynamic=True)
+        
+        if floorCol:
+            body = BulletRigidBodyNode("Floor")
 
-        body = BulletRigidBodyNode("Floor")
+        if wallCol:
+            body2 = BulletRigidBodyNode("Walls")
 
-        body2 = BulletRigidBodyNode("Walls")
+        if ceilCol:
+            body3 = BulletRigidBodyNode("Ceil")
 
-        body3 = BulletRigidBodyNode("Ceil")
+        if floorCol:
+            body.setRestitution(0.75)
 
-        body.setRestitution(0.75)
-        body2.setRestitution(0.75)
-        body3.setRestitution(0.75)
+        if wallCol:
+            body2.setRestitution(0.75)
 
-        bodyNP = self.worldNP.attachNewNode(body)
+        if ceilCol:
+            body3.setRestitution(0.75)
 
-        bodyNP2 = self.worldNP.attachNewNode(body2)
+        if floorCol:
+            bodyNP = self.worldNP.attachNewNode(body)
 
-        bodyNP3 = self.worldNP.attachNewNode(body3)
+        if wallCol:
+            bodyNP2 = self.worldNP.attachNewNode(body2)
 
-        bodyNP.node().addShape(shape)
+        if ceilCol:
+            bodyNP3 = self.worldNP.attachNewNode(body3)
 
-        bodyNP2.node().addShape(shape2)
+        if floorCol:
+            bodyNP.node().addShape(shape)
 
-        bodyNP3.node().addShape(shape3)
+        if wallCol:
+            bodyNP2.node().addShape(shape2)
 
-        bodyNP.node().setRestitution(0.75)
+        if ceilCol:
+            bodyNP3.node().addShape(shape3)
 
-        bodyNP2.node().setRestitution(0.75)
+        if floorCol:
+            bodyNP.node().setRestitution(0.75)
 
-        bodyNP3.node().setRestitution(0.75)
+        if wallCol:
+            bodyNP2.node().setRestitution(0.75)
 
-        bodyNP.node().setCollisionResponse(True)
+        if ceilCol:
+            bodyNP3.node().setRestitution(0.75)
 
-        bodyNP2.node().setCollisionResponse(True)
+        if floorCol:
+            bodyNP.node().setCollisionResponse(True)
 
-        bodyNP3.node().setCollisionResponse(True)
+        if wallCol:
+            bodyNP2.node().setCollisionResponse(True)
 
-        bodyNP.setPos(0, 0, 0)
+        if ceilCol:
+            bodyNP3.node().setCollisionResponse(True)
 
-        bodyNP2.setPos(0, 0, 0)
+        if floorCol:
+            bodyNP.setPos(0, 0, 0)
 
-        bodyNP3.setPos(0, 0, 0)
+        if wallCol:
+            bodyNP2.setPos(0, 0, 0)
 
-        bodyNP.setCollideMask(BitMask32.allOn())
+        if ceilCol:
+            bodyNP3.setPos(0, 0, 0)
 
-        bodyNP2.setCollideMask(BitMask32.allOn())
+        if floorCol:
+            bodyNP.setCollideMask(BitMask32.allOn())
 
-        bodyNP3.setCollideMask(BitMask32.allOn())
+        if wallCol:
+            bodyNP2.setCollideMask(BitMask32.allOn())
 
-        self.world.attachRigidBody(bodyNP.node())
+        if ceilCol:
+            bodyNP3.setCollideMask(BitMask32.allOn())
 
-        self.world.attachRigidBody(bodyNP2.node())
+        if floorCol:
+            self.world.attachRigidBody(bodyNP.node())
 
-        self.world.attachRigidBody(bodyNP3.node())
+        if wallCol:
+            self.world.attachRigidBody(bodyNP2.node())
 
-        bodyNP.show()
+        if ceilCol:
+            self.world.attachRigidBody(bodyNP3.node())
 
-        bodyNP2.show()
+        if floorCol:
+            bodyNP.show()
 
-        bodyNP3.show()
+        if wallCol:
+            bodyNP2.show()
 
-        self.floor.reparentTo(bodyNP)
+        if ceilCol:
+            bodyNP3.show()
 
-        self.walls.reparentTo(bodyNP2)
+        if floorCol:
+            self.floor.reparentTo(bodyNP)
 
-        self.ceil.reparentTo(bodyNP3)
+        if wallCol:
+            self.walls.reparentTo(bodyNP2)
 
-        self.floorNP = bodyNP
+        if ceilCol:
+            self.ceil.reparentTo(bodyNP3)
 
-        self.wallsNP = bodyNP2
+        if floorCol:
+            self.floorNP = bodyNP
 
-        self.ceilNP = bodyNP3
+        if wallCol:
+            self.wallsNP = bodyNP2
+
+        if ceilCol:
+            self.ceilNP = bodyNP3
 
         self.ground.reparentTo(render)
 
@@ -524,15 +620,10 @@ class level:
             # Cleanup ray node
 
             ray_np.removeNode()
-
-            base_node = portal_instance.find(
-                "**/base"
-            )  # Searching for base node in the portal hierarchy
-
-            flower_node = portal_instance.find(
-                "**/flower"
-            )  # Searching for flower node in the portal hierarchy
-
+          # Index to get the first node
+        self.player_start = self.ground.findAllMatches("**/playerStart").getPath(0).getPos()
+        print(self.player_start)
+        self.player.set_player_pos(self.player_start + (0, 0, 3))
     def spawn_on_floor(self, num_monsters=10):
         """Spawn a specified number of monsters on the floor using the existing floor collision geometry."""
 
@@ -710,7 +801,12 @@ class level:
 
             print(f"Two-sided: {letter_path.getTwoSided()}")
 
-
+    def get_current_arcade(self):
+        return self.current_arcade
+    
+    def set_current_arcade(self, current_arcade):
+        self.current_arcade = current_arcade
+        
     def update(self, task):
         self.audio.update(task)
 
@@ -731,17 +827,18 @@ class level:
         ]  # Directly use the color at current index
 
         # Apply color cycling to floor, walls, and ceiling
+        if hasattr(self, 'floor'):
+            
+            for stage in self.floor.find_all_texture_stages():
+                self.floor.setTexOffset(
+                    stage, 0.5 * sin(self.clock / 6), 0.5 * sin(self.clock / 6)
+                )
 
-        for stage in self.floor.find_all_texture_stages():
-            self.floor.setTexOffset(
-                stage, 0.5 * sin(self.clock / 6), 0.5 * sin(self.clock / 6)
-            )
+                self.floor.setTexScale(
+                    stage, 0.05 * sin(self.clock) + 2.5, 0.05 * sin(self.clock) + 2.5, 1
+                )
 
-            self.floor.setTexScale(
-                stage, 0.05 * sin(self.clock) + 2.5, 0.05 * sin(self.clock) + 2.5, 1
-            )
-
-            self.floor.set_color(current_color)
+                self.floor.set_color(current_color)
 
         # Update wall texture scale to simulate 512x1024 ratio
 
@@ -752,20 +849,21 @@ class level:
         wall_tex_scale_v = (
             0.25 * sin(self.clock) + 0.5
         )  # Adjust V scale to match 512x1024 ratio
+        if hasattr(self, 'walls'):
+            for stage in self.walls.find_all_texture_stages():
+                self.walls.setTexOffset(
+                    stage, 0.5 * sin(self.clock / 6), 0.5 * sin(self.clock / 6)
+                )
 
-        for stage in self.walls.find_all_texture_stages():
-            self.walls.setTexOffset(
-                stage, 0.5 * sin(self.clock / 6), 0.5 * sin(self.clock / 6)
-            )
+                self.walls.setTexScale(stage, wall_tex_scale_u, wall_tex_scale_v)
 
-            self.walls.setTexScale(stage, wall_tex_scale_u, wall_tex_scale_v)
+                self.walls.set_color(current_color)
 
-            self.walls.set_color(current_color)
-
-        for stage in self.ceil.find_all_texture_stages():
-            self.ceil.setTexOffset(
-                stage, 0.5 * sin(self.clock / 6), 0.5 * sin(self.clock / 6)
-            )
+        if hasattr(self, 'ceil'):
+            for stage in self.ceil.find_all_texture_stages():
+                self.ceil.setTexOffset(
+                    stage, 0.5 * sin(self.clock / 6), 0.5 * sin(self.clock / 6)
+                )
 
             self.ceil.setTexScale(
                 stage, 0.05 * sin(self.clock) + 2.5, 0.05 * sin(self.clock) + 2.5, 1
@@ -774,3 +872,38 @@ class level:
             self.ceil.set_color(current_color)
 
         return task.cont
+    def cleanup(self):
+        """Clean up physics world and other resources"""
+        if hasattr(self, 'player'):
+            self.player.ball_roll.stop()
+            self.player.cleanup()
+        
+        if hasattr(self, 'door_manager'):
+            self.door_manager.cleanup()  # Add this line
+        
+        if len(self.portals):
+            for portal in self.portals:
+                portal.removeNode()
+        if len(self.letterlist.letter_nodes):
+            for letter in self.letterlist.letter_nodes:
+                letter.removeNode()
+        if hasattr(self, 'npc_mounts'):
+            for mount in self.npc_mounts:
+                mount.removeNode()
+            self.npcs = []
+            self.npc_mounts = []
+        # Cleanup monster manager if it exists
+        if len(self.monsters):
+            for monster in self.monsters:
+                monster.removeNode()
+        if len(self.doors):
+            for door in self.doors:
+                door.removeNode()
+        if hasattr(self, 'monster_manager'):
+            self.monster_manager.cleanup()
+        
+        # Cleanup audio
+        if hasattr(self, 'audio'):
+            self.audio.cleanup()
+            # Remove any remaining tasks
+            #base.task_mgr.remove('level_update')

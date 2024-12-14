@@ -1,4 +1,3 @@
-
 from direct.particles.ParticleEffect import ParticleEffect
 
 from direct.particles import Particles

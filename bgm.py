@@ -33,6 +33,7 @@ class BGM:
             "boing03",
             "boing04",
             "pickup",
+            "door_open"
         ]
         self.sfx = {}
         for s in self.sfx_names:

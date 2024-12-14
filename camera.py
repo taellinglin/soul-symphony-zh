@@ -24,9 +24,8 @@ class CameraController:
 
     def update_camera(self, task):
         # Check if player NodePath is valid
-
-        if self.player.is_empty():
-            print("Player NodePath is empty. Skipping camera update.")
+        if not self.player:  # This will check if self.player is None or invalid
+            print("Player object is invalid. Skipping camera update.")
             return task.cont
 
         # Compute speed
