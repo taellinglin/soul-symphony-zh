@@ -29,7 +29,7 @@ class MotionBlur:
         self.motion_quad.reparent_to(base.render2d)
 
         # Use a lower alpha value to prevent excessive blending and performance hit
-        self.motion_quad.set_color(0, 0, 0, 0.025)
+        self.motion_quad.set_color(0, 0, 0, 0.0025)
         self.motion_quad.set_transparency(True)
 
         # Adjust Z order to render the quad above the background

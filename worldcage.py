@@ -183,6 +183,7 @@ class WorldCage(Stage):
         self.audio_data = np.array([])  # Buffer for storing audio data
         self.pyaudio_instance = pyaudio.PyAudio()
         self.stream = None
+        
         # Initialize color intervals for cycling through colors
 
         base.disableMouse()  # Disable mouse control
@@ -199,7 +200,7 @@ class WorldCage(Stage):
 
         self.current_color_index = 0
 
-        self.motion_blur = None
+        self.motion_blur = MotionBlur()
 
     def star(self):
         # Load the star image
@@ -550,20 +551,8 @@ class WorldCage(Stage):
         inputState.watchWithModifiers("cam-right", "gamepad-shoulder_right")
 
         inputState.watchWithModifiers("cam-left", "gamepad-shoulder_left")
-        self.player = player()
-        if hasattr(self, 'level'):
-            self.level.cleanup()
-        print("level: " + str(self.lvl))
-        if self.lvl is not None and self.arcade_lvl is None:
-            self.level = Level(player=self.player, lvl=self.lvl)
-        else:
-            self.level = Level(player=self.player, arcade_lvl=self.arcade_lvl)
-        
 
-        self.player.ballNP.reparentTo(self.level.worldNP)
-        
-        self.level.world.attachRigidBody(self.player.ballNP.node())
-        
+        self.reset_level()
         
         self.dialog = dialog()
 
@@ -616,7 +605,7 @@ class WorldCage(Stage):
         # Task to handle modifiers
         #base.taskMgr.add(self.handle_zoom,  "HandleZoom
         taskMgr.add(self.processInput, "processInput")
-        self.start_color_cycling()  # Start color cycling once
+        self.level.start_color_cycling()  # Start color cycling once
         
     def set_zoom_out(self, state):
         print("Zoom Out")
@@ -659,7 +648,24 @@ class WorldCage(Stage):
             self.player.ballNP.node().applyCentralImpulse(Vec3(0, 0, 128 + 32))
             base.bgm.playSfx("ball-jump")
             self.jump_count += 1
+            if len(self.level.npc_mounts):
+                for n, npc_mount in enumerate(self.level.npc_mounts):
+                    if (
+                        npc_mount.getPos().getXy() - self.player.ballNP.getPos().getXy()
+                    ).length() < 5:
+                        self.dialog_card.text = self.level.npcs[n].get("dialog")
 
+                        self.dialog_card.setFont(choice(base.fonts))
+
+                        self.dialog_card_node.show()
+
+                        base.bgm.playSfx("start-dialog")
+
+                        self.player.force = Vec3(0, 0, 0)
+
+                        self.player.torque = Vec3(0, 0, 0)
+
+                        self.player.ballNP.node().setLinearDamping(1)
             # Check for portal interactions
             if len(self.level.portals) > 1:  # Need at least 2 portals to warp
                 for p, portal in enumerate(self.level.portals):
@@ -716,6 +722,7 @@ class WorldCage(Stage):
                         
                         return  # Exit after selecting a door
     def reset_level(self):
+        
         """Reset level, music, and audio with proper cleanup"""
         print("Resetting level, music, and audio...")
         
@@ -737,12 +744,16 @@ class WorldCage(Stage):
         # Pick random level
         random_lvl = random.randrange(len(base.levels))
         print(f"Loading random level: {random_lvl}")
-        
+        if hasattr(self, 'level'):
+            self.level.cleanup()
         self.player = player()
         self.level = Level(player=self.player, lvl=random_lvl)
+        self.level.load_world()
+        self.level.load_ground(lvl=random_lvl, arcade_lvl=None)
         self.player.ballNP.reparentTo(self.level.worldNP)
         
         self.level.world.attachRigidBody(self.player.ballNP.node())
+        
         base.task_mgr.add(self.update, "update")
         base.task_mgr.add(self.level.update, "level_update")
         base.task_mgr.add(self.processInput, "processInput")
@@ -960,54 +971,50 @@ class WorldCage(Stage):
                 else:
                     print("Nametag does not exist.")
                     
-        # Check to see if floorNP, wallsNP, and player exist
-        if hasattr(self.level, 'floorNP') and hasattr(self.level, 'wallsNP') and hasattr(self.player, 'ballNP'):
-            # Check for contacts with the floor and walls
+# Initialize result and result2 to avoid referencing undefined variables
+        result = None
+        result2 = None
+
+        # Check for contact with the floor
+        if hasattr(self.level, 'floorNP') and self.level.floorNP is not None and \
+        hasattr(self.player, 'ballNP') and self.player.ballNP is not None:
             result = self.level.world.contactTestPair(
                 self.player.ballNP.node(), self.level.floorNP.node()
             )
 
+        # Check for contact with the walls
+        if hasattr(self.level, 'wallsNP') and self.level.wallsNP is not None and \
+        hasattr(self.player, 'ballNP') and self.player.ballNP is not None:
             result2 = self.level.world.contactTestPair(
                 self.player.ballNP.node(), self.level.wallsNP.node()
             )
 
-            # Handle bouncing sound when contacting the floor
-            if result.getNumContacts() > 0:
-                contact = result.getContacts()[0]
+        # Handle bouncing sound when contacting the floor
+        if result is not None and result.getNumContacts() > 0:
+            contact = result.getContacts()[0]
+            if contact.getNode1() == self.level.floorNP.node():
+                if not self.player.boing:
+                    self.player.boing = True
+                    mpoint = contact.getManifoldPoint()
+                    volume = abs(mpoint.getDistance())
+                    pitch = (volume / 4) + 0.5
+                    base.bgm.playSfx(choice(self.player.boings), volume, pitch)
+        else:
+            self.player.boing = False
 
-                if contact.getNode1() == self.level.floorNP.node():
-                    if not self.player.boing:
-                        self.player.boing = True
+        # Handle bouncing sound when contacting the walls
+        if result2 is not None and result2.getNumContacts() > 0:
+            contact2 = result2.getContacts()[0]
+            if contact2.getNode1() == self.level.wallsNP.node():
+                if not self.player.boing:
+                    self.player.boing = True
+                    mpoint = contact2.getManifoldPoint()
+                    volume = abs(mpoint.getDistance())
+                    pitch = (volume / 4) + 0.5
+                    base.bgm.playSfx(choice(self.player.boings), volume, pitch)
+        else:
+            self.player.boing = False
 
-                        mpoint = contact.getManifoldPoint()
-
-                        volume = abs(mpoint.getDistance())
-
-                        pitch = (volume / 4) + 0.5
-
-                        base.bgm.playSfx(choice(self.player.boings), volume, pitch)
-
-            else:
-                self.player.boing = False
-
-            # Handle bouncing sound when contacting the walls
-            if result2.getNumContacts() > 0:
-                contact2 = result2.getContacts()[0]
-
-                if contact2.getNode1() == self.level.wallsNP.node():
-                    if not self.player.boing:
-                        self.player.boing = True
-
-                        mpoint = contact2.getManifoldPoint()
-
-                        volume = abs(mpoint.getDistance())
-
-                        pitch = (volume / 4) + 0.5
-
-                        base.bgm.playSfx(choice(self.player.boings), volume, pitch)
-
-            else:
-                self.player.boing = False
 
         # Iterate through each monster in the scene
         for monster in self.level.monsters:
@@ -1080,51 +1087,54 @@ class WorldCage(Stage):
                 print("Score + 1!")
 
         if self.audio_data.size > 0:
-            # Limit the number of samples processed to avoid overflow
+            # Limit samples to avoid overflow
             max_samples = 512
+            samples = np.array(self.audio_data[:max_samples])
 
-            if len(self.audio_data) > max_samples:
-                self.audio_data = self.audio_data[:max_samples]
-
-            samples = np.array(self.audio_data)[:max_samples]
-
-            # Proceed with your FFT and transparency updates
+            # Perform FFT on audio data
             spectrum = np.fft.fft(samples)
-
             freqs = np.fft.fftfreq(len(samples), 1 / self.fs)
 
-            band_indices = np.array_split(np.argsort(freqs), 7)
-
+            # Split frequencies into three bands for floor, walls, and ceil
+            band_indices = np.array_split(np.argsort(freqs), 3)
             amplitudes = [np.abs(spectrum[indices]).mean() for indices in band_indices]
 
+            # Normalize amplitudes for transparency values
             transparencies = np.clip(amplitudes / np.max(amplitudes), 0, 0.5)
-            if hasattr(self.level, 'floorNP') and hasattr(self.level, 'wallsNP') and hasattr(self.player, 'ballNP'):
-            # Update the ground, floor, walls, and ceiling colors based on transparency
-                objects_to_update = {
-                    "floor": self.level.floor.get_children(),
-                    "walls": self.level.walls.get_children(),
-                    "ceil": self.level.ceil.get_children(),
+
+            # Verify level objects and gather target nodes
+            if (
+                hasattr(self.level, 'floorNP') and
+                hasattr(self.level, 'wallsNP') and
+                hasattr(self.level, 'ceil') and
+                hasattr(self.player, 'ballNP')
+            ):
+                # Specific nodes to update
+                level_objects = {
+                    "floor": self.level.floorNP.find("**/levelFloor"),
+                    "walls": self.level.wallsNP.find("**/levelWall"),
+                    "ceil": self.level.ceil.find("**/levelCeil"),
                 }
+
+                # Iterate over objects and apply updates
+                for i, (obj_type, obj) in enumerate(level_objects.items()):
+                    if not obj.isEmpty():
+                        # Ensure transparency and apply color cycling
+                        obj.setTransparency(True)
+                        color_choice = random.choice(self.color_choices)  # Randomly select a color
+                        transparency_value = transparencies[i] if i < len(transparencies) else 0.05
+                        
+                        # Apply color with transparency
+                        obj.setColorScale(
+                            *(color_choice + (transparency_value,))
+                        )
+                        print(f"Updated {obj_type}: Color {color_choice}, Transparency {transparency_value}")
+                    else:
+                        print(f"{obj_type} not found or has no children!")
+
             else:
-                objects_to_update = {}
+                print("Required attributes not found!")
 
-            for i, (key, children) in enumerate(objects_to_update.items()):
-                for obj in children:
-                    if obj.isHidden():
-                        obj.show()
-                        obj.setTransparency(TransparencyAttrib.MAlpha)
-                    color_choice = random.choice(
-                        self.color_choices
-                    )  # Randomly select a color
-
-                    # Ensure the index for transparencies does not exceed its length
-                    transparency_value = (
-                        transparencies[i] if i < len(transparencies) else 0.05
-                    )  # Default to 1.0 if out of bounds
-
-                    obj.set_color(
-                        *(color_choice + (transparency_value * 0.5,))
-                    )  # Apply transparency
 
             for p, portal in enumerate(self.level.portals):
                 # Find the base and flower nodes

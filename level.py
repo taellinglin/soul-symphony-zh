@@ -117,49 +117,14 @@ class Level:
 
         self.clock2 = 0
         
-        self.load_world()
-
-        # Example of how you'd use this:
-
-        # Simulate the game loop where you update monsters' movement and "kick-off" behavior
-
-        # This loop would typically be part of the Panda3D task manager
-
-        
-        self.load_ground(lvl=self.lvl, arcade_lvl=None)
-        
+        self.color_cycle_task = None
+        self.current_color_index = 0
         # Remove duplicate player creation
         # self.player = player()  # <- Remove this line
         
         # Add the update task to Panda3D's task manager to continually update monsters
 
         # base.taskMgr.add(self.monster_manager.update_monsters)  # Add to task manager to continuously update monsters
-        print("Level Loading Complete")
-        print("Level Tree:")
-        print("--------------------------------")
-        print("Floor:")
-        print(self.floor)
-        print("--------------------------------")
-        print("Walls:")
-        print(self.walls)
-        print("--------------------------------")
-        print("Ceil:")
-        print(self.ceil)
-        print("--------------------------------")
-        print("Portals:")
-        print(self.portals) # Portals is a NodePath; no need to call `.node()`.
-        print("--------------------------------")
-        print("Player Start:")
-        print(self.player_start)
-        print("--------------------------------")
-        print("Doors:")
-        print(self.doors)
-        print("--------------------------------")
-        print("Letterlist:")
-        print(self.letterlist)
-        print(self.npcs)
-        print(self.npc_mounts)
-        base.task_mgr.add(self.update, "level_update")
 
     def load_textures_from_directory(self, directory):
         texture_files = sorted(
@@ -224,11 +189,25 @@ class Level:
 
         dt = globalClock.get_dt()  # Get the delta time for this frame
     
-
+        
         self.monster_manager.update_monsters(dt)
 
         return task.cont
 
+    def update_colors(self, task):
+        """Update colors for various game elements"""
+        self.current_color_index = (self.current_color_index + 1) % len(self.colors)
+        current_color = self.colors[self.current_color_index]
+    def start_color_cycling(self):
+        """Start the color cycling task if not already running"""
+        if self.color_cycle_task is None:
+            self.color_cycle_task = taskMgr.add(self.update_colors, "color_cycle_task")
+
+    def stop_color_cycling(self):
+        """Stop the color cycling task if running"""
+        if self.color_cycle_task is not None:
+            taskMgr.remove(self.color_cycle_task)
+            self.color_cycle_task = None
     def load_world(self):
         # World
 
@@ -261,7 +240,9 @@ class Level:
 
     def load_ground(self, lvl, arcade_lvl=None):
         """Load the ground model for the specified level"""
-
+        floorCol = None
+        wallCol = None
+        ceilCol = None
         try:
             level_index = int(lvl)
         except (ValueError, TypeError):
@@ -434,140 +415,56 @@ class Level:
 
 
 
-        mesh = BulletTriangleMesh()
+        def setup_rigid_body(mesh, geom, body_name, restitution, parent_node, world):
+            if not geom:
+                return None
 
-        mesh2 = BulletTriangleMesh()
+            # Create BulletTriangleMesh and add geometry
+            mesh.addGeom(geom)
+            shape = BulletTriangleMeshShape(mesh, dynamic=True)
 
-        mesh3 = BulletTriangleMesh()
-
-        if floorCol:
-            mesh.addGeom(floorCol)
-
-        if wallCol:
-            mesh2.addGeom(wallCol)
-
-        if ceilCol:
-            mesh3.addGeom(ceilCol)
-
-        shape = BulletTriangleMeshShape(mesh, dynamic=True)
-
-        shape2 = BulletTriangleMeshShape(mesh2, dynamic=True)
-
-        shape3 = BulletTriangleMeshShape(mesh3, dynamic=True)
-        
-        if floorCol:
-            body = BulletRigidBodyNode("Floor")
-
-        if wallCol:
-            body2 = BulletRigidBodyNode("Walls")
-
-        if ceilCol:
-            body3 = BulletRigidBodyNode("Ceil")
-
-        if floorCol:
-            body.setRestitution(0.75)
-
-        if wallCol:
-            body2.setRestitution(0.75)
-
-        if ceilCol:
-            body3.setRestitution(0.75)
-
-        if floorCol:
-            bodyNP = self.worldNP.attachNewNode(body)
-
-        if wallCol:
-            bodyNP2 = self.worldNP.attachNewNode(body2)
-
-        if ceilCol:
-            bodyNP3 = self.worldNP.attachNewNode(body3)
-
-        if floorCol:
+            # Create and configure the rigid body
+            body = BulletRigidBodyNode(body_name)
+            body.setRestitution(restitution)
+            bodyNP = parent_node.attachNewNode(body)
             bodyNP.node().addShape(shape)
-
-        if wallCol:
-            bodyNP2.node().addShape(shape2)
-
-        if ceilCol:
-            bodyNP3.node().addShape(shape3)
-
-        if floorCol:
-            bodyNP.node().setRestitution(0.75)
-
-        if wallCol:
-            bodyNP2.node().setRestitution(0.75)
-
-        if ceilCol:
-            bodyNP3.node().setRestitution(0.75)
-
-        if floorCol:
+            bodyNP.node().setRestitution(restitution)
             bodyNP.node().setCollisionResponse(True)
-
-        if wallCol:
-            bodyNP2.node().setCollisionResponse(True)
-
-        if ceilCol:
-            bodyNP3.node().setCollisionResponse(True)
-
-        if floorCol:
             bodyNP.setPos(0, 0, 0)
-
-        if wallCol:
-            bodyNP2.setPos(0, 0, 0)
-
-        if ceilCol:
-            bodyNP3.setPos(0, 0, 0)
-
-        if floorCol:
             bodyNP.setCollideMask(BitMask32.allOn())
 
-        if wallCol:
-            bodyNP2.setCollideMask(BitMask32.allOn())
+            # Attach to physics world
+            world.attachRigidBody(bodyNP.node())
 
-        if ceilCol:
-            bodyNP3.setCollideMask(BitMask32.allOn())
-
-        if floorCol:
-            self.world.attachRigidBody(bodyNP.node())
-
-        if wallCol:
-            self.world.attachRigidBody(bodyNP2.node())
-
-        if ceilCol:
-            self.world.attachRigidBody(bodyNP3.node())
-
-        if floorCol:
+            # Visualize the rigid body (optional)
             bodyNP.show()
 
-        if wallCol:
-            bodyNP2.show()
+            return bodyNP
 
-        if ceilCol:
-            bodyNP3.show()
+        # Create meshes
+        mesh_floor = BulletTriangleMesh()
+        mesh_walls = BulletTriangleMesh()
+        mesh_ceil = BulletTriangleMesh()
 
-        if floorCol:
-            self.floor.reparentTo(bodyNP)
+        # Set up rigid bodies for floor, walls, and ceiling
+        self.floorNP = setup_rigid_body(mesh_floor, floorCol, "Floor", 0.75, self.worldNP, self.world)
+        self.wallsNP = setup_rigid_body(mesh_walls, wallCol, "Walls", 0.75, self.worldNP, self.world)
+        self.ceilNP = setup_rigid_body(mesh_ceil, ceilCol, "Ceil", 0.75, self.worldNP, self.world)
 
-        if wallCol:
-            self.walls.reparentTo(bodyNP2)
+        # Reparent models to rigid bodies
+        if self.floorNP:
+            self.floor.reparentTo(self.floorNP)
+        if self.wallsNP:
+            self.walls.reparentTo(self.wallsNP)
+        if self.ceilNP:
+            self.ceil.reparentTo(self.ceilNP)
 
-        if ceilCol:
-            self.ceil.reparentTo(bodyNP3)
-
-        if floorCol:
-            self.floorNP = bodyNP
-
-        if wallCol:
-            self.wallsNP = bodyNP2
-
-        if ceilCol:
-            self.ceilNP = bodyNP3
-
+        # Reparent ground node to render
         self.ground.reparentTo(render)
 
-        # Now we have a valid cTrav
-
+        # Additional configurations
         spawn_count = 100
+
 
         for i in range(spawn_count):
             random_x = uniform(-500, 500)  # Random X coordinate within bounds
@@ -901,7 +798,8 @@ class Level:
                 door.removeNode()
         if hasattr(self, 'monster_manager'):
             self.monster_manager.cleanup()
-        
+        if hasattr(self, 'ground'):
+            self.ground = None
         # Cleanup audio
         if hasattr(self, 'audio'):
             self.audio.cleanup()
