@@ -605,7 +605,7 @@ class WorldCage(Stage):
         # Task to handle modifiers
         #base.taskMgr.add(self.handle_zoom,  "HandleZoom
         taskMgr.add(self.processInput, "processInput")
-        self.level.start_color_cycling()  # Start color cycling once
+        self.start_color_cycling()  # Start color cycling once
         
     def set_zoom_out(self, state):
         print("Zoom Out")
@@ -1087,54 +1087,60 @@ class WorldCage(Stage):
                 print("Score + 1!")
 
         if self.audio_data.size > 0:
-            # Limit samples to avoid overflow
+            # Limit the number of samples processed to avoid overflow
             max_samples = 512
-            samples = np.array(self.audio_data[:max_samples])
 
-            # Perform FFT on audio data
+            if len(self.audio_data) > max_samples:
+                self.audio_data = self.audio_data[:max_samples]
+
+            samples = np.array(self.audio_data)[:max_samples]
+
+            # Proceed with your FFT and transparency updates
             spectrum = np.fft.fft(samples)
+
             freqs = np.fft.fftfreq(len(samples), 1 / self.fs)
 
-            # Split frequencies into three bands for floor, walls, and ceil
-            band_indices = np.array_split(np.argsort(freqs), 3)
+            band_indices = np.array_split(np.argsort(freqs), 7)
+
             amplitudes = [np.abs(spectrum[indices]).mean() for indices in band_indices]
 
-            # Normalize amplitudes for transparency values
             transparencies = np.clip(amplitudes / np.max(amplitudes), 0, 0.5)
-
-            # Verify level objects and gather target nodes
-            if (
-                hasattr(self.level, 'floorNP') and
-                hasattr(self.level, 'wallsNP') and
-                hasattr(self.level, 'ceil') and
-                hasattr(self.player, 'ballNP')
-            ):
-                # Specific nodes to update
-                level_objects = {
-                    "floor": self.level.floorNP.find("**/levelFloor"),
-                    "walls": self.level.wallsNP.find("**/levelWall"),
-                    "ceil": self.level.ceil.find("**/levelCeil"),
-                }
-
-                # Iterate over objects and apply updates
-                for i, (obj_type, obj) in enumerate(level_objects.items()):
-                    if not obj.isEmpty():
-                        # Ensure transparency and apply color cycling
-                        obj.setTransparency(True)
-                        color_choice = random.choice(self.color_choices)  # Randomly select a color
-                        transparency_value = transparencies[i] if i < len(transparencies) else 0.05
-                        
-                        # Apply color with transparency
-                        obj.setColorScale(
-                            *(color_choice + (transparency_value,))
-                        )
-                        print(f"Updated {obj_type}: Color {color_choice}, Transparency {transparency_value}")
-                    else:
-                        print(f"{obj_type} not found or has no children!")
-
+                
+            if hasattr(self.level, 'floorNP') and hasattr(self.level, 'wallsNP') and hasattr(self.level, 'ceil') and hasattr(self.player, 'ballNP'):
+                try:
+                    # Update the ground, floor, walls, and ceiling colors based on transparency
+                    objects_to_update = {
+                        "floor": self.level.floorNP.get_children(),
+                        "walls": self.level.wallsNP.get_children(),
+                        "ceil": self.level.ceil.get_children(),
+                    }
+                except AttributeError as e:
+                    # Log and handle any unexpected issues
+                    print(f"Error accessing children: {e}")
+                    objects_to_update = {}
             else:
-                print("Required attributes not found!")
+                objects_to_update = {}
 
+            # Debugging output
+            print("Objects to update:", objects_to_update)
+
+            for i, (key, children) in enumerate(objects_to_update.items()):
+                for obj in children:
+                    if obj.isHidden():
+                        obj.show()
+                        obj.setTransparency(TransparencyAttrib.MAlpha)
+                    color_choice = random.choice(
+                        self.color_choices
+                    )  # Randomly select a color
+
+                    # Ensure the index for transparencies does not exceed its length
+                    transparency_value = (
+                        transparencies[i] if i < len(transparencies) else 0.05
+                    )  # Default to 1.0 if out of bounds
+
+                    obj.set_color(
+                        *(color_choice + (transparency_value * 0.5,))
+                    )  # Apply transparency
 
             for p, portal in enumerate(self.level.portals):
                 # Find the base and flower nodes

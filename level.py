@@ -61,11 +61,9 @@ class Level:
     def __init__(self, player=None, lvl=None, arcade_lvl=None):
         # Add cleanup of existing physics/collision objects if they exist     
         # Convert lvl to int if it's a string and assign to self.lvl
-        if lvl is None:
-            self.lvl = 0
-        else:
-            self.lvl = lvl
+        self.lvl = lvl
         self.arcade_lvl = arcade_lvl
+        print(f"level: ", self.lvl)
         self.audio = audio3d()
         
         self.npcs = []
@@ -123,7 +121,7 @@ class Level:
         # self.player = player()  # <- Remove this line
         
         # Add the update task to Panda3D's task manager to continually update monsters
-
+        taskMgr.add(self.update, 'update')
         # base.taskMgr.add(self.monster_manager.update_monsters)  # Add to task manager to continuously update monsters
 
     def load_textures_from_directory(self, directory):
@@ -697,6 +695,10 @@ class Level:
             print(f"Position: {letter_path.getPos()}")
 
             print(f"Two-sided: {letter_path.getTwoSided()}")
+            
+        self.floor = self.ground.find("**/floor")
+        self.walls = self.ground.find("**/walls")
+        self.ceil = self.ground.find("**/ceil")
 
     def get_current_arcade(self):
         return self.current_arcade
@@ -777,7 +779,12 @@ class Level:
         
         if hasattr(self, 'door_manager'):
             self.door_manager.cleanup()  # Add this line
-        
+        if hasattr(self, 'floor'):
+            self.floor.removeNode()
+        if hasattr(self, 'walls'):
+            self.walls.removeNode()
+        if hasattr(self, 'ceil'):
+            self.ceil.removeNode()
         if len(self.portals):
             for portal in self.portals:
                 portal.removeNode()
