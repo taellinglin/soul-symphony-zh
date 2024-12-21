@@ -1,107 +1,113 @@
-from panda3d.core import WindowProperties
-
 from direct.showbase.ShowBase import ShowBase
-
-from screenrec import ScreenRecorder  # Import the ScreenRecorder class
-
-from gamepadInput import GamepadInput
-
-from bgm import BGM
-
-from titleScreen import TitleScreen
-
 from stageflow import Flow
-
-from stageflow.panda3d import Panda3DSplash
-
-
+from screenrec import ScreenRecorder
+from gamepadInput import GamepadInput
+from bgm import BGM
 from scoreboard import scoreboard
-
+from titleScreen import TitleScreen
+from loadingScreen import LoadingScreen
 from worldcage import WorldCage
-
-from stageflow.prefab import Quit
-
+from panda3d.core import WindowProperties, PerspectiveLens
 import os
+from stageflow import Stage
+from panda3d.core import Vec4
+import functools
+from panda3d.core import NodePath
+from pyrecord import setup_sg
+from panda3d.core import Lens
+from splashscreen import SplashScreen
+import random
 
-import time  # Ensure you import time for timing the recording
-
-from panda3d.core import GraphicsPipe
-
-
-# Now you can use native_width and native_height
-
+class Quit:
+    def enter(self, data=None):
+        self.userExit()
+    def exit(self, data=None):
+        return data
 
 class Base(ShowBase):
     def __init__(self):
-        ShowBase.__init__(self)
-
-        self.screen_recorder = ScreenRecorder(
-            self
-        )  # Create the screen recorder instance
-
+        super().__init__(self)
+        
+        # Set up fullscreen immediately after ShowBase init
+        self.setup_fullscreen()
+        # Initialize essential systems for splash/title
+        self.screen_recorder = ScreenRecorder(self)
+        setup_sg(self)
         self.gamepad_input = GamepadInput()
-
         self.bgm = BGM()
-
-        # self.motion_blur = MotionBlur()
-
         self.disable_mouse()
+        
+        # Bind F11 to take a screenshot
+        self.accept("f11", self.screen_recorder.take_screenshot)
 
+        # Bind F12 to start/stop screen recording
+        self.accept("f12", self.toggle_recording)
+        
+        # Load fonts needed for scoreboard
+        self.load_scoreboard_fonts()
+
+        # Initialize scoreboard
         self.scoreboard = scoreboard()
-
         self.scoreboard.hide()
+        # Initialize flow with only splash and quit stages
 
-        self.fonts = self.get_fonts("fonts/text/")
 
-        self.levels = ["worldcage"]
 
-        # Setup stage flow
+        # Store stage classes for lazy loading
 
+        # Define available levels
+        self.levels = [
+            "levels/level00.bam",
+            "levels/level01.bam",
+            "levels/level02.bam",
+            "levels/level03.bam",
+            #"levels/level04.bam",
+            "levels/level05.bam",
+        ]
+        self.lvl = random.randint(0, len(self.levels) -1)
         self.flow = Flow(
-            stages=dict(
-                splash=Panda3DSplash(exit_stage="title_screen"),
-                title_screen=TitleScreen(exit_stage="worldcage"),
-                worldcage=WorldCage(exit_stage="quit", lvl=0),
-                quit=Quit(),
-            ),
-            initial_stage="title_screen",
+            stages={
+                "splash": SplashScreen,
+                "title_screen": TitleScreen,
+                "loading": LoadingScreen,
+                "worldcage": WorldCage(exit_stage="quit", lvl=self.lvl),
+                "quit": Quit,
+            },
+            initial_stage="splash"
         )
+        
+    def setup_fullscreen(self):
+        """Set up fullscreen at native resolution"""
+        props = WindowProperties()
+        props.setFullscreen(True)
 
-        self.setup_input_events()
+        # Get the display information
+        di = self.pipe.getDisplayInformation()
 
-    def setup_input_events(self):
-        """Bind input events for screenshots and recording."""
+        # Get the native resolution of the primary display
+        width = di.getDisplayModeWidth(0)
+        height = di.getDisplayModeHeight(0)
 
-        self.accept("f11", self.handle_select_press)  # Screenshot on 'F11'
+        # Set the window size to match the display
+        props.setSize(width, height)
 
-        self.accept("f12", self.handle_select_hold)  # Toggle recording on 'F12'
+        # Request the properties
+        self.win.requestProperties(props)
 
-    def handle_select_press(self):
-        """Handle single press of 'F11' for taking a screenshot."""
+        print(f"Setting fullscreen resolution to {width}x{height}")
 
-        print("F11 pressed (screenshot).")
+    def load_scoreboard_fonts(self):
+        """Load fonts needed for scoreboard"""
+        self.fonts = []
+        font_dir = "fonts/text"
 
-        if not self.screen_recorder.recording:
-            self.screen_recorder.take_screenshot()
-
-    def handle_select_hold(self):
-        """Handle holding 'F12' for toggling video recording."""
-
-        print("F12 held (toggle recording).")
-
-        if not self.screen_recorder.recording:
-            self.screen_recorder.start_recording()
-
-        else:
-            elapsed = (
-                time.time() - self.screen_recorder.record_start_time
-                if self.screen_recorder.record_start_time
-                else 0
-            )
-
-            if elapsed >= 3:
-                self.screen_recorder.stop_recording()
-
+        if os.path.exists(font_dir):
+            for font_file in os.listdir(font_dir):
+                if font_file.endswith(('.ttf', '.otf')):
+                    font_path = os.path.join(font_dir, font_file)
+                    print(f"Loading font: {font_file}")
+                    self.fonts.append(self.loader.loadFont(font_path))
+        
     def get_fonts(self, folder_path):
         """Load fonts from the specified folder."""
 
@@ -118,40 +124,94 @@ class Base(ShowBase):
 
         return font_files
 
+    def print_node_tree(self, node: NodePath, indent=""):
+        # Print the name of the current node
+        print(indent + node.get_name())
+        
+        # Recursively print child nodes
+        for child in node.get_children():
+            #self.print_node_tree(child, indent + "  ")
+            pass
+            
+    def print_running_tasks(self):
+        tasks = taskMgr.getTasks()
+        if not tasks:
+            print("No tasks are currently running.")
+        else:
+            print(f"Currently running tasks ({len(tasks)}):")
+            for task in tasks:
+                print(f"Task {task.name} (ID: {task.id})")
+    def print_system_status(self):
+        print("\n=== Node Tree ===")
+        self.print_node_tree(base.render)
+        
+        print("\n=== Currently Running Tasks ===")
+        self.print_running_tasks()
+        
+    def toggle_recording(self):
+        """Toggle screen recording on or off."""
+        if self.screen_recorder.recording:
+            self.screen_recorder.stop_recording()
+        else:
+            self.screen_recorder.start_recording()
 
-# Run the game
+    # The main part of the application
+    def set_aspect_ratio(self,resolution):
+        width, height = resolution
+        aspect_ratio = width / height
 
+        # Set the window size
+        wp = WindowProperties()
+        wp.setSize(width, height)
+        base.win.requestProperties(wp)
 
-def main():
-    base = Base()
+        # Adjust the camera lens
+        lens = PerspectiveLens()
+        lens.setAspectRatio(aspect_ratio)
+        base.cam.node().setLens(lens)
 
-    # Get the default graphics pipe
+    # Example: Setting 16:9 or 4:3 aspect ratios
+    def adjust_aspect_ratio_based_on_resolution(self):
+        # Get the current resolution
+        resolution = base.win.getSize()
 
-    pipe = base.win.getPipe()
+        if resolution[0] / resolution[1] == 16 / 9:
+            print("Setting 16:9 aspect ratio")
+            self.set_aspect_ratio((1920, 1080))  # Example for 16:9
+        elif resolution[0] / resolution[1] == 4 / 3:
+            print("Setting 4:3 aspect ratio")
+            self.set_aspect_ratio((1024, 768))  # Example for 4:3
+        else:
+            print("Setting default aspect ratio")
+            self.set_aspect_ratio(resolution)  # Maintain the current resolution aspect ratio
 
-    # Get the native resolution of the screen
+    # Call this function at the start or on resolution change
+    
+if __name__ == "__main__":
+    app = Base()
+      # Call this early to set the right aspect ratio
+    
+    # Set the camera lens' aspect ratio
+    lens = base.cam.node().getLens()
 
+    
+
+    # Continue with window properties and fullscreen setup
+    pipe = app.win.getPipe()
     native_width = pipe.getDisplayWidth()
-
     native_height = pipe.getDisplayHeight()
+    lens = PerspectiveLens()
+    lens.setAspectRatio(16/9)
+    base.cam.node().setLens(lens)
 
-    print(native_height)
-
-    print(native_width)
-
-    # Set up window properties
 
     wp = WindowProperties()
-
-    wp.setFullscreen(1)
-
+    wp.setFullscreen(True)
+    print(f"native width:{native_width}")
+    print(f"native width:{native_height}")
     wp.setSize(native_width, native_height)  # Set to native screen resolution
+    
+    app.win.requestProperties(wp)
 
-    base.openMainWindow()
+    app.run()
 
-    base.win.requestProperties(wp)
-    base.run()
-
-
-if __name__ == "__main__":
-    main()

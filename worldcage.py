@@ -9,6 +9,7 @@ import random
 
 import sys
 
+from panda3d.core import PerspectiveLens
 
 from direct.showbase.PythonUtil import randFloat
 
@@ -140,12 +141,16 @@ class WorldCage(Stage):
 
     _textures = None  # Class-level storage for textures
 
-    def __init__(self, exit_stage="main_menu", lvl=None, audio_amplitude=None):
+    def __init__(self, exit_stage="worldcage", lvl=None, audio_amplitude=None):
     
     
         super().__init__()  # Initialize the ShowBase
         self.zooming_out = False
         self.zooming_in = False
+        lens = PerspectiveLens()
+        lens.setAspectRatio(16/9)
+        base.cam.node().setLens(lens)
+
         if lvl is None:
             self.lvl = 0
 
@@ -223,15 +228,15 @@ class WorldCage(Stage):
         self.clock = 0
 
         self.npcs = []
-        self.transparency = 0.05
+        self.transparency = 0.15
         self.zoom_level = 30
         self.fs = 96000  # Sampling frequency
-        self.buffer_size = 256  # Size of audio buffer
+        self.buffer_size = 1024  # Size of audio buffer
         self.audio_data = np.array([])  # Buffer for storing audio data
         self.pyaudio_instance = pyaudio.PyAudio()
         self.stream = None
         # Initialize color intervals for cycling through colors
-
+        self.initialize_audio()
         base.disableMouse()  # Disable mouse control
 
         self.font_path = "fonts/konnarian/Daemon.otf"
@@ -245,8 +250,6 @@ class WorldCage(Stage):
         self.color_cycle_task = None  # Track the color cycling task
 
         self.current_color_index = 0
-
-        self.motion_blur = MotionBlur()
 
     def star(self):
         # Load the star image
@@ -407,7 +410,7 @@ class WorldCage(Stage):
 
     def enter(self, lvl=None):
     
-        self.initialize_audio()
+        
         print("Entered new level or portal, audio stream reset.")
         # Set initial fade state
         base.win.setClearColor(Vec4(0, 0, 0, 1))  # Start with opaque black background
@@ -431,8 +434,7 @@ class WorldCage(Stage):
         fade_in.start()
         base.accept("fadeInDone", cleanup_fade)
 
-        self.cleanup_level()
-        self.motion_blur = MotionBlur()
+        #self.cleanup_level()
         if lvl == None:
             lvl = self.lvl
 
@@ -612,7 +614,7 @@ class WorldCage(Stage):
 
         print("level: " + str(self.lvl))
 
-        self.level = level(self.lvl)
+        self.level = level(base.lvl)
 
         self.level.get_npcs(21)
 
@@ -624,7 +626,7 @@ class WorldCage(Stage):
 
         self.level.world.attachRigidBody(self.player.ballNP.node())
 
-        self.player.ballNP.setPos(choice(self.level.portals).getPos() + (0, 0, 3))
+        self.player.ballNP.setPos(random.choice(self.level.portals).getPos() + (0, 0, 3))
 
         self.dialog = dialog()
 
@@ -797,7 +799,7 @@ class WorldCage(Stage):
         for p, portal in enumerate(self.level.portals):
             if (
                 portal.getPos().getXy() - self.player.ballNP.getPos().getXy()
-            ).length() < 5:
+            ).length() < 8:
                 self.dialog_card.text = choice(
                     ["Ok!", "Alright!", "Affirmative!", "Totally!"]
                 )
@@ -807,8 +809,8 @@ class WorldCage(Stage):
                 base.bgm.stopSfx()
 
                 base.bgm.playSfx("warp")
-
-                self.transition(choice(base.levels))
+                base.lvl = random.randint(0, len(base.levels) -1)
+                self.transition("worldcage")
 
                 return
 
@@ -1297,7 +1299,9 @@ class WorldCage(Stage):
         
             fade_card.removeNode()
             self.exit_stage = "main_menu" if exit_stage is None else exit_stage
-            base.flow.transition(self.exit_stage)
+            base.lvl = random.randint(0, len(base.levels) -1)
+            print(f"Base Level:{base.lvl}")
+            base.flow.transition("worldcage")
             return Task.done
 
         fade_out.setDoneEvent("fadeOutDone")
@@ -1305,14 +1309,14 @@ class WorldCage(Stage):
         base.accept("fadeOutDone", complete_transition)
     
 
-    def exit(self, data):
+    def exit(self, data=None):
            # Stop and close the audio stream
-        if hasattr(self, "stream") and self.stream.is_active():  # Use is_active() instead of active
-            self.stream.stop_stream()
-            self.stream.close()
+        #if hasattr(self, "stream") and self.stream.is_active():  # Use is_active() instead of active
+            #self.stream.stop_stream()
+            #self.stream.close()
 
         # Reset the audio data array
-        self.audio_data = np.array([])
+        #self.audio_data = np.array([])
 
         # Reset amplitude tracking index
         self.current_amplitude_idx = 0
@@ -1322,7 +1326,6 @@ class WorldCage(Stage):
             "Audio stream and associated resources have been successfully cleaned up."
         )
         # Cleanup particles if they exist
-        self.motion_blur.cleanup()
         if hasattr(self, "particles"):
             # Disable the particle system
 
@@ -1432,11 +1435,6 @@ class WorldCage(Stage):
         """Clean up any existing level resources before creating a new one"""
         self.stop_color_cycling()  # Stop color cycling before cleanup
 
-        if self.motion_blur is not None:
-            self.motion_blur.cleanup()
-            self.motion_blur = None
-        else:
-            print("Warning: motion_blur is None and cannot be cleaned up.")
 
         if hasattr(self, "level"):
             # Clean up physics world

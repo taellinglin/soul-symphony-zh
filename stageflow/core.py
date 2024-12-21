@@ -116,59 +116,16 @@ class Stage:
 
 
 class Flow:
-    def __init__(
-        self, stages=None, substages=None, initial_stage=None, initial_stage_data=None
-    ):
-        """
-
-        A container for stages and substages, and managing the flow
-
-        between them.
-
-
-
-        stages
-
-            a dictionary `dict(name=StageType())` of your :class:`Stage`
-
-            instances.
-
-        substages
-
-            (optional) another dictionary of stages, to be used as
-
-            substages.
-
-        initial_stage
-
-            (optional) The name of the :class:`Stage` to enter
-
-            immediately.
-
-        initial_stage_data
-
-            (optional)
-
-        """
-
+    def __init__(self, stages=None, substages=None, initial_stage=None, initial_stage_data=None):
         self.current_stage = None
-
-        if stages is None:
-            self.stages = {}
-
-        else:
-            self.stages = stages
-
+        self.stages = {key: value for key, value in (stages or {}).items()}  # Store classes, not instances
         self.active_substages = []
-
-        if substages is None:
-            self.substages = {}
-
-        else:
-            self.substages = substages
-
-        if initial_stage is not None:
+        self.substages = {key: value for key, value in (substages or {}).items()}  # Same for substages
+        if initial_stage:
             self.transition(initial_stage, initial_stage_data)
+
+
+
 
     def get_current_stage(self):
         return self.current_stage
@@ -195,41 +152,23 @@ class Flow:
             return None
 
     def transition(self, stage_name, data=None):
-        """
-
-        Exit the current stage and enter another. This can only be done
-
-        if no substage is active.
-
-
-
-        stage_name
-
-            Name of the stage to transition to
-
-        data
-
-            Arbitrary data that will be passed to the current stage's
-
-            :class:`Stage.exit`
-
-        """
-
         if stage_name not in self.stages:
-            raise ValueError("Flow has no stage named '{}'.".format(stage_name))
+            raise ValueError(f"Flow has no stage named '{stage_name}'.")
 
         if self.active_substages:
-            raise Exception("Can not leave a stage with active substages.")
+            raise Exception("Cannot leave a stage with active substages.")
 
-        if self.current_stage is not None:
-            final_data = self.stages[self.current_stage].exit(data)
+        # Exit the current stage
+        if self.current_stage:
+            data = self.stages[self.current_stage].exit(data)
 
-        else:
-            final_data = data
+        # Instantiate the stage lazily if needed
+        if not isinstance(self.stages[stage_name], Stage):
+            self.stages[stage_name] = self.stages[stage_name]()  # Instantiate the class
 
+        # Enter the new stage
         self.current_stage = stage_name
-
-        self.stages[stage_name].enter(final_data)
+        self.stages[stage_name].enter(data)
 
     def push_substage(self, substage_name, data=None):
         """

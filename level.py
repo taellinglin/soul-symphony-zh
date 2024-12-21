@@ -62,14 +62,6 @@ class level:
 
         self.npcs = []
 
-        self.levels = [
-            base.loader.loadModel("levels/level00.bam"),
-            base.loader.loadModel("levels/level01.bam"),
-            base.loader.loadModel("levels/level02.bam"),
-            base.loader.loadModel("levels/level03.bam"),
-            base.loader.loadModel("levels/maze00.bam"),
-            base.loader.loadModel("levels/maze02.bam"),
-        ]
 
         self.floortextures = self.load_textures_from_directory(
             "./graphics/patterns/floor"
@@ -84,7 +76,7 @@ class level:
         )
 
         if lvl == None:
-            lvl = randint(0, len(self.levels))
+            lvl = random.randint(0, len(base.levels))
 
         else:
             self.lvl = lvl
@@ -240,17 +232,29 @@ class level:
         self.world.setDebugNode(self.debugNP.node())
 
     def load_ground(self):
+        # Load the ground model
+        self.ground = base.loader.loadModel(base.levels[self.lvl])
+        self.ground.reparentTo(self.worldNP)
 
-        self.ground = self.levels[self.lvl]
-
+        # Load NPCs and portals
         self.npc_mounts = self.ground.findAllMatches("**/npc**")
+        self.portals = self.ground.findAllMatches("**/portal**")
 
+        # Load floor, walls, and ceiling
         self.floor = self.ground.findAllMatches("**/levelFloor").getPath(0)
-
         self.walls = self.ground.findAllMatches("**/levelWall").getPath(0)
-
         self.ceil = self.ground.findAllMatches("**/levelCeil").getPath(0)
 
+        # Load player start position
+        self.player_start = self.ground.findAllMatches("**/playerStart").getPath(0)
+
+        # Load collision geometries
+        floorCol = self.ground.findAllMatches("**/floorCol").getPath(0).node().getGeom(0)
+        wallCol = self.ground.findAllMatches("**/wallCol").getPath(0).node().getGeom(0)
+        ceilCol = self.ground.findAllMatches("**/ceilCol").getPath(0).node().getGeom(0)
+
+
+        # Apply textures to floor, walls, and ceiling
         for stage in self.floor.find_all_texture_stages():
             self.floor.set_texture(stage, choice(self.floortextures), 1)
 
@@ -260,147 +264,103 @@ class level:
         for stage in self.ceil.find_all_texture_stages():
             self.ceil.set_texture(stage, choice(self.ceiltextures), 1)
 
-        self.player_start = self.ground.findAllMatches("**/playerStart").getPath(0)
-
-        self.portals = self.ground.findAllMatches("**/portal**")
-
-        floorCol = (
-            self.ground.findAllMatches("**/floorCol").getPath(0).node().getGeom(0)
-        )
-
-        wallCol = self.ground.findAllMatches("**/wallCol").getPath(0).node().getGeom(0)
-
-        ceilCol = self.ground.findAllMatches("**/ceilCol").getPath(0).node().getGeom(0)
-
-        self.player_start = self.ground.findAllMatches("**/playerStart").getPath(0)
-
-        self.portals = self.ground.findAllMatches("**/portal**")
-
-        # Load the textures
-
-        self.base_texture = base.loader.loadTexture(
-            "portals/base00.png"
-        )  # Base texture
-
-        self.flower_texture = base.loader.loadTexture(
-            "portals/effect01.png"
-        )  # Flower texture
+        # Load portal textures
+        self.base_texture = base.loader.loadTexture("portals/base00.png")
+        self.flower_texture = base.loader.loadTexture("portals/effect01.png")
 
         # Check if textures are loaded correctly
-
         if not self.base_texture or not self.flower_texture:
             print("Error: Textures failed to load.")
-
         else:
             print("Textures loaded successfully.")
 
+        # Load portal template
+        self.portal_template = base.loader.loadModel("components/portal00.bam")
+        if not self.portal_template:
+            print("Error: Failed to load portal template.")
+            return
+
+        # Process each portal
         if len(self.portals):
             for p, portal in enumerate(self.portals):
                 # Play the portal sound effect
-
                 self.audio.playSfx("portal_loop", portal, True)
 
                 # Instantiate the portal template
-
                 portal_instance = self.portal_template.instanceTo(portal)
-
-                portal.setPos(portal.getPos().x, portal.getPos().y, portal.getPos().z)
-
-                # Debug: Check if portal_instance is valid
-
                 if not portal_instance:
                     print(f"Error: Failed to instantiate portal {p}.")
-
                     continue
 
                 # Print the portal's node hierarchy to see what's inside
-
                 print(f"Portal {p} hierarchy:")
-
-                portal_instance.ls()  # List the hierarchy of the portal instance
+                portal_instance.ls()
 
                 # Check for the base and flower components in the portal hierarchy
+                base_node = portal_instance.find("**/base")
+                flower_node = portal_instance.find("**/flower")
 
-                base_node = portal_instance.find(
-                    "**/base"
-                )  # Searching for base node in the portal hierarchy
+                # Ensure base_node and flower_node are found
+                if not base_node:
+                    print(f"Error: Base node not found in portal {p}.")
+                    continue
 
-                flower_node = portal_instance.find(
-                    "**/flower"
-                )  # Searching for flower node in the portal hierarchy
+                if not flower_node:
+                    print(f"Error: Flower node not found in portal {p}.")
+                    continue
 
+                # Set textures for base_node and flower_node
                 for stage in base_node.find_all_texture_stages():
                     base_node.set_texture(stage, self.base_texture, 1)
 
-    
                 for stage in flower_node.find_all_texture_stages():
                     flower_node.set_texture(stage, self.flower_texture, 1)
 
-        # Assuming 'self.letterlist' is properly initialized and contains 'letter_nodes' as a list of NodePaths
-
+        # Load letter mounts
         self.letterlist.letter_mounts = self.ground.findAllMatches("**/letter**")
 
         # A helper function to check if a node is already in the parent-child chain
-
         def is_in_parent_chain(node, parent):
-
             current_parent = node.getParent()
-
             while current_parent:
                 if current_parent == parent:
                     return True
-
                 current_parent = current_parent.getParent()
-
             return False
 
         if len(self.letterlist.letter_mounts):
             for l, letter in enumerate(self.letterlist.letter_mounts):
-                # Create a new node (could be a copy or a fresh new node) to add to the scene
-
+                # Create a new node to add to the scene
                 letter_node = letter.attachNewNode("letter_node")
 
                 # Choose a random letter node to attach
-
                 random_letter_node = choice(self.letterlist.letter_nodes)
 
                 # Ensure that the random_letter_node is not part of the current letter node's parent-child chain
-
                 if not is_in_parent_chain(random_letter_node, letter_node):
                     random_letter_node.reparentTo(letter)
-
                 else:
-                    print(
-                        f"Cycle detected: Cannot reparent {random_letter_node} to {letter}"
-                    )
-
+                    print(f"Cycle detected: Cannot reparent {random_letter_node} to {letter}")
         else:
             print("Error: No letter nodes found on the ground.")
 
         print(f"Current letter nodes: {self.letterlist.letter_nodes}")
 
+        # Create collision meshes
         mesh = BulletTriangleMesh()
-
         mesh2 = BulletTriangleMesh()
-
         mesh3 = BulletTriangleMesh()
 
         mesh.addGeom(floorCol)
-
         mesh2.addGeom(wallCol)
-
         mesh2.addGeom(ceilCol)
 
         shape = BulletTriangleMeshShape(mesh, dynamic=True)
-
         shape2 = BulletTriangleMeshShape(mesh2, dynamic=True)
-
         shape3 = BulletTriangleMeshShape(mesh3, dynamic=True)
 
         body = BulletRigidBodyNode("Floor")
-
         body2 = BulletRigidBodyNode("Walls")
-
         body3 = BulletRigidBodyNode("Ceil")
 
         body.setRestitution(0.75)
@@ -408,130 +368,79 @@ class level:
         body3.setRestitution(0.75)
 
         bodyNP = self.worldNP.attachNewNode(body)
-
         bodyNP2 = self.worldNP.attachNewNode(body2)
-
         bodyNP3 = self.worldNP.attachNewNode(body3)
 
         bodyNP.node().addShape(shape)
-
         bodyNP2.node().addShape(shape2)
-
         bodyNP3.node().addShape(shape3)
 
-        bodyNP.node().setRestitution(0.75)
-
-        bodyNP2.node().setRestitution(0.75)
-
-        bodyNP3.node().setRestitution(0.75)
-
         bodyNP.node().setCollisionResponse(True)
-
         bodyNP2.node().setCollisionResponse(True)
-
         bodyNP3.node().setCollisionResponse(True)
 
         bodyNP.setPos(0, 0, 0)
-
         bodyNP2.setPos(0, 0, 0)
-
         bodyNP3.setPos(0, 0, 0)
 
         bodyNP.setCollideMask(BitMask32.allOn())
-
         bodyNP2.setCollideMask(BitMask32.allOn())
-
         bodyNP3.setCollideMask(BitMask32.allOn())
 
         self.world.attachRigidBody(bodyNP.node())
-
         self.world.attachRigidBody(bodyNP2.node())
-
         self.world.attachRigidBody(bodyNP3.node())
 
         bodyNP.show()
-
         bodyNP2.show()
-
         bodyNP3.show()
 
         self.floor.reparentTo(bodyNP)
-
         self.walls.reparentTo(bodyNP2)
-
         self.ceil.reparentTo(bodyNP3)
 
         self.floorNP = bodyNP
-
         self.wallsNP = bodyNP2
-
         self.ceilNP = bodyNP3
 
         self.ground.reparentTo(render)
 
-        # Now we have a valid cTrav
-
+        # Spawn monsters
         spawn_count = 100
-
         for i in range(spawn_count):
             random_x = uniform(-500, 500)  # Random X coordinate within bounds
-
             random_y = uniform(-500, 500)  # Random Y coordinate within bounds
 
-            # Ray now casts upwards (0, 0, 1) to detect collisions with objects above
-
+            # Ray casts upwards to detect collisions with objects above
             ray = CollisionRay(random_x, random_y, 50, 0, 0, -1)  # Upward ray
-
             ray_node = CollisionNode(f"ray_{i}")
-
             ray_node.addSolid(ray)
-
             ray_node.setFromCollideMask(BitMask32.allOn())
-
             ray_np = self.worldNP.attachNewNode(ray_node)
 
             # Add collider and handler
-
             self.cTrav.addCollider(ray_np, self.handler)
 
             # Perform collision traversal
-
             self.cTrav.traverse(self.worldNP)
 
             if self.handler.getNumEntries() > 0:
                 self.handler.sortEntries()
-
                 entry = self.handler.getEntry(0)  # Closest collision
-
                 collision_point = entry.getSurfacePoint(self.worldNP)
 
-                print(f"Spawn {i}: Placing monster at {collision_point}")
-
                 # Adjust the Z value of the collision point to move the monster 0.25 units above the floor
-
                 new_collision_point = Point3(
                     collision_point.x, collision_point.y, collision_point.z + 0.25
                 )
 
                 # Use the collision point to place a monster
-
                 monster = self.monster_manager.create_monster(i)
-
                 monster.setPos(new_collision_point)
-
                 monster.reparentTo(self.worldNP)
 
             # Cleanup ray node
-
             ray_np.removeNode()
-
-            base_node = portal_instance.find(
-                "**/base"
-            )  # Searching for base node in the portal hierarchy
-
-            flower_node = portal_instance.find(
-                "**/flower"
-            )  # Searching for flower node in the portal hierarchy
 
     def spawn_on_floor(self, num_monsters=10):
         """Spawn a specified number of monsters on the floor using the existing floor collision geometry."""

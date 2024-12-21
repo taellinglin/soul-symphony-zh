@@ -36,7 +36,7 @@ from motionBlur import MotionBlur
 
 class TitleScreen(Stage):
 
-    def __init__(self, exit_stage="main_menu"):
+    def __init__(self, exit_stage="loading"):
     
         self.exit_stage = exit_stage
 
@@ -63,9 +63,9 @@ class TitleScreen(Stage):
     
         self.data = data
 
-        base.accept("enter", self.transition, [self.exit_stage])
+        base.accept("enter", base.flow.transition, ["worldcage"])
 
-        base.accept("gamepad-start", self.transition, [self.exit_stage])
+        base.accept("gamepad-start", base.flow.transition, ["worldcage"])
 
         base.enableParticles()
 
@@ -116,8 +116,8 @@ class TitleScreen(Stage):
         return task.cont
 
     def transition(self, exit_stage):
-    
-        base.flow.transition(self.exit_stage)
+        print(exit_stage)
+        base.flow.transition(exit_stage)
 
     def create_logo_wave(self):
         # Define the wave parameters
@@ -191,71 +191,7 @@ class TitleScreen(Stage):
         self.star_decal = self.centerPivot(self.star_spinner)
 
         self.star_decal.setScale(1.0, 1.0, 1.0)
-
-        # Create particle effect programmatically
-
-        self.particle = ParticleEffect()
-
-        particles = Particles("particles")
-
-        particles.setFactory("PointParticleFactory")
-
-        particles.setRenderer("LineParticleRenderer")
-
-        particles.setEmitter("PointEmitter")
-
-        # Set pool size and particle properties
-
-        particles.setPoolSize(2048)
-
-        particles.setBirthRate(1)
-
-        particles.setLitterSize(10)
-
-        particles.setLitterSpread(2)
-
-        particles.setSystemLifespan(0.0)
-
-        particles.setLocalVelocityFlag(True)
-
-        particles.setSystemGrowsOlderFlag(False)
-
-        # Particle factory settings
-
-        particles.factory.setLifespanBase(0.5)
-
-        particles.factory.setLifespanSpread(0.2)
-
-        particles.factory.setMassBase(1.0)
-
-        particles.factory.setTerminalVelocityBase(400.0)
-
-        # Particle renderer settings
-
-        renderer = particles.renderer
-
-        renderer.setHeadColor(Vec4(1, 1, 1, 1))  # White head
-
-        renderer.setTailColor(Vec4(1, 1, 0, 0))  # Fades to transparent yellow
-
-        renderer.setLineScaleFactor(1.0)
-
-        # Particle emitter settings
-
-        emitter = particles.emitter
-
-        emitter.setEmissionType(BaseParticleEmitter.ETEXPLICIT)
-
-        emitter.setExplicitLaunchVector(Vec3(0.0, 1.0, 0.0))
-
-        emitter.setRadiateOrigin(Point3(0.0, 0.0, 0.0))
-
-        emitter.setAmplitude(1.2)
-
-        emitter.setAmplitudeSpread(0.05)
-
-        emitter.setOffsetForce(Vec3(0.0, 0.0, 0.0))
-
+        
         self.logo_card = CardMaker("logo_card")
 
         self.logo_card.set_frame(0, 0, 1, 1)
@@ -279,10 +215,6 @@ class TitleScreen(Stage):
         self.create_logo_wave()
 
         # Attach particles to effect and star decal
-
-        self.particle.addParticles(particles)
-
-        self.particle.start(self.imageObject)
 
         # Initialize color intervals for cycling through colors
 
@@ -431,7 +363,7 @@ class TitleScreen(Stage):
 
         self.create_star_pulse()
 
-        self.particle.reparentTo(self.star_node)
+       
 
         # Initialize a task to continuously rotate the star
 
@@ -570,7 +502,7 @@ class TitleScreen(Stage):
 
         return task.cont
 
-    def exit(self, data):
+    def exit(self, data=None):
         if hasattr(self, "cycle_task"):
             base.taskMgr.remove(self.cycle_task)
 
@@ -594,10 +526,9 @@ class TitleScreen(Stage):
 
         self.star_spinner.removeNode()
 
-        self.particle.cleanup()
+        #self.particle.cleanup()
 
         self.glyph_rings.center.detachNode()
-        self.motion_blur.cleanup()
 
         base.cam.reparentTo(render)
 
@@ -612,5 +543,6 @@ class TitleScreen(Stage):
         base.taskMgr.remove("update")
 
         base.taskMgr.remove("logo_wave_task")
+
 
         return data
