@@ -15,60 +15,8 @@ import functools
 from panda3d.core import NodePath
 from pyrecord import setup_sg
 from panda3d.core import Lens
-
-class SplashScreen(Stage):
-    def __init__(self, base, exit_stage="title_screen"):
-        self.base = base
-        self.exit_stage = exit_stage
-        self.splash_colors = [
-            Vec4(1, 0, 0, 1),  # Red
-            Vec4(1, 0.5, 0, 1),  # Orange
-            Vec4(1, 1, 0, 1),  # Yellow
-            Vec4(0, 1, 0, 1),  # Green
-            Vec4(0, 0, 1, 1),  # Blue
-            Vec4(0.29, 0, 0.51, 1),  # Indigo
-            Vec4(0.56, 0, 1, 1),  # Violet
-        ]
-        
-    def enter(self, data=None):
-        from panda3d_logos.splashes import RainbowSplash
-        from panda3d_logos.splashes import Pattern
-        from panda3d_logos.splashes import Colors
-        
-        # Stop any existing sounds first
-        if hasattr(self.base, 'bgm'):
-            self.base.bgm.stopSfx()
-        
-        self.splash = RainbowSplash(
-            pattern=Pattern.FLICKERING,
-            colors=Colors.RAINBOW,
-            pattern_freq=13,
-            cycle_freq=15
-        )
-        self.interval = self.splash.setup()
-        
-        # Start the interval
-        self.interval.start()
-        
-        # Schedule the transition with a consistent delay
-        delay = self.interval.getDuration() + 0.5
-        self.base.taskMgr.doMethodLater(
-            delay,
-            self.transition_out, 
-            'transition_from_splash'
-        )
-    def cleanup(self):
-        self.splash.teardown()
-        
-    def transition_out(self, task):
-        self.cleanup()
-        self.base.load_stage(stage_name="title_screen", lvl=1, arcade_lvl=None)  # Load title screen before transitioning
-        #self.base.flow.transition(self.exit_stage)
-        return task.done
-    def exit(self, data=None):
-        if hasattr(self, 'splash'):
-            self.splash.teardown()
-        return data
+from motionBlur import MotionBlur
+from splashscreen import SplashScreen
 
 class Quit:
     def enter(self, data=None):
@@ -79,17 +27,10 @@ class Quit:
 class Base(ShowBase):
     def __init__(self):
         super().__init__(self)
-        
+        self.lvl = 0
+        self.motion_blur = None
         # Set up fullscreen immediately after ShowBase init
         self.setup_fullscreen()
-        self.levels = [
-            base.loader.loadModel("arcade/stage1.bam"),
-            base.loader.loadModel("levels/level00.bam"),
-            base.loader.loadModel("levels/level01.bam"),
-            base.loader.loadModel("levels/level02.bam"),
-            base.loader.loadModel("levels/level03.bam"),
-            base.loader.loadModel("levels/maze02.bam"),
-        ]
         # Initialize essential systems for splash/title
         self.screen_recorder = ScreenRecorder(self)
         setup_sg(self)
@@ -109,11 +50,13 @@ class Base(ShowBase):
         # Initialize scoreboard
         self.scoreboard = scoreboard()
         self.scoreboard.hide()
-
         # Initialize flow with only splash and quit stages
         self.flow = Flow(
             stages={
-                "splash": SplashScreen(base=self, exit_stage="title_screen"),
+                "splash": SplashScreen(exit_stage="title_screen"),
+                "title_screen": TitleScreen(exit_stage="loading"),
+                "loading": LoadingScreen(exit_stage="worldcage"),
+                "worldcage": WorldCage(exit_stage="quit", lvl=self.lvl),
                 "quit": Quit()
             },
             initial_stage="splash"
@@ -121,9 +64,6 @@ class Base(ShowBase):
 
         # Store stage classes for lazy loading
         self.stage_classes = {
-            "title_screen": ("titleScreen", "TitleScreen", "loading"),
-            "loading": ("loadingScreen", "LoadingScreen", "worldcage"),
-            "worldcage": ("worldcage", "WorldCage", "quit")
         }
 
         # Define available levels
@@ -201,53 +141,7 @@ class Base(ShowBase):
             self.screen_recorder.stop_recording()
         else:
             self.screen_recorder.start_recording()
-    def load_stage(self, stage_name, lvl=None, arcade_lvl=None, data=None):
-        """Dynamically load a stage when needed"""
-        # Clean up the current stage before loading a new one
-        if hasattr(self, 'current_stage') and self.current_stage is not None:
-            print(f"Cleaning up the current stage: {self.current_stage}")
-            self.current_stage.exit(None)  # Ensure cleanup happens without blocking the main thread
 
-        # Check if the stage exists in the stage_classes and hasn't been loaded yet in flow
-        if stage_name in self.stage_classes and stage_name not in self.flow.stages:
-            print(f"Loading stage: {stage_name}")
-            
-            # Extract the module and class information for the stage
-            module_name, class_name, exit_stage = self.stage_classes[stage_name]
-            
-            # Dynamically import the module
-            module = __import__(module_name)
-            
-            # Get the class reference from the module
-            stage_class = getattr(module, class_name)
-
-            # Conditionally pass lvl and arcade_lvl to worldcage
-            if stage_name == "worldcage":
-                if hasattr(self, 'current_stage') and self.current_stage is not None:
-                    self.current_stage.exit(None)  # Ensure the current stage is exited
-
-                # Load the new stage
-                stage = stage_class(exit_stage=exit_stage, lvl=lvl, arcade_lvl=arcade_lvl)
-
-            elif stage_name == "loading":
-                print("Loading the loading screen, how meta is that?")
-                stage = stage_class(base=base, exit_stage=exit_stage, lvl=lvl, arcade_lvl=arcade_lvl)
-            else:
-                stage = stage_class(exit_stage)
-
-            # Store the stage in the flow
-            self.flow.stages[stage_name] = stage
-
-            # Set the current stage to the new stage
-            self.current_stage = stage
-
-            # Call the enter() method for the new stage, passing the data argument
-            stage.enter(data)  # Assuming data is optional or can be passed in here
-            self.print_system_status()
-            return stage
-
-        # If the stage is already loaded, return the existing stage
-        return self.flow.stages.get(stage_name)
     # The main part of the application
     def set_aspect_ratio(self,resolution):
         width, height = resolution
@@ -282,15 +176,16 @@ class Base(ShowBase):
     
 if __name__ == "__main__":
     app = Base()
-    app.adjust_aspect_ratio_based_on_resolution()  # Call this early to set the right aspect ratio
-
+    #app.adjust_aspect_ratio_based_on_resolution()  # Call this early to set the right aspect ratio
+    
     # Set the camera lens' aspect ratio
     lens = base.cam.node().getLens()
     window_width, window_height = base.win.get_size()
-    lens.setAspectRatio(window_width / float(window_height))
+    #lens.setAspectRatio(window_width / float(window_height))
 
     # Apply the aspect ratio settings to the camera
-    base.cam.node().setLens(lens)
+    #base.cam.node().setLens(lens)
+    app.camLens.setFov(70)
 
     # Continue with window properties and fullscreen setup
     pipe = app.win.getPipe()

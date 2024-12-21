@@ -37,9 +37,10 @@ from panda3d.core import TextureStage
 
 class TitleScreen(Stage):
 
-    def __init__(self, exit_stage="loading", lvl=None, arcade_lvl=None):
+    def __init__(self, exit_stage=None):
+        super().__init__()
         self.exit_stage = exit_stage
-
+        base.motion_blur = MotionBlur()
         self.colors = [
             Vec4(1, 0, 0, 1),  # Red
             Vec4(1, 0.5, 0, 1),  # Orange
@@ -57,13 +58,12 @@ class TitleScreen(Stage):
         self.wave_amplitude = 0.125  # Amplitude of the wave effect
 
         self.wave_frequency = 5.0
-        self.motion_blur = MotionBlur()
+        #self.motion_blur = MotionBlur()
 
-    def enter(self, data):
+    def enter(self):
+        base.accept("enter", self.transition, self.exit_stage)
 
-        base.accept("enter", self.transition, [self.exit_stage])
-
-        base.accept("gamepad-start", self.transition, [self.exit_stage])
+        base.accept("gamepad-start", self.transition, self.exit_stage)
 
         base.enableParticles()
 
@@ -115,8 +115,7 @@ class TitleScreen(Stage):
 
     def transition(self, exit_stage):
         print(f"Transitioning to {exit_stage}")
-        base.load_stage("worldcage", 0, None)
-        
+        base.flow.transition(exit_stage)
         
 
     def create_logo_wave(self):
@@ -555,10 +554,7 @@ class TitleScreen(Stage):
         return task.cont
 
     def cleanup(self):
-        if hasattr(self, 'renderParent'):
-            del self.renderParent
-        else:
-            print("renderParent attribute not found. Skipping cleanup for it.")
+
         # Remove any tasks
         if hasattr(self, "cycle_task"):
             base.taskMgr.remove(self.cycle_task)
@@ -569,7 +565,6 @@ class TitleScreen(Stage):
         if hasattr(self, "update_task"):
             #base.taskMgr.remove(self.update_task)
             pass
-
         # Remove objects and nodes
         self.imageObject.removeNode()
         self.imageObject2.removeNode()
@@ -577,14 +572,10 @@ class TitleScreen(Stage):
         self.bg2.removeNode()
         self.star_spinner.removeNode()
         
-        # Check for renderParent before deleting it
-        if hasattr(self, 'renderParent'):
-            del self.renderParent
-        else:
-            print("renderParent attribute not found. Skipping cleanup.")
-        self.motion_blur.cleanup()
         # Detach elements
         self.glyph_rings.center.detachNode()
+        del self.glyph_rings
+        del self.logo_card
         # Stop music and sound
         base.bgm.stopMusic()
 
@@ -594,11 +585,10 @@ class TitleScreen(Stage):
         base.taskMgr.remove("update")
         base.taskMgr.remove("logo_wave_task")
 
-    def exit(self, data):
+    def exit(self):
         # Perform cleanup of the current stage
         self.cleanup() 
         # Additional exit logic (if any)
         # Example: Transition to the next stage
-        # (You can add more code here to handle specific exit actions)
-        
-        return data
+        # (You can add more code h  ere to handle specific exit actions)
+        return

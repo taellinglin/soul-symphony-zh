@@ -88,119 +88,12 @@ class WorldCage(Stage):
     # Add this as a class variable (outside __init__)
     _textures = None  # Class-level storage for textures
 
-    def __init__(self, exit_stage="quit", lvl=None, arcade_lvl=None):
+    def __init__(self, exit_stage="quit", lvl=None):
         super().__init__()  # Initialize the ShowBase
-        if hasattr(self, "player"):
-            self.player.removeNode()
-        self.zooming_out = False
-        self.zooming_in = False
-        # Get the window width and height
-        window_width = base.win.getXSize()
-        window_height = base.win.getYSize()
-    
-        # Calculate the correct aspect ratio
-        aspect_ratio = window_width / window_height
-
-        # Update the camera lens
-        lens = base.cam.node().getLens()  # Get the lens for the camera
-        lens.setAspectRatio(aspect_ratio)
-        if lvl is None and arcade_lvl is None:
-            self.lvl = 0
-        else:
-            self.lvl = lvl
-            self.arcade_lvl = arcade_lvl
-
-        base.enableParticles()
-        base.cam.node().get_lens().set_fov(45)
-        self.exit_stage = exit_stage
-
-        self.globalClock = globalClock
-
-        self.rotation_speed = 60  # Degrees per second
-
-        # Initialize colors (ROYGBIV)
-        self.colors = []
-
-        phase_frags = 6
-
-        # Keep track of jump state
-        self.on_ground = False
-
-        self.jump_count = 0  # Tracks how many jumps have been performed
-
-        # Define the ROYGBIV color pattern
-        for phase in [0.5 * pi * (i / float(phase_frags)) for i in range(phase_frags)]:
-            self.colors.append(
-                (1, sin(phase), 0, 1)
-            )  # Red to Orange
-
-        for phase in [0.5 * pi * (i / float(phase_frags)) for i in range(phase_frags)]:
-            self.colors.append((1 - sin(phase), 1, 0, 1))  # Orange to Yellow
-
-        for phase in [0.5 * pi * (i / float(phase_frags)) for i in range(phase_frags)]:
-            self.colors.append((0, 1, sin(phase), 1))  # Yellow to Green
-
-        for phase in [0.5 * pi * (i / float(phase_frags)) for i in range(phase_frags)]:
-            self.colors.append((0, 1 - sin(phase), 1, 1))  # Green to Cyan
-
-        for phase in [0.5 * pi * (i / float(phase_frags)) for i in range(phase_frags)]:
-            self.colors.append((sin(phase), 0, 1, 1))  # Cyan to Blue
-
-        for phase in [0.5 * pi * (i / float(phase_frags)) for i in range(phase_frags)]:
-            self.colors.append((1, 0, 1 - sin(phase), 1))  # Blue to Violet
-
-        # Maintain a base colors list for cycling
-        self.base_colors = [
-            (1, 0, 0, 1),  # Red
-            (1, 0.5, 0, 1),  # Orange
-            (1, 1, 0, 1),  # Yellow
-            (0, 1, 0, 1),  # Green
-            (0, 0, 1, 1),  # Blue
-            (0.5, 0, 1, 1),  # Indigo
-            (1, 0, 1, 1),  # Violet
-        ]
-
-        # Define a range of colors to choose from
-        self.color_choices = [
-            (1, 0, 0),  # Red
-            (1, 0.5, 0),  # Orange
-            (1, 1, 0),  # Yellow
-            (0, 1, 0),  # Green
-            (0, 0, 1),  # Blue
-            (0.5, 0, 1),  # Indigo
-            (1, 0, 1),  # Violet
-        ]
-
-        self.color_idx = -1
-
-        self.clock = 0
-
-        self.npcs = []
-        self.transparency = 0.05
-        self.zoom_level = 30
-        self.fs = 96000  # Sampling frequency
-        self.buffer_size = 256  # Size of audio buffer
-        self.audio_data = np.array([])  # Buffer for storing audio data
-        self.pyaudio_instance = pyaudio.PyAudio()
-        self.stream = None
+        self.exit_stage= exit_stage
+        self.lvl = lvl
         
-        # Initialize color intervals for cycling through colors
-
-        base.disableMouse()  # Disable mouse control
-
-        self.font_path = "fonts/konnarian/Daemon.otf"
-
-        self.texture_directory = "stars/"
-
-        self.level_min_bound, self.level_max_bound = 1024, 1024
-
-        self.textures_loaded = False  # Add this flag
-
-        self.color_cycle_task = None  # Track the color cycling task
-
-        self.current_color_index = 0
-
-        self.motion_blur = MotionBlur()
+        
 
     def star(self):
         # Load the star image
@@ -351,7 +244,122 @@ class WorldCage(Stage):
         self.audio_data = np.array([])
         print("Audio stream and resources cleaned up.")
 
-    def enter(self, data=None):
+    def enter(self, exit_stage='quit', lvl=None):
+        if hasattr(self, "level") and self.level is not None:
+            self.level.cleanup()
+        self.lvl = lvl
+        self.reset_level()
+        if hasattr(self, "player"):
+            del self.player
+        self.zooming_out = False
+        self.zooming_in = False
+        # Get the window width and height
+        window_width = base.win.getXSize()
+        window_height = base.win.getYSize()
+    
+        # Calculate the correct aspect ratio
+        aspect_ratio = window_width / window_height
+
+        # Update the camera lens
+        lens = base.cam.node().getLens()  # Get the lens for the camera
+        lens.setAspectRatio(aspect_ratio)
+        if lvl is None:
+            self.lvl = 0
+        else:
+            self.lvl = lvl
+
+        base.enableParticles()
+        base.cam.node().get_lens().set_fov(45)
+        self.exit_stage = exit_stage
+
+        self.globalClock = globalClock
+
+        self.rotation_speed = 60  # Degrees per second
+
+        # Initialize colors (ROYGBIV)
+        self.colors = []
+
+        phase_frags = 6
+
+        # Keep track of jump state
+        self.on_ground = False
+
+        self.jump_count = 0  # Tracks how many jumps have been performed
+
+        # Define the ROYGBIV color pattern
+        for phase in [0.5 * pi * (i / float(phase_frags)) for i in range(phase_frags)]:
+            self.colors.append(
+                (1, sin(phase), 0, 1)
+            )  # Red to Orange
+
+        for phase in [0.5 * pi * (i / float(phase_frags)) for i in range(phase_frags)]:
+            self.colors.append((1 - sin(phase), 1, 0, 1))  # Orange to Yellow
+
+        for phase in [0.5 * pi * (i / float(phase_frags)) for i in range(phase_frags)]:
+            self.colors.append((0, 1, sin(phase), 1))  # Yellow to Green
+
+        for phase in [0.5 * pi * (i / float(phase_frags)) for i in range(phase_frags)]:
+            self.colors.append((0, 1 - sin(phase), 1, 1))  # Green to Cyan
+
+        for phase in [0.5 * pi * (i / float(phase_frags)) for i in range(phase_frags)]:
+            self.colors.append((sin(phase), 0, 1, 1))  # Cyan to Blue
+
+        for phase in [0.5 * pi * (i / float(phase_frags)) for i in range(phase_frags)]:
+            self.colors.append((1, 0, 1 - sin(phase), 1))  # Blue to Violet
+
+        # Maintain a base colors list for cycling
+        self.base_colors = [
+            (1, 0, 0, 1),  # Red
+            (1, 0.5, 0, 1),  # Orange
+            (1, 1, 0, 1),  # Yellow
+            (0, 1, 0, 1),  # Green
+            (0, 0, 1, 1),  # Blue
+            (0.5, 0, 1, 1),  # Indigo
+            (1, 0, 1, 1),  # Violet
+        ]
+
+        # Define a range of colors to choose from
+        self.color_choices = [
+            (1, 0, 0),  # Red
+            (1, 0.5, 0),  # Orange
+            (1, 1, 0),  # Yellow
+            (0, 1, 0),  # Green
+            (0, 0, 1),  # Blue
+            (0.5, 0, 1),  # Indigo
+            (1, 0, 1),  # Violet
+        ]
+
+        self.color_idx = -1
+
+        self.clock = 0
+
+        self.npcs = []
+        self.transparency = 0.05
+        self.zoom_level = 30
+        self.fs = 96000  # Sampling frequency
+        self.buffer_size = 256  # Size of audio buffer
+        self.audio_data = np.array([])  # Buffer for storing audio data
+        self.pyaudio_instance = pyaudio.PyAudio()
+        self.stream = None
+        
+        # Initialize color intervals for cycling through colors
+
+        base.disableMouse()  # Disable mouse control
+
+        self.font_path = "fonts/konnarian/Daemon.otf"
+
+        self.texture_directory = "stars/"
+
+        self.level_min_bound, self.level_max_bound = 1024, 1024
+
+        self.textures_loaded = False  # Add this flag
+
+        self.color_cycle_task = None  # Track the color cycling task
+
+        self.current_color_index = 0
+        self.is_cleaned = False
+        self.renderParent = None  # Example optional attribute
+        self.motion_blur = None  # Example optional attribute
         self.initialize_audio()
         print("Entered new level or portal, audio stream reset.")
         # Set initial fade state
@@ -377,10 +385,7 @@ class WorldCage(Stage):
         base.accept("fadeInDone", cleanup_fade)
 
         self.cleanup()
-       
-        self.motion_blur = MotionBlur()
-        if data is None:
-            data = str(base.levels[self.lvl])
+
 
         #self.level = Level(player=self.player, lvl=self.lvl, arcade_lvl=None)
 
@@ -520,7 +525,7 @@ class WorldCage(Stage):
 
         base.bgm.playMusic(None, True, 0.8)
 
-        base.task_mgr.add(self.update, "update")
+        #base.task_mgr.add(self.update, "update")
 
         base.accept("escape", sys.exit)
 
@@ -551,8 +556,10 @@ class WorldCage(Stage):
         inputState.watchWithModifiers("cam-right", "gamepad-shoulder_right")
 
         inputState.watchWithModifiers("cam-left", "gamepad-shoulder_left")
-
-        self.reset_level()
+        
+        self.player = player()
+        
+        self.level = Level(player=self.player, lvl=self.lvl)
         
         self.dialog = dialog()
 
@@ -569,8 +576,18 @@ class WorldCage(Stage):
         self.dialog_card_node.setScale(0.08)
 
         base.scoreboard.show()
-
+        
+        
         self.level.audio.audio3d.attachListener(base.cam)
+        
+        self.level.load_world()
+        
+        self.level.load_ground(lvl=self.lvl)
+        
+        self.player.ballNP.reparentTo(self.level.worldNP)
+        
+        self.level.world.attachRigidBody(self.player.ballNP.node())
+        
 
         self.particles = SoulParticles(self.texture_directory, self.level.worldNP)
 
@@ -605,6 +622,8 @@ class WorldCage(Stage):
         # Task to handle modifiers
         #base.taskMgr.add(self.handle_zoom,  "HandleZoom
         taskMgr.add(self.processInput, "processInput")
+        taskMgr.add(self.handle_zoom, "handle_zoom")
+        
         self.start_color_cycling()  # Start color cycling once
         
     def set_zoom_out(self, state):
@@ -735,6 +754,7 @@ class WorldCage(Stage):
         taskMgr.remove('level_update')
         taskMgr.remove('HandleZoom')
         taskMgr.remove('process_audio')
+        self.stop_color_cycling
         # Stop current music and effects
         if hasattr(base, 'bgm'):
             base.bgm.stopSfx()
@@ -743,25 +763,27 @@ class WorldCage(Stage):
         
         # Pick random level
         random_lvl = random.randrange(len(base.levels))
-        print(f"Loading random level: {random_lvl}")
+        print(f"Loading random level: {self.lvl}")
         if hasattr(self, 'level'):
-            self.level.cleanup()
+            #self.level.cleanup()
+            pass
         self.player = player()
-        self.level = Level(player=self.player, lvl=random_lvl)
+        self.level = Level(player=self.player, lvl=self.lvl)
         self.level.load_world()
-        self.level.load_ground(lvl=random_lvl, arcade_lvl=None)
+        self.level.load_ground(lvl=self.lvl)
         self.player.ballNP.reparentTo(self.level.worldNP)
         
         self.level.world.attachRigidBody(self.player.ballNP.node())
-        
-        base.task_mgr.add(self.update, "update")
-        base.task_mgr.add(self.level.update, "level_update")
+        #self.enter(lvl=self.lvl)
+        #base.task_mgr.add(self.update, "update")
+        #base.task_mgr.add(self.level.update, "level_update")
         base.task_mgr.add(self.processInput, "processInput")
         
-        self.start_color_cycling()
+        #self.level.start_color_cycling()
         # Play random music track
         if hasattr(base, 'bgm'):
-            base.bgm.playMusic(None, True, 0.8)
+            #base.bgm.playMusic(None, True, 0.8)
+            pass
         print(self.level.worldNP.ls())
         print("Level reset complete!")
     def actionB(self):
@@ -1320,15 +1342,15 @@ class WorldCage(Stage):
         # Define the completion of the transition
         def complete_transition(task=None):
             fade_card.removeNode()
-            self.exit_stage = "arcade"
-            base.flow.transition(self.exit_stage, current_arcade_level)
+            self.exit_stage = "worldcage"
+            base.flow.transition(self.exit_stage)
             return Task.done
 
         fade_out.setDoneEvent("fadeOutDone")
         fade_out.start()
         base.accept("fadeOutDone", complete_transition)
     
-    def exit(self, data):
+    def exit(self):
         # Stop and close the audio stream
         if hasattr(self, "stream") and self.stream.is_active():  # Use is_active() instead of active
             self.stream.stop_stream()
@@ -1435,54 +1457,70 @@ class WorldCage(Stage):
 
         self.stop_color_cycling()  # Stop color cycling when exiting
 
-        return data
+        return
 
     def cleanup(self):
+        if self.is_cleaned:
+            print("WorldCage stage already cleaned up. Skipping.")
+            return
+        self.is_cleaned = True
+        print("Cleaning up WorldCage stage...")
         if hasattr(self, 'renderParent'):
             del self.renderParent
         else:
             print("renderParent attribute not found. Skipping cleanup for it.")
         """Clean up any existing level resources before creating a new one"""
-        self.stop_color_cycling()  # Stop color cycling before cleanup
+        if hasattr(self, "color_cycle_task"):
+                    self.stop_color_cycling()
+                    self.color_cycle_task = [] 
 
-        if self.motion_blur is not None:
-            self.motion_blur.cleanup()
-            self.motion_blur = None
+        if hasattr(self, "motion_blur"):
+            if self.motion_blur is not None:
+                self.motion_blur.cleanup()
+                self.motion_blur = None
         else:
             print("Warning: motion_blur is None and cannot be cleaned up.")
 
         if hasattr(self, "level"):
-            # Clean up physics world
-            if hasattr(self.level, "world"):
-                if hasattr(self.level, "floorNP") and self.level.floorNP:
-                    self.level.world.removeRigidBody(self.level.floorNP.node())
-                if hasattr(self.level, "wallsNP") and self.level.wallsNP:
-                    self.level.world.removeRigidBody(self.level.wallsNP.node())
+            if self.level is not None:
+                # Clean up physics world
+                if hasattr(self.level, "world"):
+                    if hasattr(self.level, "floorNP") and self.level.floorNP:
+                        self.level.world.removeRigidBody(self.level.floorNP.node())
+                    if hasattr(self.level, "wallsNP") and self.level.wallsNP:
+                        self.level.world.removeRigidBody(self.level.wallsNP.node())
+                    if hasattr(self.level, "ceilNP") and self.level.wallsNP:
+                        self.level.world.removeRigidBody(self.level.wallsNP.node())
 
-            # Clean up audio
-            if hasattr(self.level, "audio"):
-                self.level.audio.stopLoopingAudio()
+                # Clean up audio
+                if hasattr(self.level, "audio"):
+                    self.level.audio.stopLoopingAudio()
 
-            # Clean up debug visualization
-            if hasattr(self.level, "debugNP"):
-                self.level.debugNP.detachNode()
-                self.level.debugNP.removeNode()
+                # Clean up debug visualization
+                if hasattr(self.level, "debugNP"):
+                    self.level.debugNP.detachNode()
+                    self.level.debugNP.removeNode()
 
-            # Clean up NPCs
-            if hasattr(self.level, "npc_mounts"):
-                for npc in self.level.npc_mounts:
-                    npc.detachNode()
-                    npc.removeNode()
+                # Clean up NPCs
+                if hasattr(self.level, "npc_mounts"):
+                    for npc in self.level.npc_mounts:
+                        npc.detachNode()
+                        npc.removeNode()
 
-            # Clean up portals
-            if hasattr(self.level, "portals"):
-                for portal in self.level.portals:
-                    portal.detachNode()
-                    portal.removeNode()
+                # Clean up portals
+                if hasattr(self.level, "portals"):
+                    for portal in self.level.portals:
+                        portal.detachNode()
+                        portal.removeNode()
 
-            # Clean up world node
-            if hasattr(self.level, "worldNP"):
-                self.level.worldNP.removeNode()
+                # Clean up world node
+                if hasattr(self.level, "worldNP"):
+                    self.level.worldNP.removeNode()
+                    
+                if hasattr(self.level, "doors"):
+                    self.doors = []
+                
+                
 
     def load_textures(self):
         """Load textures only if they haven't been loaded before"""
@@ -1529,8 +1567,8 @@ class WorldCage(Stage):
 
     def update_colors(self, task):
         """Update colors for various game elements"""
-        self.current_color_index = (self.current_color_index + 1) % len(self.colors)
-        current_color = self.colors[self.current_color_index]
+        self.current_color_index = (self.current_color_index + 1) % len(self.base_colors)
+        current_color = self.base_colors[self.current_color_index]
 
         # Apply the color to relevant objects
         # Add any objects you want to cycle colors for
