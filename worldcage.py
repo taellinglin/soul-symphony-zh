@@ -886,242 +886,104 @@ class WorldCage(Stage):
         self.player.ballNP.node().applyTorque(torque)
 
     def update(self, task):
-        # Get the linear velocity vector
-    
-
         velocity = self.player.ballNP.get_node(0).getLinearVelocity()
-
-        # Calculate the magnitude of the velocity vector
-
-        velocity_magnitude = (
-            velocity.length()
-        )  # Get the length (magnitude) of the vector
-
-        # Map the magnitude to a transparency value in the range [0.15, 1.0]
-
-        max_velocity = (
-            2000.0  # Define a maximum expected velocity (this may need tuning)
-        )
-
-        min_transparency = 0.0  # Minimum opacity (more transparent)
-
-        max_transparency = 0.125  # Maximum opacity (fully opaque)
-
-        # Normalize the transparency based on the velocity magnitude
+        velocity_magnitude = velocity.length()
+        max_velocity = 2000.0
+        min_transparency = 0.0
+        max_transparency = 0.125
 
         if velocity_magnitude > 0:
-            # Normalize the velocity to a range between 0 and 1
-
             normalized_velocity = min(1, velocity_magnitude / max_velocity)
-
-            # Set transparency so that lower velocity means higher transparency
-
-            self.transparency = min_transparency + (
-                max_transparency - min_transparency
-            ) * (1 - normalized_velocity)
-
+            self.transparency = min_transparency + (max_transparency - min_transparency) * (1 - normalized_velocity)
         else:
-            # If the ball is stationary, set transparency to minimum (most transparent)
-
             self.transparency = max_transparency
 
-        # Set the rotation speed based on the velocity
-
         self.rotation_speed = velocity_magnitude * 2
-
-        # Initialize color intervals for cycling through colors
-
-        # Update the listener's velocity based on the player's ball position
-
-        self.level.audio.audio3d.setListenerVelocity(
-            self.player.ballNP.get_node(0).getLinearVelocity()
-        )
-
-        # Update the color index for cycling through colors
-
         self.color_idx = (self.color_idx + 1) % len(self.colors)
-
-        # Update ball roll speed based on linear velocity
-
+        
         self.player.ball_roll.setPlayRate(
-            0.05
-            * (
-                abs(self.player.ballNP.get_node(0).getLinearVelocity().getX())
-                + abs(self.player.ballNP.get_node(0).getLinearVelocity().getY())
-                + abs(self.player.ballNP.get_node(0).getLinearVelocity().getZ())
-            )
+            0.05 * (abs(velocity.getX()) + abs(velocity.getY()) + abs(velocity.getZ()))
         )
 
-        # Check proximity to NPC mounts and show/hide nametags
+        self.level.audio.audio3d.setListenerVelocity(velocity)
 
-        for n, npc_mount in enumerate(self.level.npc_mounts):
+        for npc_mount in self.level.npc_mounts:
             nametag = npc_mount.find("**/npcNametag")
-
-            if (
-                npc_mount.getPos().getXy() - self.player.ballNP.getPos().getXy()
-            ).length() < 5:
+            if nametag and (npc_mount.getPos().getXy() - self.player.ballNP.getPos().getXy()).length() < 5:
                 if nametag.isHidden():
                     nametag.show()
-
                     base.bgm.playSfx("hover")
-
-            else:
+            elif nametag:
                 nametag.hide()
 
-        # Check for contacts with the floor and walls
-
-        result = self.level.world.contactTestPair(
-            self.player.ballNP.node(), self.level.floorNP.node()
-        )
-
-        result2 = self.level.world.contactTestPair(
-            self.player.ballNP.node(), self.level.wallsNP.node()
-        )
-
-        # Handle bouncing sound when contacting the floor
+        result = self.level.world.contactTestPair(self.player.ballNP.node(), self.level.floorNP.node())
+        result2 = self.level.world.contactTestPair(self.player.ballNP.node(), self.level.wallsNP.node())
 
         if result.getNumContacts() > 0:
             contact = result.getContacts()[0]
-
-            if contact.getNode1() == self.level.floorNP.node():
-                if not self.player.boing:
-                    self.player.boing = True
-
-                    mpoint = contact.getManifoldPoint()
-
-                    volume = abs(mpoint.getDistance())
-
-                    pitch = (volume / 4) + 0.5
-
-                    base.bgm.playSfx(choice(self.player.boings), volume, pitch)
-
+            if contact.getNode1() == self.level.floorNP.node() and not self.player.boing:
+                self.player.boing = True
+                mpoint = contact.getManifoldPoint()
+                volume = abs(mpoint.getDistance())
+                pitch = (volume / 4) + 0.5
+                base.bgm.playSfx(choice(self.player.boings), volume, pitch)
         else:
             self.player.boing = False
-
-        # Handle bouncing sound when contacting the walls
 
         if result2.getNumContacts() > 0:
             contact2 = result2.getContacts()[0]
-
-            if contact2.getNode1() == self.level.wallsNP.node():
-                if not self.player.boing:
-                    self.player.boing = True
-
-                    mpoint = contact2.getManifoldPoint()
-
-                    volume = abs(mpoint.getDistance())
-
-                    pitch = (volume / 4) + 0.5
-
-                    base.bgm.playSfx(choice(self.player.boings), volume, pitch)
-
+            if contact2.getNode1() == self.level.wallsNP.node() and not self.player.boing:
+                self.player.boing = True
+                mpoint = contact2.getManifoldPoint()
+                volume = abs(mpoint.getDistance())
+                pitch = (volume / 4) + 0.5
+                base.bgm.playSfx(choice(self.player.boings), volume, pitch)
         else:
             self.player.boing = False
 
-        # Iterate through each monster in the scene
-
         for monster in self.level.monsters:
-            # Retrieve the combined node for the monster
-
-            yin_yang_np = monster.yin_yang_np  # This holds the whole symbol
-
-            # Perform contact tests with the Yin (black) and Yang (white) parts
-
-            result_yin = self.level.world.contactTestPair(
-                self.player.ballNP.node(), monster.yin_np.node()
-            )  # Black part
-
-            result_yang = self.level.world.contactTestPair(
-                self.player.ballNP.node(), monster.yang_np.node()
-            )  # White part
-
-            # Decrease player's health if colliding with the Yin (black part)
+            yin_yang_np = monster.yin_yang_np
+            result_yin = self.level.world.contactTestPair(self.player.ballNP.node(), monster.yin_np.node())
+            result_yang = self.level.world.contactTestPair(self.player.ballNP.node(), monster.yang_np.node())
 
             if result_yin.getNumContacts() > 0:
                 contact_yin = result_yin.getContacts()[0]
-
                 if contact_yin.getNode1() == monster.yin_np.node():
-                    # Decrease player's health by 10%
-
                     new_health = self.player.health - (self.player.max_health * 0.1)
-
-                    self.update_health(new_health)  # Update health bar and health value
-
-                    print(
-                        f"Player hit Yin (black part)! Health decreased: {self.player.health}"
-                    )
-
-            # Heal player's health if colliding with the Yang (white part)
+                    self.update_health(new_health)
+                    print(f"Player hit Yin (black part)! Health decreased: {self.player.health}")
 
             if result_yang.getNumContacts() > 0:
                 contact_yang = result_yang.getContacts()[0]
-
                 if contact_yang.getNode1() == monster.yang_np.node():
-                    # Increase player's health by 10%, ensuring it doesn't exceed max
-
                     new_health = self.player.health + (self.player.max_health * 0.1)
-
                     self.player.health = min(self.player.max_health, new_health)
-
-                    self.update_health(
-                        self.player.health
-                    )  # Update health bar and health value
-
-                    print(
-                        f"Player hit Yang (white part)! Health increased: {self.player.health}"
-                    )
-
-        # Update scoreboard and player color
+                    self.update_health(self.player.health)
+                    print(f"Player hit Yang (white part)! Health increased: {self.player.health}")
 
         base.scoreboard.score_node.setColor(choice(self.colors))
-
         self.player.ballNP.set_color(choice(self.colors))
 
-        # Check for interactions with letters
-
-        for l, letter in enumerate(render.findAllMatches("**/letter**")):
+        for letter in render.findAllMatches("**/letter**"):
             letter.set_h(letter, 1)
-
             letter.set_color(choice(self.colors))
-
-            if (
-                letter.getPos().getXy() - self.player.ballNP.getPos().getXy()
-            ).length() < 3:
+            if (letter.getPos().getXy() - self.player.ballNP.getPos().getXy()).length() < 3:
                 base.bgm.playSfx("pickup", 1, randFloat(0.1, 2), False)
-
                 letter.detachNode()
-
                 letter.removeNode()
-
                 base.scoreboard.addPoints(1)
-
                 print("Score + 1!")
 
         if self.audio_data.size > 0:
-            # Limit the number of samples processed to avoid overflow
-
-            # Limit the number of samples processed to avoid overflow
-
             max_samples = 512
-
             if len(self.audio_data) > max_samples:
                 self.audio_data = self.audio_data[:max_samples]
-
             samples = np.array(self.audio_data)[:max_samples]
-
-            # Proceed with your FFT and transparency updates
-
             spectrum = np.fft.fft(samples)
-
             freqs = np.fft.fftfreq(len(samples), 1 / self.fs)
-
             band_indices = np.array_split(np.argsort(freqs), 7)
-
             amplitudes = [np.abs(spectrum[indices]).mean() for indices in band_indices]
-
             transparencies = np.clip(amplitudes / np.max(amplitudes), 0, 0.5)
-
-            # Update the ground, floor, walls, and ceiling colors based on transparency
 
             objects_to_update = {
                 "floor": self.level.floor.get_children(),
@@ -1134,147 +996,53 @@ class WorldCage(Stage):
                     if obj.isHidden():
                         obj.show()
                         obj.setTransparency(TransparencyAttrib.MAlpha)
-                    color_choice = random.choice(
-                        self.color_choices
-                    )  # Randomly select a color
+                    color_choice = random.choice(self.color_choices)
+                    transparency_value = transparencies[i] if i < len(transparencies) else 0.05
+                    obj.set_color(*(color_choice + (transparency_value * 0.5,)))
 
-                    # Ensure the index for transparencies does not exceed its length
-
-                    transparency_value = (
-                        transparencies[i] if i < len(transparencies) else 0.05
-                    )  # Default to 1.0 if out of bounds
-
-                    obj.set_color(
-                        *(color_choice + (transparency_value * 0.5,))
-                    )  # Apply transparency
-
-            for p, portal in enumerate(self.level.portals):
-                # Find the base and flower nodes
-
+            for portal in self.level.portals:
                 base_node = portal.find("**/base")
-
                 flower_node = portal.find("**/flower")
+                if base_node and flower_node:
+                    flower_node.setHpr(self.clock * 30, self.clock * 30, self.clock * 30)
+                    flower_node.setScale(2 * ((sin(self.clock) + 1) / 2))
+                    base_node.setScale(sin(self.clock) * 2)
+                    flower_node.setTransparency(TransparencyAttrib.MAlpha)
+                    flower_node.setDepthTest(True)
+                    base_node.setH(-self.clock)
+                    color_choice = random.choice(self.color_choices)
+                    emission_color = LVecBase4f(color_choice[0], color_choice[1], color_choice[2], (sin(self.clock * 0.06) + 1) / 2)
+                    flower_node.setColor(emission_color)
+                    color_choice = random.choice(self.color_choices)
+                    emission_color2 = LVecBase4f(color_choice[0], color_choice[1], color_choice[2], 0.75)
+                    base_node.setColor(emission_color2)
 
-                # Make flower rotate or adjust orientation based on time or clock
-
-                flower_node.setHpr(self.clock * 30, self.clock * 30, self.clock * 30)
-
-                flower_node.setScale(2 * ((sin(self.clock) + 1) / 2))
-
-                base_node.setScale(sin(self.clock) * 2)
-
-                # Apply transparency if necessary
-
-                flower_node.setTransparency(
-                    TransparencyAttrib.MAlpha
-                )  # Make the part use alpha transparency
-
-                # Set the color write to False using ColorWriteAttrib for the flower node
-
-                flower_node.setDepthTest(True)
-
-                base_node.setH(-self.clock)
-
-                # Randomly choose a color from the color choices list
-
-                color_choice = random.choice(self.color_choices)
-
-                # Create the emissive color using the selected color_choice
-
-                emission_color = LVecBase4f(
-                    color_choice[0],
-                    color_choice[1],
-                    color_choice[2],
-                    (sin(self.clock * 0.06) + 1) / 2,
-                )  # Use RGB and set alpha to 1 for full opacity
-
-                # Randomly choose a color from the color choices list
-
-                color_choice = random.choice(self.color_choices)
-
-                # Create the emissive color using the selected color_choice
-
-                emission_color2 = LVecBase4f(
-                    color_choice[0], color_choice[1], color_choice[2], 0.75
-                )  # Use RGB and set alpha to 1 for full opacity
-
-                flower_node.setColor(emission_color)
-
-                base_node.setColor(emission_color2)
-
-            for n, npc_node in enumerate(self.level.npc_mounts):
+            for npc_node in self.level.npc_mounts:
                 emblem = npc_node.find("**/npcEmblem")
-
                 face = npc_node.find("**/npcFace")
-
-                # Set random colors for emblem and face
-
-                color_choice = random.choice(self.color_choices)
-
-                emblem.set_color(
-                    LVecBase4f(color_choice[0], color_choice[1], color_choice[2], 0.5)
-                )  # Emblem color with some transparency
-
-                color_choice = random.choice(self.color_choices)
-
-                face.set_color(
-                    LVecBase4f(color_choice[0], color_choice[1], color_choice[2], 1)
-                )  # Face color fully opaque
-
-                # Get the current time
-
-                time = globalClock.getFrameTime()
-
-                # Calculate Z position with a sine wave
-
-                amplitude = 0.05  # Amplitude of the oscillation
-
-                period = 2.0  # Duration of one full oscillation (2 seconds)
-
-                frequency = (
-                    2 * math.pi / period
-                )  # Frequency to complete one oscillation in 2 seconds
-
-                # Calculate the new Z offset based on sine wave
-
-                bobbing_height = amplitude * math.sin(frequency * time)
-
-                # Get the original position of the NPC (should be stored when the bobbing starts)
-
-                original_pos = (
-                    npc_node.getPos()
-                )  # Get the current position (this should be the original position at start)
-
-                # Apply the oscillation relative to the original position (only change the Z value)
-
-                npc_node.setZ(original_pos.getZ() + bobbing_height)
-
-                npc_node.setDepthTest(False)
-
-            #    print(npc_node)
-
-            #    print(color_choice)
-
-        # Increment clock and get delta time
+                if emblem and face:
+                    color_choice = random.choice(self.color_choices)
+                    emblem.set_color(LVecBase4f(color_choice[0], color_choice[1], color_choice[2], 0.5))
+                    color_choice = random.choice(self.color_choices)
+                    face.set_color(LVecBase4f(color_choice[0], color_choice[1], color_choice[2], 1))
+                    time = globalClock.getFrameTime()
+                    amplitude = 0.05
+                    period = 2.0
+                    frequency = 2 * math.pi / period
+                    bobbing_height = amplitude * math.sin(frequency * time)
+                    original_pos = npc_node.getPos()
+                    npc_node.setZ(original_pos.getZ() + bobbing_height)
+                    npc_node.setDepthTest(False)
 
         self.clock += 1
-
         dt = globalClock.getDt()
-
         self.processInput(dt)
 
-        # Camera positioning based on player's ball position
         self.level.world.doPhysics(dt, 25, 2.0 / 360.0)
-
         base.cam.set_x(self.player.ballNP.get_x())
-
         base.cam.set_y(self.player.ballNP.get_y() - 48)
-
         base.cam.set_z(self.player.ballNP.get_z() + self.zoom_level)
-
         base.cam.look_at(self.player.ballNP)
-
-        # Perform physics update
 
         return task.cont
 
@@ -1288,16 +1056,16 @@ class WorldCage(Stage):
 
         # Create fade-out effect using LerpFunctionInterval
         def fade_color(t):
-        
-            fade_card.setColor(0, 0, 0, t)
+            if hasattr(self, "fade_card"):
+                fade_card.setColor(0, 0, 0, t)
 
         fade_out = LerpFunctionInterval(
             fade_color, duration=0.5, fromData=0, toData=1, blendType="easeInOut"
         )
 
         def complete_transition(task=None):
-        
-            fade_card.removeNode()
+            if hasattr(self, "fade_card"):
+                fade_card.removeNode()
             self.exit_stage = "main_menu" if exit_stage is None else exit_stage
             base.lvl = random.randint(0, len(base.levels) -1)
             print(f"Base Level:{base.lvl}")

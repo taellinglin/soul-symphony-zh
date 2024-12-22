@@ -63,9 +63,9 @@ class TitleScreen(Stage):
     
         self.data = data
 
-        base.accept("enter", base.flow.transition, ["worldcage"])
+        base.accept("enter", base.flow.transition, ["worldcage", base.lvl])
 
-        base.accept("gamepad-start", base.flow.transition, ["worldcage"])
+        base.accept("gamepad-start", base.flow.transition, ["worldcage", base.lvl])
 
         base.enableParticles()
 
@@ -117,7 +117,7 @@ class TitleScreen(Stage):
 
     def transition(self, exit_stage):
         print(exit_stage)
-        base.flow.transition(exit_stage)
+        base.flow.transition(exit_stage=exit_stage)
 
     def create_logo_wave(self):
         # Define the wave parameters
@@ -529,6 +529,7 @@ class TitleScreen(Stage):
         #self.particle.cleanup()
 
         self.glyph_rings.center.detachNode()
+
 
         base.cam.reparentTo(render)
 

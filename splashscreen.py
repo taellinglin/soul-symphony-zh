@@ -43,13 +43,14 @@ class SplashScreen(Stage):
             self.transition_out, 
             'transition_from_splash'
         )
+        return data
     def cleanup(self):
         self.splash.teardown()
         
     def transition_out(self, task):
         self.cleanup()
         #self.base.load_stage(stage_name="title_screen", lvl=0)  # Load title screen before transitioning
-        base.flow.transition(self.exit_stage)
+        base.flow.transition("title_screen")
         return task.done
     def exit(self, data=None):
         if hasattr(self, 'splash'):

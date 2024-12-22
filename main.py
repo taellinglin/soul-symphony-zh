@@ -13,7 +13,6 @@ from stageflow import Stage
 from panda3d.core import Vec4
 import functools
 from panda3d.core import NodePath
-from pyrecord import setup_sg
 from panda3d.core import Lens
 from splashscreen import SplashScreen
 import random
@@ -32,7 +31,6 @@ class Base(ShowBase):
         self.setup_fullscreen()
         # Initialize essential systems for splash/title
         self.screen_recorder = ScreenRecorder(self)
-        setup_sg(self)
         self.gamepad_input = GamepadInput()
         self.bgm = BGM()
         self.disable_mouse()
@@ -61,13 +59,14 @@ class Base(ShowBase):
             "levels/level01.bam",
             "levels/level02.bam",
             "levels/level03.bam",
-            #"levels/level04.bam",
+            "levels/level04.bam",
             "levels/level05.bam",
         ]
         self.lvl = random.randint(0, len(self.levels) -1)
+
         self.flow = Flow(
             stages={
-                "splash": SplashScreen,
+                "splash": SplashScreen(exit_stage="titlescreen"),
                 "title_screen": TitleScreen,
                 "loading": LoadingScreen,
                 "worldcage": WorldCage(exit_stage="quit", lvl=self.lvl),
