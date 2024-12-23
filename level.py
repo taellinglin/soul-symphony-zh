@@ -107,7 +107,8 @@ class level:
 
         # This loop would typically be part of the Panda3D task manager
 
-        self.monster_manager = MonsterManager(base.render)
+        # base.taskMgr.add(self.monster_manager.update_monsters)  # Add to task manager to continuously update monsters
+        self.monster_manager = MonsterManager(self.worldNP)
 
         self.monsters = self.monster_manager.place_monsters([], num_monsters=10)
 
@@ -119,8 +120,7 @@ class level:
 
         # Add the update task to Panda3D's task manager to continually update monsters
 
-        # base.taskMgr.add(self.monster_manager.update_monsters)  # Add to task manager to continuously update monsters
-
+        
         self.clock = 0
 
         self.clock2 = 0
@@ -152,7 +152,7 @@ class level:
         # Create and return a Yin-Yang monster
 
 
-        return YinYangMonster(parent_node=self.render)
+        return YinYangMonster(parent_node=self.render, size=5)
 
     def get_npcs(self, num_npcs):
     
@@ -406,10 +406,10 @@ class level:
         self.ground.reparentTo(render)
 
         # Spawn monsters
-        spawn_count = 100
+        spawn_count = 128
         for i in range(spawn_count):
-            random_x = uniform(-500, 500)  # Random X coordinate within bounds
-            random_y = uniform(-500, 500)  # Random Y coordinate within bounds
+            random_x = uniform(-5, 5)  # Random X coordinate within bounds
+            random_y = uniform(-5, 5)  # Random Y coordinate within bounds
 
             # Ray casts upwards to detect collisions with objects above
             ray = CollisionRay(random_x, random_y, 50, 0, 0, -1)  # Upward ray
@@ -435,142 +435,96 @@ class level:
                 )
 
                 # Use the collision point to place a monster
-                monster = self.monster_manager.create_monster(i)
+                monster = self.monster_manager.create_yin_yang()
                 monster.setPos(new_collision_point)
                 monster.reparentTo(self.worldNP)
 
             # Cleanup ray node
             ray_np.removeNode()
 
-    def spawn_on_floor(self, num_monsters=10):
+    def spawn_on_floor(self, num_monsters=12):
         """Spawn a specified number of monsters on the floor using the existing floor collision geometry."""
-
+        
         # Step 1: Get the existing floor collision geometry
-
         floor_col_geom = self.ground.find("**/floorCol")
-
+        
         if not floor_col_geom:
             print("Error: No floor collision geometry found!")
-
             return
 
-        print(
-            floor_col_geom.ls()
-        )  # Debug: Print floor collision details for validation
+        # Debug: Print floor collision details for validation
+        print(floor_col_geom.ls())
 
         # Check if it's a GeomNode
-
-        if isinstance(floor_col_geom.node(), GeomNode):
-            # Create a BulletTriangleMesh from the Geom
-
-            mesh = BulletTriangleMesh()
-
-            for geom in range(floor_col_geom.node().getNumGeoms()):
-                mesh.addGeom(floor_col_geom.node().getGeom(geom))
-
-            # Create a BulletTriangleMeshShape
-
-            shape = BulletTriangleMeshShape(mesh, dynamic=False)
-
-            # Create a rigid body for the floor
-
-            body = BulletRigidBodyNode("FloorCollision")
-
-            body.addShape(shape)
-
-            # Attach the rigid body to the scene
-
-            body_np = self.worldNP.attachNewNode(body)
-
-            body_np.setPos(floor_col_geom.getPos(render))
-
-            body_np.setCollideMask(BitMask32.bit(1))
-
-            self.world.attachRigidBody(body)
-
-            print("Generated collision geometry from floorCol.")
-
-        else:
+        if not isinstance(floor_col_geom.node(), GeomNode):
             print("Error: floorCol is not a GeomNode.")
-
             return
 
-        # Step 2: Get the bounding box of the collision shape
+        # Create BulletTriangleMesh from the GeomNode
+        mesh = BulletTriangleMesh()
+        for geom in range(floor_col_geom.node().getNumGeoms()):
+            mesh.addGeom(floor_col_geom.node().getGeom(geom))
 
+        # Create BulletTriangleMeshShape
+        shape = BulletTriangleMeshShape(mesh, dynamic=False)
+
+        # Create rigid body for the floor
+        body = BulletRigidBodyNode("FloorCollision")
+        body.addShape(shape)
+        
+        # Attach rigid body to the scene
+        body_np = self.worldNP.attachNewNode(body)
+        body_np.setPos(floor_col_geom.getPos(render))
+        body_np.setCollideMask(BitMask32.bit(1))
+        self.world.attachRigidBody(body)
+
+        print("Generated collision geometry from floorCol.")
+
+        # Step 2: Get bounding box of the collision shape
         floor_bounds = body_np.getTightBounds()
-
         if not floor_bounds:
             print("Error: Unable to compute bounds for the floor collision geometry.")
-
             return
 
         min_x, min_y, min_z = floor_bounds[0].x, floor_bounds[0].y, floor_bounds[0].z
-
         max_x, max_y, max_z = floor_bounds[1].x, floor_bounds[1].y, floor_bounds[1].z
 
         # Debug bounding box
-
         if self.debugNP:
-            print(
-                f"Floor Bounds: Min({min_x}, {min_y}, {min_z}) Max({max_x}, {max_y}, {max_z})"
-            )
+            print(f"Floor Bounds: Min({min_x}, {min_y}, {min_z}) Max({max_x}, {max_y}, {max_z})")
 
         # Step 3: Spawn monsters at random positions on the floor
-
         for i in range(num_monsters):
             random_x = random.uniform(min_x, max_x)
-
             random_y = random.uniform(min_y, max_y)
 
             # Step 4: Cast a ray downwards to determine the Z position on the floor
-
             ray_start = Point3(random_x, random_y, max_z + 10)  # Start above the floor
-
-            ray_end = Point3(random_x, random_y, min_z - 10)  # End below the floor
+            ray_end = Point3(random_x, random_y, min_z - 10)    # End below the floor
 
             # Perform the ray test
-
-            ray_result = self.world.rayTestAll(
-                ray_start, ray_end
-            )  # Use rayTestAll for multiple hits
-
+            ray_result = self.world.rayTestAll(ray_start, ray_end)
+            
             if ray_result.getNumHits() > 0:  # Check for hits
                 closest_hit = ray_result.getHit(0)
-
                 hit_pos = closest_hit.getHitPos()
-
-                # Offset the monster slightly above the floor
-
-                spawn_pos = Point3(hit_pos.x, hit_pos.y, hit_pos.z + 0.25)
+                spawn_pos = Point3(hit_pos.x, hit_pos.y, hit_pos.z + 0.25)  # Offset slightly above floor
 
                 # Step 5: Create and spawn the monster
-
-                monster = self.monster_manager.create_yin_yang()
-
+                monster = self.monster_manager.create_yin_yang(self.world)
                 monster.setPos(spawn_pos)
-
                 monster.setH(random.uniform(0, 360))  # Randomize rotation
-
-                monster.setCollideMask(
-                    BitMask32.bit(1)
-                )  # Ensure correct collision mask
-
-                # Parent the monster to the appropriate node and add to the list
-
+                monster.setCollideMask(BitMask32.bit(1))  # Ensure correct collision mask
                 monster.reparentTo(self.level.monsters_node)
-
                 self.monsters.append(monster)
 
                 print(f"Spawned monster at: {spawn_pos}")
-    
 
             else:
-                print(
-                    f"No collision detected for monster {i} at position ({random_x}, {random_y})."
-                )
-
+                print(f"No collision detected for monster {i} at position ({random_x}, {random_y}).")
                 if self.debugNP:
                     print(f"Ray start: {ray_start}, Ray end: {ray_end}")
+
 
     def place_letters(self):
         for l, letter_node in enumerate(self.letterlist.letter_nodes):

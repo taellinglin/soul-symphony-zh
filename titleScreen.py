@@ -36,7 +36,7 @@ from motionBlur import MotionBlur
 
 class TitleScreen(Stage):
 
-    def __init__(self, exit_stage="loading"):
+    def __init__(self, exit_stage="worldcage"):
     
         self.exit_stage = exit_stage
 
@@ -57,12 +57,10 @@ class TitleScreen(Stage):
         self.wave_amplitude = 0.125  # Amplitude of the wave effect
 
         self.wave_frequency = 5.0
+        
+
+    def enter(self, exit_stage="worldcage"):
         self.motion_blur = MotionBlur()
-
-    def enter(self, data):
-    
-        self.data = data
-
         base.accept("enter", base.flow.transition, ["worldcage", base.lvl])
 
         base.accept("gamepad-start", base.flow.transition, ["worldcage", base.lvl])
@@ -72,10 +70,9 @@ class TitleScreen(Stage):
         base.cam.set_z(32)
 
         base.cam.look_at(render)
-
-        self.glyph_rings = GlyphRings(
-            font=base.loader.load_font("fonts/konnarian/Daemon.otf")
-        )
+        print(self)
+        self.glyph_font = base.loader.load_font("fonts/konnarian/Daemon.otf")
+        self.glyph_rings = GlyphRings(self.glyph_font, 16, 16)
 
         self.star_and_logo()
 

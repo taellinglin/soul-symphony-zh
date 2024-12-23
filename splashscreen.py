@@ -1,9 +1,10 @@
 from stageflow import Stage
-from panda3d_logos.splashes import RainbowSplash
-from panda3d_logos.splashes import Pattern
-from panda3d_logos.splashes import Colors
+from RainbowSplash import RainbowSplash
 from panda3d.core import Vec4
 from direct.showbase import ShowBase
+from motionBlur import MotionBlur
+from panda3d_logos.splashes import Pattern
+from panda3d_logos.splashes import Colors
 class SplashScreen(Stage):
     def __init__(self, exit_stage="title_screen"):
 

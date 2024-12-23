@@ -55,6 +55,7 @@ setup(
                 "macosx_10_9_x86_64",
             ],
             "include_patterns": [
+                "assets/*.*",
                 "**/*.png",
                 "**/*.ogg",
                 "**/*.wav",

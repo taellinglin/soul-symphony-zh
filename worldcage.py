@@ -24,6 +24,7 @@ from stageflow import Stage
 from level import level
 
 from player import player
+from yinyang import YinYangMonster
 
 from npc import npc
 from motionBlur import MotionBlur
@@ -250,6 +251,7 @@ class WorldCage(Stage):
         self.color_cycle_task = None  # Track the color cycling task
 
         self.current_color_index = 0
+        
 
     def star(self):
         # Load the star image
@@ -788,7 +790,54 @@ class WorldCage(Stage):
                         self.player.torque = Vec3(0, 0, 0)
 
                         self.player.ballNP.node().setLinearDamping(1)
+            
+                        
+                
+    def spawn_random_yinyang(self, world):
+        # Define the boundaries for where you can spawn the yin-yang disks
+        map_bounds = {
+            'min_x': -5, 'max_x': 5,  # X boundaries for inside the map
+            'min_y': -5, 'max_y': 5,  # Y boundaries for inside the map
+            'min_z': 0, 'max_z': 20,   # Z boundaries for inside the map (adjust as needed)
+            'out_of_map_range': 100,    # Outside the map range
+        }
 
+        # Randomly decide whether to spawn the yin-yang inside or outside the map
+        spawn_inside_map = random.choice([True, False])
+
+        # Random position generation
+        if spawn_inside_map:
+            # Spawn inside the map: random position within defined bounds
+            x = random.uniform(map_bounds['min_x'], map_bounds['max_x'])
+            y = random.uniform(map_bounds['min_y'], map_bounds['max_y'])
+            z = random.uniform(map_bounds['min_z'], map_bounds['max_z'])
+        else:
+            # Spawn outside the map: random position beyond the map range
+            x = random.uniform(map_bounds['max_x'], map_bounds['out_of_map_range'])
+            y = random.uniform(map_bounds['max_y'], map_bounds['out_of_map_range'])
+            z = random.uniform(map_bounds['max_z'], map_bounds['out_of_map_range'])
+
+        # Define the size for the Yin-Yang monster (you can adjust this as needed)
+        size = random.uniform(0.5, 2.0)  # Random size between 0.5 and 2.0
+
+        # Create YinYangMonster at the random position using the specified size
+        # Assuming `parent_node` is the level node where monsters are spawned, and `world` is the game world.
+        new_monster = YinYangMonster(render, world=world, size=1)
+
+        # Set the position of the monster
+        new_monster.set_pos(x, y, z)
+
+        # Optionally, if you need to scale the monster, you can do so here
+        new_monster.set_scale(size)
+
+        # Add the new monster to the manager's list of monsters
+        self.level.monsters.append(new_monster)
+
+        print(f"Spawned a new Yin-Yang monster at position ({x}, {y}, {z}) with size {size}")
+
+    def spawn_multiple_random_yinyangs(self, count):
+        for _ in range(count):
+            self.spawn_random_yinyang()
     
     def actionAUp(self):
         if self.player.ballNP.node().getLinearDamping() == 1:
@@ -918,7 +967,11 @@ class WorldCage(Stage):
 
         result = self.level.world.contactTestPair(self.player.ballNP.node(), self.level.floorNP.node())
         result2 = self.level.world.contactTestPair(self.player.ballNP.node(), self.level.wallsNP.node())
+        result3 = self.level.world.contactTestPair(self.player.ballNP.node(), self.level.ceilNP.node())
+        
 
+
+        # Checking for floor collision
         if result.getNumContacts() > 0:
             contact = result.getContacts()[0]
             if contact.getNode1() == self.level.floorNP.node() and not self.player.boing:
@@ -930,6 +983,19 @@ class WorldCage(Stage):
         else:
             self.player.boing = False
 
+        # Checking for ceiling collision (same logic as floor, but with ceiling)
+        if result3.getNumContacts() > 0:
+            contact_ceiling = result_ceiling.getContacts()[0]
+            if contact_ceiling.getNode1() == self.level.ceilingNP.node() and not self.player.boing:
+                self.player.boing = True
+                mpoint = contact_ceiling.getManifoldPoint()
+                volume = abs(mpoint.getDistance())
+                pitch = (volume / 4) + 0.5
+                base.bgm.playSfx(choice(self.player.boings), volume, pitch)
+        else:
+            self.player.boing = False
+
+        # Checking for wall collision (same logic as floor, but with walls)
         if result2.getNumContacts() > 0:
             contact2 = result2.getContacts()[0]
             if contact2.getNode1() == self.level.wallsNP.node() and not self.player.boing:
@@ -941,25 +1007,83 @@ class WorldCage(Stage):
         else:
             self.player.boing = False
 
+        # Checking for yin-yang disk collisions (your existing logic)
+        # Loop through all monsters to check for collisions with yin and yang parts
         for monster in self.level.monsters:
             yin_yang_np = monster.yin_yang_np
             result_yin = self.level.world.contactTestPair(self.player.ballNP.node(), monster.yin_np.node())
             result_yang = self.level.world.contactTestPair(self.player.ballNP.node(), monster.yang_np.node())
 
+            # Handle Yin part of the monster (collision with player's ball)
             if result_yin.getNumContacts() > 0:
                 contact_yin = result_yin.getContacts()[0]
                 if contact_yin.getNode1() == monster.yin_np.node():
+                    # Apply damage to player or knockback effect here
                     new_health = self.player.health - (self.player.max_health * 0.1)
                     self.update_health(new_health)
                     print(f"Player hit Yin (black part)! Health decreased: {self.player.health}")
+                    # Optional: Apply knockback logic to the yin part here
 
+            # Handle Yang part of the monster (collision with player's ball)
             if result_yang.getNumContacts() > 0:
                 contact_yang = result_yang.getContacts()[0]
                 if contact_yang.getNode1() == monster.yang_np.node():
+                    # Apply health increase or knockback effect here
                     new_health = self.player.health + (self.player.max_health * 0.1)
                     self.player.health = min(self.player.max_health, new_health)
                     self.update_health(self.player.health)
                     print(f"Player hit Yang (white part)! Health increased: {self.player.health}")
+
+            # Check for collisions of Yin part with floor, wall, and ceiling
+            result_yin_floor = self.level.world.contactTestPair(monster.yin_np.node(), self.level.floorNP.node())
+            result_yin_wall = self.level.world.contactTestPair(monster.yin_np.node(), self.level.wallsNP.node())
+            result_yin_ceiling = self.level.world.contactTestPair(monster.yin_np.node(), self.level.ceilNP.node())
+
+            # Check for collisions of Yang part with floor, wall, and ceiling
+            result_yang_floor = self.level.world.contactTestPair(monster.yang_np.node(), self.level.floorNP.node())
+            result_yang_wall = self.level.world.contactTestPair(monster.yang_np.node(), self.level.wallsNP.node())
+            result_yang_ceiling = self.level.world.contactTestPair(monster.yang_np.node(), self.level.ceilNP.node())
+
+            # Handle Yin part collision with floor, wall, or ceiling
+            if result_yin_floor.getNumContacts() > 0:
+                contact_yin_floor = result_yin_floor.getContacts()[0]
+                if contact_yin_floor.getNode1() == self.level.floorNP.node():
+                    # Apply effect for collision with floor
+                    print(f"Yin part collided with the floor!")
+
+            if result_yin_wall.getNumContacts() > 0:
+                contact_yin_wall = result_yin_wall.getContacts()[0]
+                if contact_yin_wall.getNode1() == self.level.wallsNP.node():
+                    # Apply effect for collision with wall
+                    print(f"Yin part collided with the wall!")
+
+            if result_yin_ceiling.getNumContacts() > 0:
+                contact_yin_ceiling = result_yin_ceiling.getContacts()[0]
+                if contact_yin_ceiling.getNode1() == self.level.ceilingNP.node():
+                    # Apply effect for collision with ceiling
+                    print(f"Yin part collided with the ceiling!")
+
+            # Handle Yang part collision with floor, wall, or ceiling
+            if result_yang_floor.getNumContacts() > 0:
+                contact_yang_floor = result_yang_floor.getContacts()[0]
+                if contact_yang_floor.getNode1() == self.level.floorNP.node():
+                    # Apply effect for collision with floor
+                    print(f"Yang part collided with the floor!")
+
+            if result_yang_wall.getNumContacts() > 0:
+                contact_yang_wall = result_yang_wall.getContacts()[0]
+                if contact_yang_wall.getNode1() == self.level.wallsNP.node():
+                    # Apply effect for collision with wall
+                    print(f"Yang part collided with the wall!")
+
+            if result_yang_ceiling.getNumContacts() > 0:
+                contact_yang_ceiling = result_yang_ceiling.getContacts()[0]
+                if contact_yang_ceiling.getNode1() == self.level.ceilingNP.node():
+                    # Apply effect for collision with ceiling
+                    print(f"Yang part collided with the ceiling!")
+
+            # Optional: Apply knockback logic to the yang part here
+
 
         base.scoreboard.score_node.setColor(choice(self.colors))
         self.player.ballNP.set_color(choice(self.colors))
@@ -1236,6 +1360,22 @@ class WorldCage(Stage):
             # Clean up world node
             if hasattr(self.level, "worldNP"):
                 self.level.worldNP.removeNode()
+    def cleanup_monsters(self):
+        # Remove monsters from the scene
+        for monster in self.monsters:  # Assuming self.monsters is a list of all monster objects
+            if hasattr(monster, 'body_np'):
+                # Detach the monster's NodePath from the render tree
+                monster.body_np.remove_node()  # This removes the monster from the scene
+
+            if hasattr(monster, 'body') and self.level.world:
+                # If the monster has a physics body, remove it from the world
+                self.level.world.remove_collision_node(monster.body)
+                self.level.world.remove(body=monster.body)  # Ensure the body is removed from the physics world
+                monster.body = None  # Clean up the physics body
+
+        # Clear the list of monsters
+        self.monsters.clear()
+        print("All monsters have been cleaned up from the scene.")
 
     def load_textures(self):
         """Load textures only if they haven't been loaded before"""

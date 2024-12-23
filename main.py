@@ -16,7 +16,7 @@ from panda3d.core import NodePath
 from panda3d.core import Lens
 from splashscreen import SplashScreen
 import random
-
+from motionBlur import MotionBlur
 class Quit:
     def enter(self, data=None):
         self.userExit()
@@ -43,7 +43,7 @@ class Base(ShowBase):
         
         # Load fonts needed for scoreboard
         self.load_scoreboard_fonts()
-
+        
         # Initialize scoreboard
         self.scoreboard = scoreboard()
         self.scoreboard.hide()
@@ -66,12 +66,12 @@ class Base(ShowBase):
 
         self.flow = Flow(
             stages={
-                "splash": SplashScreen(exit_stage="titlescreen"),
-                "title_screen": TitleScreen,
-                "loading": LoadingScreen,
+                "splash": SplashScreen(exit_stage="title_screen"),
+                "title_screen": TitleScreen(exit_stage="worldcage"),            
                 "worldcage": WorldCage(exit_stage="quit", lvl=self.lvl),
                 "quit": Quit,
             },
+            #initial_stage="title_screen"
             initial_stage="splash"
         )
         

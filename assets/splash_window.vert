@@ -13,6 +13,8 @@ float pi = 3.14159265359;
 
 
 void main()  {
+  vec4 v = vec4(0.0); // Initialize v
+  vec3 rgb = vec3(0.0); // Initialize rgb
   gl_Position = p3d_ModelViewProjectionMatrix * vertex;
   v_clipTexCoord = 0.5 * gl_Position.xy + vec2(0.5 * gl_Position.w);
   v_obliquity = acos(

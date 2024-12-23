@@ -3,7 +3,7 @@ class MonsterManager:
     # ... existing code ...
 
 
-"""Generated docstring placeholder."""
+    """Generated docstring placeholder."""
     def cleanup(self):
         """Clean up all monster resources"""
         # Remove all monsters
