@@ -8,7 +8,7 @@ from panda3d.core import CullFaceAttrib
 
 class MiniMap(DirectObject):
 
-    def __init__(self, base, level_model_path, texture_path=None, size=0.3, transparency=0.5):
+    def __init__(self, base, level_model_path, texture_path=None, size=0.35, transparency=0.25):
         """
         Initializes the minimap with a single level model and optional texture.
         :param base: The Panda3D base instance.
