@@ -377,7 +377,7 @@ class WorldCage(Stage):
 
         self.stream = self.pyaudio_instance.open(
             format=pyaudio.paFloat32,
-            channels=1,  # Mono
+            channels=2,  # Mono
             rate=self.fs,
             input=True,
             frames_per_buffer=self.buffer_size,
@@ -1130,10 +1130,26 @@ class WorldCage(Stage):
             samples = np.array(self.audio_data)[:max_samples]
             spectrum = np.fft.fft(samples)
             freqs = np.fft.fftfreq(len(samples), 1 / self.fs)
-            band_indices = np.array_split(np.argsort(freqs), 7)
-            amplitudes = [np.abs(spectrum[indices]).mean() for indices in band_indices]
+            
+            # Limit to positive frequencies up to Nyquist
+            positive_freqs = freqs[:len(freqs) // 2]
+            positive_spectrum = np.abs(spectrum[:len(spectrum) // 2])
+            
+            # Define number of bands dynamically (e.g., 3 bands for floor, walls, ceil)
+            num_bands = 3
+            band_edges = np.linspace(0, self.fs / 2, num_bands + 1)
+            
+            # Calculate amplitudes for each band
+            amplitudes = []
+            for i in range(num_bands):
+                band_mask = (positive_freqs >= band_edges[i]) & (positive_freqs < band_edges[i + 1])
+                band_amplitude = positive_spectrum[band_mask].mean() if np.any(band_mask) else 0
+                amplitudes.append(band_amplitude)
+            
+            # Normalize transparencies
             transparencies = np.clip(amplitudes / np.max(amplitudes), 0, 0.5)
 
+            # Map to objects
             objects_to_update = {
                 "floor": self.level.floor.get_children(),
                 "walls": self.level.walls.get_children(),
@@ -1141,13 +1157,18 @@ class WorldCage(Stage):
             }
 
             for i, (key, children) in enumerate(objects_to_update.items()):
+                if i >= len(transparencies):
+                    break  # Avoid index issues
+                transparency_value = transparencies[i]
+                
                 for obj in children:
                     if obj.isHidden():
                         obj.show()
                         obj.setTransparency(TransparencyAttrib.MAlpha)
                     color_choice = random.choice(self.color_choices)
-                    transparency_value = transparencies[i] if i < len(transparencies) else 0.05
-                    obj.set_color(*(color_choice + (transparency_value * 0.5,)))
+                    obj.set_color(*(color_choice + (transparency_value,)))
+
+
 
             for portal in self.level.portals:
                 base_node = portal.find("**/base")

@@ -201,7 +201,7 @@ if __name__ == "__main__":
     native_width = pipe.getDisplayWidth()
     native_height = pipe.getDisplayHeight()
     lens = PerspectiveLens()
-    lens.setAspectRatio(16/9)
+    lens.setAspectRatio(native_width/native_height)
     base.cam.node().setLens(lens)
 
 
