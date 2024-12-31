@@ -235,7 +235,7 @@ class WorldCage(Stage):
         self.clock = 0
 
         self.npcs = []
-        self.transparency = 0.25
+        self.transparency = 1
         self.flower_transparency = 0.25
         self.zoom_level = 30
         self.fs = 96000  # Sampling frequency
@@ -1128,7 +1128,7 @@ class WorldCage(Stage):
                 print("Score + 1!")
 
         if self.audio_data.size > 0:
-            max_samples = 96000  # Limit to the first 48000 samples
+            max_samples = 5128  # Limit to the first 48000 samples
             if len(self.audio_data) > max_samples:
                 self.audio_data = self.audio_data[:max_samples]
             
