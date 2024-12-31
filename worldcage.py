@@ -151,7 +151,7 @@ class WorldCage(Stage):
         super().__init__()  # Initialize the ShowBase
         self.zooming_out = False
         self.zooming_in = False
-        pipe = app.win.getPipe()
+        pipe = base.win.getPipe()
         native_width = pipe.getDisplayWidth()
         native_height = pipe.getDisplayHeight()
         lens = PerspectiveLens()
@@ -1128,7 +1128,7 @@ class WorldCage(Stage):
                 print("Score + 1!")
 
         if self.audio_data.size > 0:
-            max_samples = 48000
+            max_samples = 4096
             if len(self.audio_data) > max_samples:
                 self.audio_data = self.audio_data[:max_samples]
             samples = np.array(self.audio_data)[:max_samples]
