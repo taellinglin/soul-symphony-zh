@@ -151,9 +151,13 @@ class WorldCage(Stage):
         super().__init__()  # Initialize the ShowBase
         self.zooming_out = False
         self.zooming_in = False
+        pipe = app.win.getPipe()
+        native_width = pipe.getDisplayWidth()
+        native_height = pipe.getDisplayHeight()
         lens = PerspectiveLens()
-        lens.setAspectRatio(16/9)
+        lens.setAspectRatio(native_width/native_height)
         base.cam.node().setLens(lens)
+
 
         if lvl is None:
             self.lvl = 0
