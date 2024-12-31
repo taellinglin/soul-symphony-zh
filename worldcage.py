@@ -1124,7 +1124,7 @@ class WorldCage(Stage):
                 print("Score + 1!")
 
         if self.audio_data.size > 0:
-            max_samples = 96000
+            max_samples = 48000
             if len(self.audio_data) > max_samples:
                 self.audio_data = self.audio_data[:max_samples]
             samples = np.array(self.audio_data)[:max_samples]
