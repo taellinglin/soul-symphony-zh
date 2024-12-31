@@ -1182,7 +1182,7 @@ class WorldCage(Stage):
                         obj.show()
                     obj.setTransparency(TransparencyAttrib.MAlpha)  # Ensure transparency is applied
                     color = random.choice(self.color_choices)
-                    obj.set_color(color[0], color[1], color[2], transparencies[i]*transparency_value)
+                    obj.set_color(color[0], color[1], color[2], transparency_value)
             
             # Debugging: Log the current state of amplitudes and transparencies
             print(f"Amplitudes: {amplitudes}")
