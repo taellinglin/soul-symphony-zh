@@ -61,6 +61,7 @@ class Base(ShowBase):
             "levels/level03.bam",
             "levels/level04.bam",
             "levels/level05.bam",
+            "levels/map00.bam"
         ]
         self.lvl = random.randint(0, len(self.levels) -1)
 

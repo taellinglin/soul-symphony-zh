@@ -17,6 +17,8 @@ from monsterman import YinYangMonster
 
 import random
 
+from minimap import MiniMap
+
 from panda3d.bullet import BulletWorld
 
 from panda3d.bullet import BulletRigidBodyNode
@@ -82,7 +84,7 @@ class level:
             self.lvl = lvl
 
             # Define colors for cycling
-
+        self.minimap = None
         self.colors = [
             Vec4(1, 0, 0, 1),  # Red
             Vec4(1, 0.5, 0, 1),  # Orange
@@ -109,14 +111,18 @@ class level:
 
         # base.taskMgr.add(self.monster_manager.update_monsters)  # Add to task manager to continuously update monsters
         self.monster_manager = MonsterManager(self.worldNP)
+        self.minimap = MiniMap(base=base, level_model_path=base.levels[lvl], size=0.5, transparency=0.25)
 
-        self.monsters = self.monster_manager.place_monsters([], num_monsters=10)
+
+        
 
         self.cTrav = CollisionTraverser()
 
         self.handler = CollisionHandlerQueue()
 
         self.load_ground()
+        
+        self.monsters = self.monster_manager.place_monsters([], num_monsters=10)
 
         # Add the update task to Panda3D's task manager to continually update monsters
 
@@ -152,7 +158,7 @@ class level:
         # Create and return a Yin-Yang monster
 
 
-        return YinYangMonster(parent_node=self.render, size=5)
+        return YinYangMonster(parent_node=base.render, size=5)
 
     def get_npcs(self, num_npcs):
     
@@ -575,6 +581,7 @@ class level:
 
 
     def update(self, task):
+        
         self.audio.update(task)
 
         self.clock += 0.001

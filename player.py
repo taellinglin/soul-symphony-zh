@@ -111,3 +111,9 @@ class player:
 
     def __destroy__(self):
         self.ball_roll.stop()
+        
+    def get_pos(self):
+        return self.ballNP.getPos()
+
+    def getHpr(self):
+        return self.ballNP.getHpr()

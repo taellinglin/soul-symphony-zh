@@ -410,3 +410,6 @@ class SoulParticles:
             base.taskMgr.remove("star_update")
 
         print("Cleanup completed.")
+        
+    def reCenter(self, player=None):
+        self.p0.emitter.setRadiateOrigin(player.getPos())

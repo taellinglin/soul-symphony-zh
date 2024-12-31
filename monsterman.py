@@ -343,7 +343,7 @@ class MonsterManager:
 
         return monster
 
-    def place_monsters(self, monsters, num_monsters=10):
+    def place_monsters(self, monsters=[], num_monsters=10):
         """Place monsters randomly in the world."""
 
         for i in range(num_monsters):

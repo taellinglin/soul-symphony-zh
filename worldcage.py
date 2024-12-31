@@ -7,6 +7,9 @@ from math import cos
 
 import random
 
+from panda3d.core import GamepadButton
+
+
 import sys
 
 from panda3d.core import PerspectiveLens
@@ -157,9 +160,8 @@ class WorldCage(Stage):
 
         else:
             self.lvl = lvl
-
         base.enableParticles()
-
+        
         self.exit_stage = exit_stage
 
         self.globalClock = globalClock
@@ -175,7 +177,7 @@ class WorldCage(Stage):
         phase_frags = 6
 
         # Keep track of jump state
-
+        self.mapVisible = True 
         self.on_ground = False
 
         self.jump_count = 0  # Tracks how many jumps have been performed
@@ -229,10 +231,11 @@ class WorldCage(Stage):
         self.clock = 0
 
         self.npcs = []
-        self.transparency = 0.15
+        self.transparency = 0.5
+        self.flower_transparency = 0.15
         self.zoom_level = 30
         self.fs = 96000  # Sampling frequency
-        self.buffer_size = 1024  # Size of audio buffer
+        self.buffer_size = 5128  # Size of audio buffer
         self.audio_data = np.array([])  # Buffer for storing audio data
         self.pyaudio_instance = pyaudio.PyAudio()
         self.stream = None
@@ -411,12 +414,11 @@ class WorldCage(Stage):
         print("Audio stream and resources cleaned up.")
 
     def enter(self, lvl=None):
-    
         
         print("Entered new level or portal, audio stream reset.")
         # Set initial fade state
-        base.win.setClearColor(Vec4(0, 0, 0, 1))  # Start with opaque black background
-        render2d.setColorScale(0, 0, 0, 1)  # Start fully black
+        #base.win.setClearColor(Vec4(0, 0, 0, 1))  # Start with opaque black background
+        #render2d.setColorScale(0, 0, 0, 1)  # Start fully black
 
         # Create fade in interval for render2d color scale
         fade_in = LerpColorScaleInterval(
@@ -465,49 +467,49 @@ class WorldCage(Stage):
             LerpColorInterval(
                 self.imageObject2,
                 0.04,
-                Vec4(1, 0, 0, self.transparency),
+                Vec4(1, 0, 0, self.flower_transparency),
                 startColor=Vec4(1, 0.5, 0, 0),
                 blendType="easeInOut",
             ),  # Red to Orange
             LerpColorInterval(
                 self.imageObject2,
                 0.05,
-                Vec4(1, 1, 0, self.transparency),
+                Vec4(1, 1, 0, self.flower_transparency),
                 startColor=Vec4(1, 0, 0, 0),
                 blendType="easeInOut",
             ),  # Orange to Yellow
             LerpColorInterval(
                 self.imageObject2,
                 0.06,
-                Vec4(0, 1, 0, self.transparency),
+                Vec4(0, 1, 0, self.flower_transparency),
                 startColor=Vec4(1, 1, 0, 0),
                 blendType="easeInOut",
             ),  # Yellow to Green
             LerpColorInterval(
                 self.imageObject2,
                 0.07,
-                Vec4(0, 0, 1, self.transparency),
+                Vec4(0, 0, 1, self.flower_transparency),
                 startColor=Vec4(0, 1, 0, 0),
                 blendType="easeInOut",
             ),  # Green to Blue
             LerpColorInterval(
                 self.imageObject2,
                 0.08,
-                Vec4(0.29, 0, 0.51, self.transparency),
+                Vec4(0.29, 0, 0.51, self.flower_transparency),
                 startColor=Vec4(0, 0, 1, 0),
                 blendType="easeInOut",
             ),  # Blue to Indigo
             LerpColorInterval(
                 self.imageObject2,
                 0.09,
-                Vec4(0.56, 0, 1, self.transparency),
+                Vec4(0.56, 0, 1, self.flower_transparency),
                 startColor=Vec4(0.29, 0, 0.51, 0),
                 blendType="easeInOut",
             ),  # Indigo to Violet
             LerpColorInterval(
                 self.imageObject2,
                 0.1,
-                Vec4(1, 0, 0, self.transparency),
+                Vec4(1, 0, 0, self.flower_transparency),
                 startColor=Vec4(0.56, 0, 1, 0),
                 blendType="easeInOut",
             ),  # Violet to Red (loop)
@@ -520,49 +522,49 @@ class WorldCage(Stage):
             LerpColorInterval(
                 self.imageObject3,
                 0.1,
-                Vec4(0.56, 0, 1, self.transparency),
+                Vec4(0.56, 0, 1, self.flower_transparency),
                 startColor=Vec4(1, 0, 0, 0),
                 blendType="easeInOut",
             ),  # Red to Violet
             LerpColorInterval(
                 self.imageObject3,
                 0.09,
-                Vec4(0.29, 0, 0.51, self.transparency),
+                Vec4(0.29, 0, 0.51, self.flower_transparency),
                 startColor=Vec4(0.56, 0, 1, 0),
                 blendType="easeInOut",
             ),  # Violet to Indigo
             LerpColorInterval(
                 self.imageObject3,
                 0.08,
-                Vec4(0, 0, 1, self.transparency),
+                Vec4(0, 0, 1, self.flower_transparency),
                 startColor=Vec4(0.29, 0, 0.51, 0),
                 blendType="easeInOut",
             ),  # Indigo to Blue
             LerpColorInterval(
                 self.imageObject3,
                 0.07,
-                Vec4(0, 1, 0, self.transparency),
+                Vec4(0, 1, 0, self.flower_transparency),
                 startColor=Vec4(0, 0, 1, 0),
                 blendType="easeInOut",
             ),  # Blue to Green
             LerpColorInterval(
                 self.imageObject3,
                 0.06,
-                Vec4(1, 1, 0, self.transparency),
+                Vec4(1, 1, 0, self.flower_transparency),
                 startColor=Vec4(0, 1, 0, 0),
                 blendType="easeInOut",
             ),  # Green to Yellow
             LerpColorInterval(
                 self.imageObject3,
                 0.05,
-                Vec4(1, 0.5, 0, self.transparency),
+                Vec4(1, 0.5, 0, self.flower_transparency),
                 startColor=Vec4(1, 1, 0, 0),
                 blendType="easeInOut",
             ),  # Yellow to Orange
             LerpColorInterval(
                 self.imageObject3,
                 0.04,
-                Vec4(1, 0, 0, self.transparency),
+                Vec4(1, 0, 0, self.flower_transparency),
                 startColor=Vec4(1, 0.5, 0, 0),
                 blendType="easeInOut",
             ),  # Orange to Red (loop)
@@ -586,13 +588,21 @@ class WorldCage(Stage):
 
         base.accept("escape", sys.exit)
 
+        inputState.watchWithModifiers("forward", "arrow_up")
+        inputState.watchWithModifiers("left", "arrow_left")
+        inputState.watchWithModifiers("reverse", "arrow_down")
+        inputState.watchWithModifiers("right", "arrow_right")
         inputState.watchWithModifiers("forward", "w")
-
         inputState.watchWithModifiers("left", "a")
-
         inputState.watchWithModifiers("reverse", "s")
-
         inputState.watchWithModifiers("right", "d")
+
+        
+
+        base.accept("any", self.printKey)
+
+        # Bind the toggleMap function to the R1 button
+        inputState.watchWithModifiers("toggle_map", "r1")
 
         inputState.watchWithModifiers("turnLeft", "q")
 
@@ -610,7 +620,7 @@ class WorldCage(Stage):
 
         inputState.watchWithModifiers("cam-left", "gamepad-trigger_left")
 
-        inputState.watchWithModifiers("cam-right", "gamepad-shoulder_right")
+        inputState.watchWithModifiers("toggleMap", "gamepad-shoulder_right")
 
         inputState.watchWithModifiers("cam-left", "gamepad-shoulder_left")
 
@@ -653,15 +663,13 @@ class WorldCage(Stage):
         self.particles.create_matrix_effect(t=self.level.worldNP)
 
         base.accept("gamepad-face_a", self.actionA)
-
+        print(GamepadButton.rshoulder().getName())
         base.accept("space", self.actionA)
-
         base.accept("gamepad-face_a-up", self.actionAUp)
 
         base.accept("space-up", self.actionAUp)
 
         base.accept("gamepad-face_b", self.actionB)
-
         base.accept("shift", self.actionB)
 
         base.accept("gamepad-face_b-up", self.actionBUp)
@@ -672,18 +680,28 @@ class WorldCage(Stage):
         base.accept("gamepad-shoulder-left", self.set_zoom_out, [True])  # L1 pressed
         base.accept(
             "gamepad-shoulder-left-up", self.set_zoom_out, [False]
-        )  # L1 released
-        base.accept("gamepad-shoulder-right", self.set_zoom_in, [True])  # R1 pressed
-        base.accept(
-            "gamepad-shoulder-right-up", self.set_zoom_in, [False]
-        )  # R1 released
+        )  # L1 released  # R1 pressed
+        base.accept("gamepad-shoulder_right", self.toggleMap)
+
+ # R1 released
 
         # Task to handle modifiers
         base.taskMgr.add(self.handle_zoom, "HandleZoom")
 
         self.start_color_cycling()  # Start color cycling once
-
-    
+        hud_w, hud_h = base.win.getSize()
+        self.level.minimap.update_minimap_position(padding=0.001)
+    def printKey(self, event):
+            print(f"Key pressed: {event.key}")
+    def toggleMap(self):
+        """Toggle the visibility of the minimap."""
+        print("Toggling map")
+        if self.mapVisible:
+            self.level.minimap.hide()  # Hide the minimap
+        else:
+            self.level.minimap.show()  # Show the minimap
+        self.mapVisible = not self.mapVisible  # Toggle the state
+        
     def set_zoom_out(self, state):
         print("Zoom Out")
         self.zooming_out = state
@@ -933,8 +951,15 @@ class WorldCage(Stage):
         self.player.ballNP.node().applyCentralForce(force)
 
         self.player.ballNP.node().applyTorque(torque)
-
+    def cleanup_minimap(self):
+        # Detach the minimap camera and its components
+        self.level.minimap.level_model.removeNode()
+        self.level.minimap.player_dot.removeNode()
+        print("Minimap cleaned up!")
     def update(self, task):
+        self.level.minimap.update(self.player.get_pos(), self.player.getHpr())
+         # Continue the task
+        self.particles.reCenter(self.player.ballNP)
         velocity = self.player.ballNP.get_node(0).getLinearVelocity()
         velocity_magnitude = velocity.length()
         max_velocity = 2000.0
@@ -1099,7 +1124,7 @@ class WorldCage(Stage):
                 print("Score + 1!")
 
         if self.audio_data.size > 0:
-            max_samples = 512
+            max_samples = 96000
             if len(self.audio_data) > max_samples:
                 self.audio_data = self.audio_data[:max_samples]
             samples = np.array(self.audio_data)[:max_samples]
@@ -1277,6 +1302,8 @@ class WorldCage(Stage):
             letter.removeNode()
 
         self.level.worldNP.removeNode()
+        
+        self.cleanup_minimap()
 
         base.ignore("enter")
 
@@ -1376,6 +1403,8 @@ class WorldCage(Stage):
         # Clear the list of monsters
         self.monsters.clear()
         print("All monsters have been cleaned up from the scene.")
+        if inputState.isSet("toggle_map"):
+            self.toggleMap() 
 
     def load_textures(self):
         """Load textures only if they haven't been loaded before"""
