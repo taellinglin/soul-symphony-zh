@@ -235,8 +235,8 @@ class WorldCage(Stage):
         self.clock = 0
 
         self.npcs = []
-        self.transparency = 0.5
-        self.flower_transparency = 0.15
+        self.transparency = 0.25
+        self.flower_transparency = 0.25
         self.zoom_level = 30
         self.fs = 96000  # Sampling frequency
         self.buffer_size = 5128  # Size of audio buffer
@@ -1128,9 +1128,11 @@ class WorldCage(Stage):
                 print("Score + 1!")
 
         if self.audio_data.size > 0:
-            max_samples = 4096
+            max_samples = 96000  # Limit to the first 48000 samples
             if len(self.audio_data) > max_samples:
                 self.audio_data = self.audio_data[:max_samples]
+            
+            # Convert audio data to numpy array and take FFT
             samples = np.array(self.audio_data)[:max_samples]
             spectrum = np.fft.fft(samples)
             freqs = np.fft.fftfreq(len(samples), 1 / self.fs)
@@ -1139,7 +1141,7 @@ class WorldCage(Stage):
             positive_freqs = freqs[:len(freqs) // 2]
             positive_spectrum = np.abs(spectrum[:len(spectrum) // 2])
             
-            # Define number of bands dynamically (e.g., 3 bands for floor, walls, ceil)
+            # Define 3 frequency bands
             num_bands = 3
             band_edges = np.linspace(0, self.fs / 2, num_bands + 1)
             
@@ -1150,27 +1152,41 @@ class WorldCage(Stage):
                 band_amplitude = positive_spectrum[band_mask].mean() if np.any(band_mask) else 0
                 amplitudes.append(band_amplitude)
             
-            # Normalize transparencies
-            transparencies = np.clip(amplitudes / np.max(amplitudes), 0, 0.5)
-
-            # Map to objects
+            # Map amplitudes directly to transparency values (0.0 to 0.5)
+            max_amplitude = max(amplitudes) if amplitudes else 1  # Avoid division by zero
+            transparencies = np.clip(np.array(amplitudes) / (max_amplitude + 1e-6), 0, 1) * 0.5
+            
+            # Objects to update
             objects_to_update = {
                 "floor": self.level.floor.get_children(),
                 "walls": self.level.walls.get_children(),
                 "ceil": self.level.ceil.get_children(),
             }
-
+            
+            # Cycle through a fixed set of colors
+            if not hasattr(self, 'color_cycle_index'):
+                self.color_cycle_index = 0  # Initialize color cycle index
+            num_colors = len(self.color_choices)
+            
+            # Update transparency and cycle colors
             for i, (key, children) in enumerate(objects_to_update.items()):
                 if i >= len(transparencies):
-                    break  # Avoid index issues
+                    break  # Avoid index issues if there are more keys than bands
+                
                 transparency_value = transparencies[i]
+                color_choice = self.color_choices[self.color_cycle_index % num_colors]
+                self.color_cycle_index += 1  # Increment color cycle index
                 
                 for obj in children:
                     if obj.isHidden():
                         obj.show()
-                        obj.setTransparency(TransparencyAttrib.MAlpha)
-                    color_choice = random.choice(self.color_choices)
+                    obj.setTransparency(TransparencyAttrib.MAlpha)  # Ensure transparency is applied
                     obj.set_color(*(color_choice + (transparency_value,)))
+            
+            # Debugging: Log the current state of amplitudes and transparencies
+            print(f"Amplitudes: {amplitudes}")
+            print(f"Transparencies: {transparencies}")
+            print(f"Current Color Index: {self.color_cycle_index}")
 
 
 
